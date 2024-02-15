@@ -6,9 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-# picklefiles
-*.pkl
-
 # Distribution / packaging
 .Python
 build/
@@ -131,7 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-Results*
-/tests/test_cases/robot_trajectories*
-/tests/test_cases/RPE_2_agents_LOS/Experiments/Experiments/
+
 
