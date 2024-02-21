@@ -19,7 +19,7 @@ from Simulation.BiRobotMovement import moving_gps_tracked_host_fix_connected, \
     moving_sinusoidal_gps_tracked_host_random_connected, random_movements_host_random_movements_connected, \
     fix_host_jumping_y_connected, fix_host_random_movement_connected, \
     drone_flight, run_simulation
-from utility_fuctions import get_rot_matrix, sphericalToCartesian, cartesianToSpherical, get_4d_rot_matrix
+from UtilityCode.utility_fuctions import get_rot_matrix, sphericalToCartesian, cartesianToSpherical, get_4d_rot_matrix
 from Simulation.MultiRobotClass import MultiRobotSingleSimulation
 from Simulation.RobotClass import NewRobot
 from Simulation.NLOS_Manager import NLOS_Manager

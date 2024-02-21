@@ -29,10 +29,9 @@ import numpy as np
 import h5py
 import copy
 import matplotlib.pyplot as plt
-from filterpy.kalman import UnscentedKalmanFilter, MerweScaledSigmaPoints
 from ParticleFilter.ModifiedUKF import ModifiedUnscentedKalmanFilter, ModifiedMerweScaledSigmaPoints
-from utility_fuctions import get_rot_matrix, cartesianToSpherical, sphericalToCartesian, limit_angle, \
-    cartesian_to_spherical_delta_x, get_4d_rot_matrix, transform_matrix, inv_transformation_matrix, \
+from UtilityCode.utility_fuctions import cartesianToSpherical, sphericalToCartesian, limit_angle, \
+    get_4d_rot_matrix, transform_matrix, inv_transformation_matrix, \
     get_states_of_transform, get_covariance_of_transform
 from Simulation.RobotClass import NewRobot
 from deprecated import deprecated

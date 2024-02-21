@@ -10,8 +10,8 @@ import h5py
 import pickle as pkl
 import numpy as np
 
-from utility_fuctions import get_rot_matrix, get_4d_rot_matrix, sphericalToCartesian, cartesianToSpherical, limit_angle
-import Experiments.Transformation_Matrix_Fucntions as TMF
+from UtilityCode.utility_fuctions import get_rot_matrix, get_4d_rot_matrix, sphericalToCartesian, cartesianToSpherical, limit_angle
+import UtilityCode.Transformation_Matrix_Fucntions as TMF
 
 def load_trajectory_from_pickle(pickle_file="./trajectory.pkl", sigma_dw=None, sigma_dv=None):
     with open(pickle_file, "rb") as f:

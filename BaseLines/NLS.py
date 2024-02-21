@@ -4,7 +4,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-from utility_fuctions import get_rot_matrix, cartesianToSpherical, sphericalToCartesian, limit_angle, \
+from UtilityCode.utility_fuctions import get_rot_matrix, cartesianToSpherical, sphericalToCartesian, limit_angle, \
     cartesian_to_spherical_delta_x, get_4d_rot_matrix, transform_matrix, inv_transformation_matrix, \
     get_states_of_transform, get_covariance_of_transform
 class NLS:

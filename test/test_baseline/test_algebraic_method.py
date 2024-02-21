@@ -3,9 +3,8 @@ import unittest
 import matplotlib.pyplot as plt
 import numpy as np
 from BaseLines.AlgebraicMethod4DoF import AlgebraicMethod4DoF, Algebraic4DoF_Logger
-from Simulation.RobotClass import NewRobot
 from Simulation.BiRobotMovement import run_simulation, drone_flight, random_movements_host_random_movements_connected
-from utility_fuctions import get_rot_matrix, get_4d_rot_matrix
+from UtilityCode.utility_fuctions import get_4d_rot_matrix
 
 
 class MyTestCase(unittest.TestCase):

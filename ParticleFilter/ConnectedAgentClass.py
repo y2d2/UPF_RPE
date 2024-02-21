@@ -17,7 +17,7 @@ from matplotlib.gridspec import GridSpec
 
 from ParticleFilter.TargetTrackingUKF import TargetTrackingUKF, Datalogger
 from Simulation.RobotClass import NewRobot
-from utility_fuctions import get_rot_matrix, get_4d_rot_matrix, cartesianToSpherical
+from UtilityCode.utility_fuctions import get_rot_matrix, get_4d_rot_matrix, cartesianToSpherical
 from deprecated import deprecated
 
 

@@ -27,7 +27,7 @@ from filterpy.kalman import unscented_transform
 from filterpy.stats import logpdf
 from filterpy.common import pretty_str
 from scipy.linalg import cholesky
-from utility_fuctions import cartesianToSpherical, sphericalToCartesian, limit_angle
+from UtilityCode.utility_fuctions import cartesianToSpherical, sphericalToCartesian, limit_angle
 from deprecated import deprecated
 
 @deprecated('predict_unscented_transform is deprecated. Use unscented_transform instead.')

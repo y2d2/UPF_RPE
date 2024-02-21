@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from filterpy.kalman import UnscentedKalmanFilter
 
 # Have to use this since Spyder_WS is a project.
-from utility_fuctions import cartesianToSpherical, sphericalToCartesian, limit_angle, get_rot_matrix, get_4d_rot_matrix
+from UtilityCode.utility_fuctions import cartesianToSpherical, sphericalToCartesian, limit_angle, get_rot_matrix, get_4d_rot_matrix
 
 from ParticleFilter.TargetTrackingUKF import TargetTrackingUKF, load_dataFile
 from Simulation.BiRobotMovement import moving_gps_tracked_host_fix_connected, \

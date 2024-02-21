@@ -8,7 +8,7 @@ Created on Tue May 2 13:28:51 2023
 
 import numpy as np
 from Simulation.RobotClass import NewRobot
-from utility_fuctions import get_4d_rot_matrix, limit_angle, sphericalToCartesian, cartesianToSpherical
+from UtilityCode.utility_fuctions import get_4d_rot_matrix, limit_angle, sphericalToCartesian, cartesianToSpherical
 import matplotlib.pyplot as plt
 from scipy.linalg import null_space
 
