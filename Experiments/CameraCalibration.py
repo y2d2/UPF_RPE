@@ -55,7 +55,7 @@ def make_imu_msg(msg, inverse_imu=False , redo_imu=False):
                 msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z,
                 msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z]
     return line
-class uni
+
 
 
 
