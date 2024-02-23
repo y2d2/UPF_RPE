@@ -100,7 +100,7 @@ class UPFConnectedAgent:
     on the estimation of the trajectory of the connected agents.
     """
 
-    def __init__(self, id="0x000", x_ha_0=np.zeros(4), NLOS_bool = True, naive_sampling_bool = False):
+    def __init__(self, id="0x000", x_ha_0=np.zeros(4), drift_correction_bool= True,  NLOS_bool = False, naive_sampling_bool = False):
 
         self.id = id
         # State variables:
@@ -149,7 +149,7 @@ class UPFConnectedAgent:
         self.kappa = 0
         self.alpha = 0
         self.beta = 0
-        self.drift_correction_bool = True
+        self.drift_correction_bool = drift_correction_bool
         self.NLOS_bool = NLOS_bool
         self.naive_sampling_bool = naive_sampling_bool
         self.set_ukf_parameters()
@@ -163,11 +163,11 @@ class UPFConnectedAgent:
         self.logging = True
         self.upf_connected_agent_logger = ca_logger
 
-    def set_ukf_parameters(self, kappa=-1, alpha=1, beta=2, drift_correction_bool=True):
+    def set_ukf_parameters(self, kappa=-1, alpha=1, beta=2):
         self.kappa = kappa
         self.alpha = alpha
         self.beta = beta
-        self.drift_correction_bool = drift_correction_bool
+        # self.drift_correction_bool = drift_correction_bool
 
     def set_nlos_detection_parameters(self, min_likelihood=0.5, degeneration_factor=0.9, min_likelihood_factor=0.4):
         self.min_likelihood = min_likelihood
@@ -249,21 +249,21 @@ class UPFConnectedAgent:
         self.sigma_uwb = sigma_uwb
         self.set_best_particle(self.particles[0])
 
-    def run_model(self, dx_ca, measurement, q_ca=None, bool_ha_drift = True, time_i=None):
+    def run_model(self, dx_ca, measurement, q_ca=None, time_i=None):
         # self.iterations += 1
         self.time_i = time_i
         if self.NLOS_bool:
             if self.naive_sampling_bool:
-                self.run_predict_update_naive(dx_ca, measurement, q_ca, bool_ha_drift)
+                self.run_predict_update_naive(dx_ca, measurement, q_ca)
             else:
-                self.run_predict_update(dx_ca, measurement, q_ca, bool_ha_drift)
+                self.run_predict_update(dx_ca, measurement, q_ca)
         else:
-            self.run_predict_update_los(dx_ca, measurement, q_ca, bool_ha_drift)
+            self.run_predict_update_los(dx_ca, measurement, q_ca)
         self.resample()
         if len(self.particles) > 5000:
             raise Exception("Too many particles")
 
-    def run_predict_update_los(self, dx_ca, measurement, q_ca=None, bool_ha_drift = True):
+    def run_predict_update_los(self, dx_ca, measurement, q_ca=None):
         """"
         Debug function to force los behaviour when debugging.
         """
@@ -275,7 +275,7 @@ class UPFConnectedAgent:
 
         for particle in self.particles:
             try:
-                particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, bool_ha_drift, self.time_i)
+                particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
                 keep.append(particle)
                 self.weights.append(particle.weight)
                 self.totalWeight += particle.weight
@@ -283,7 +283,7 @@ class UPFConnectedAgent:
                 pass
         self.particles = keep
 
-    def run_predict_update_naive(self, dx_ca, measurement, q_ca=None, bool_ha_drift = True):
+    def run_predict_update_naive(self, dx_ca, measurement, q_ca=None):
         keep = []
         self.totalWeight = 0
         self.weights = []
@@ -293,8 +293,8 @@ class UPFConnectedAgent:
             # try:
             new_particle = copy.deepcopy(particle)
             new_particle.switch_los_state()
-            particle.run_filter(dx_ca, q_ca, measurement,self.ha.x_ha, P_x_ha, self.sigma_uwb, bool_ha_drift, self.time_i)
-            new_particle.run_filter(dx_ca, q_ca, measurement,self.ha.x_ha, P_x_ha, self.sigma_uwb, bool_ha_drift, self.time_i)
+            particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
+            new_particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
             keep.append(particle)
             self.weights.append(particle.weight)
             self.totalWeight += particle.weight
@@ -303,7 +303,7 @@ class UPFConnectedAgent:
             self.totalWeight += new_particle.weight
         self.particles = keep
 
-    def run_predict_update(self, dx_ca, measurement, q_ca=None, bool_ha_drift = True):
+    def run_predict_update(self, dx_ca, measurement, q_ca=None):
         keep = []
         self.totalWeight = 0
         self.weights = []
@@ -312,17 +312,17 @@ class UPFConnectedAgent:
         for particle in self.particles:
             # try:
             new_particle = copy.deepcopy(particle)
-            particle.run_filter(dx_ca, q_ca, measurement,self.ha.x_ha, P_x_ha, self.sigma_uwb, bool_ha_drift, self.time_i)
+            particle.run_filter(dx_ca, q_ca, measurement,self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
             if particle.los_state:
                 if particle.kf.likelihood < new_particle.kf.likelihood * self.min_likelihood:
                     new_particle.switch_los_state()
-                    new_particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, bool_ha_drift, self.time_i)
+                    new_particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
                     keep.append(new_particle)
                     self.weights.append(new_particle.weight)
                     self.totalWeight += new_particle.weight
             else:
                 new_particle.switch_los_state()
-                new_particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, bool_ha_drift, self.time_i)
+                new_particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
                 if new_particle.kf.likelihood > particle.kf.likelihood:
                     keep.append(new_particle)
                     self.weights.append(new_particle.weight)
