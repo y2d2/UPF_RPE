@@ -50,5 +50,12 @@ time_i: is important for logging the data, but is not needed to use the algorith
 upf.run_model(dx_ca, measurement, q_ca, time_i=None)
 ```
 
-# Data
-In the Data folder, the measurements and simulation data can be found. For the measurements the rosbags with camera images are not uploaded here, however, can be made available upon request. 
+## Data
+In the Data folder, the measurements and simulation data can be found. 
+### Measurements
+For the measurements, the rosbags with camera images are not uploaded here, however, can be made available upon request. 
+### Simulations
+The simulations include the corrupted VIO and UWB measurements so that all algorithms have exactly the same input. 
+
+## Benchmark algorithms
+An implementation of a NLS and Algebraic solution for the 4-dof problem can be found in the Code/Baselines folder
