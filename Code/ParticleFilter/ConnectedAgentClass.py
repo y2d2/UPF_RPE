@@ -100,7 +100,7 @@ class UPFConnectedAgent:
     on the estimation of the trajectory of the connected agents.
     """
 
-    def __init__(self, id="0x000", x_ha_0=np.zeros(4), drift_correction_bool= True,  NLOS_bool = False, naive_sampling_bool = False):
+    def __init__(self, id="0x000", x_ha_0=np.zeros(4), drift_correction_bool=True):
 
         self.id = id
         # State variables:
@@ -150,8 +150,6 @@ class UPFConnectedAgent:
         self.alpha = 0
         self.beta = 0
         self.drift_correction_bool = drift_correction_bool
-        self.NLOS_bool = NLOS_bool
-        self.naive_sampling_bool = naive_sampling_bool
         self.set_ukf_parameters()
 
         # Logging variables:
@@ -169,10 +167,6 @@ class UPFConnectedAgent:
         self.beta = beta
         # self.drift_correction_bool = drift_correction_bool
 
-    def set_nlos_detection_parameters(self, min_likelihood=0.5, degeneration_factor=0.9, min_likelihood_factor=0.4):
-        self.min_likelihood = min_likelihood
-        self.degeneration_factor = degeneration_factor
-        self.min_likelihood_factor = min_likelihood_factor
 
     def add_particle_with_know_start_pose(self, x_ca_0, azimuth_n, altitude_n, heading_n , sigma_uwb):
         sigma_azimuth = (2 * np.pi / azimuth_n) / np.sqrt(-8 * np.log(0.5))
@@ -182,7 +176,6 @@ class UPFConnectedAgent:
 
         particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1., drift_correction_bool = self.drift_correction_bool)
         particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
-        particle.set_NLOS_parameters(minimum_likelihood_factor=self.min_likelihood_factor, nlos_degradation=self.degeneration_factor)
         s = cartesianToSpherical(x_ca_0[:3]).tolist()
         # sigma_heading = np.sqrt(P_x_ca_0[3, 3])
         # d = np.linalg.norm(x_ca_0[:3])
@@ -233,7 +226,6 @@ class UPFConnectedAgent:
                     particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1, drift_correction_bool = self.drift_correction_bool)#weight=weights[i] / len(headings))
                     particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
                     particle.set_initial_state(s, sigma_s, heading, sigma_heading, sigma_uwb)
-                    particle.set_NLOS_parameters(minimum_likelihood_factor=self.min_likelihood_factor, nlos_degradation=self.degeneration_factor)
                     self.particles.append(particle)
         # for alt in [-np.pi/2, np.pi/2]:
         #     for az in [-np.pi, np.pi]:
@@ -252,13 +244,7 @@ class UPFConnectedAgent:
     def run_model(self, dx_ca, measurement, q_ca=None, time_i=None):
         # self.iterations += 1
         self.time_i = time_i
-        if self.NLOS_bool:
-            if self.naive_sampling_bool:
-                self.run_predict_update_naive(dx_ca, measurement, q_ca)
-            else:
-                self.run_predict_update(dx_ca, measurement, q_ca)
-        else:
-            self.run_predict_update_los(dx_ca, measurement, q_ca)
+        self.run_predict_update_los(dx_ca, measurement, q_ca)
         self.resample()
         if len(self.particles) > 5000:
             raise Exception("Too many particles")
@@ -281,58 +267,6 @@ class UPFConnectedAgent:
                 self.totalWeight += particle.weight
             except np.linalg.LinAlgError:
                 pass
-        self.particles = keep
-
-    def run_predict_update_naive(self, dx_ca, measurement, q_ca=None):
-        keep = []
-        self.totalWeight = 0
-        self.weights = []
-        P_x_ha = self.ha.get_x_ha_odom_sigma()
-        self.sigma_x_ha = np.sqrt(np.linalg.norm(P_x_ha[:3, :3]))
-        for particle in self.particles:
-            # try:
-            new_particle = copy.deepcopy(particle)
-            new_particle.switch_los_state()
-            particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
-            new_particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
-            keep.append(particle)
-            self.weights.append(particle.weight)
-            self.totalWeight += particle.weight
-            keep.append(new_particle)
-            self.weights.append(new_particle.weight)
-            self.totalWeight += new_particle.weight
-        self.particles = keep
-
-    def run_predict_update(self, dx_ca, measurement, q_ca=None):
-        keep = []
-        self.totalWeight = 0
-        self.weights = []
-        P_x_ha = self.ha.get_x_ha_odom_sigma()
-        self.sigma_x_ha= np.sqrt(np.linalg.norm(P_x_ha[:3,:3]))
-        for particle in self.particles:
-            # try:
-            new_particle = copy.deepcopy(particle)
-            particle.run_filter(dx_ca, q_ca, measurement,self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
-            if particle.los_state:
-                if particle.kf.likelihood < new_particle.kf.likelihood * self.min_likelihood:
-                    new_particle.switch_los_state()
-                    new_particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
-                    keep.append(new_particle)
-                    self.weights.append(new_particle.weight)
-                    self.totalWeight += new_particle.weight
-            else:
-                new_particle.switch_los_state()
-                new_particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb, self.drift_correction_bool, self.time_i)
-                if new_particle.kf.likelihood > particle.kf.likelihood:
-                    keep.append(new_particle)
-                    self.weights.append(new_particle.weight)
-                    self.totalWeight += new_particle.weight
-            keep.append(particle)
-            self.weights.append(particle.weight)
-            self.totalWeight += particle.weight
-            # except np.linalg.LinAlgError as e:
-            #     print(e)
-            #     pass
         self.particles = keep
 
     def resample(self):
@@ -396,8 +330,7 @@ class UPFConnectedAgent:
         """
         if particle_1 is not particle_2:
             e_par = particle_2.t_si_sj - particle_1.t_si_sj
-            if np.linalg.norm(e_par[:3]) < 1e-1 and \
-                    particle_2.los_state == particle_1.los_state and np.abs(e_par[-1]) < 1e-1:
+            if np.linalg.norm(e_par[:3]) < 1e-1 and np.abs(e_par[-1]) < 1e-1:
                 # if np.max(particle.kf.P - best_particle.kf.P) < 1e-5:
                 # print(particle_2.t_si_sj, particle_2.los_state)
                 # print(particle_1.t_si_sj, particle_1.los_state)
@@ -560,7 +493,6 @@ class UPFConnectedAgentDataLogger:
         likelihood_ax.plot(bp_dl.weight, label="Weigth")
         if los is not None:
             likelihood_ax.plot(los, color="k", label="Real LOS State")
-        likelihood_ax.plot(bp_dl.los_state, linestyle="--", color="crimson", label="LOS state estimation")
 
         likelihood_ax.legend()
         likelihood_ax.grid(True)

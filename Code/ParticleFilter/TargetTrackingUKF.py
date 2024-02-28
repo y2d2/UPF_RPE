@@ -61,33 +61,13 @@ def subtract_spherical(x, y):
 
 class TargetTrackingUKF:
     """
-    state vector = [ x, y, phi, theta_CA]
-    input vector = [ Dx_HA, Dy_HA, Dz_HA, Dx_CA, Dy_CA, Dz_CA, D_theta_CA]
-    measurement vector = [d_uwb]
-
-    # TODO: Incorporate the heading uncertainty of the host agents in the state.
-        Use the uncertainty of the host agents heading to generate particles at a distance from the current location of the host agent.
-        How do we track during NLOS? -> Keep tack of accumuated uncertainty since this does not affect the Transformation estimation
-        Generate more particles one a LOS measurement is received?
-        Remove the uncertainty from the UWB.py measurement -> translational drift is incorporated into the connecte agent from both host and connected agent.
-        Remove the uncertainty of the host agent heading from the state. -> Covered now by generating particles using this uncertainty. (Highly non linear.)
-
-    # TODO : will include trhe heading uncertainty of the host agent as an additional state. Hmm not sure this is the best thing to do.
-        Keeping the heading uncertainty of the host agent at the level of the host agent may help reduce the drift on this heading.
-
-    # TODO: So what I need to do is keep the the higher level EKF to correct for the drift of the host agent using the extimated trajectory.
-        and then keep the residual drift and propagate it to the UPF. Where the uncertaitny on the location is added to the location of the connected agent.
-        And augmenting the state of the UKF with an additional state that represent the uncertainty of the host heading.
-        and the heading drift is used to create new particles that are moved arround the host agent using the uncertainty on the host agent heading.
+    Todo: Add documentation
     """
 
     def __init__(self, x_ha_0=np.zeros(4), weight=1., los_state=True, data_logging_bool=True,
                  minimun_likelihood_factor=0.1, drift_correction_bool = True):
 
-        # ---- Input variables old:
-        # x_ha : Current position (x,y,z,h) of the host agent in the absolute reference frame of the host agent.
-        # self.x_ha = x_ha_0
-        # self.x_ha_prev = x_ha_0
+        # ---- Input variables:
         # Dt_sj : Delta position odometry of the connected agent expressed in his local odometry frame.
         self.Dt_sj = np.zeros(4)
         # q_ca: noise matrix of the odometry of the connected agent.
@@ -96,20 +76,6 @@ class TargetTrackingUKF:
         self.uwb_measurement = 0
         #
         # # ---- Internal variables:
-        # # x_ca_odom : Odometry of the connected agent wrt the position of the connected agent at connection time. (path of connected agent)
-        # self.x_ca_odom = np.zeros(3)
-        # # x_ha_0 : Position of the host agent in the absolute reference frame of the host agent at connection time.
-        # self.x_ha_0 = x_ha_0
-        # # x_ca : Position of the connected agent in the absolute reference frame of the host agent.
-        # self.x_ca = np.zeros(3)
-        # # x_ca_r : Relative position of connected agent wrt the position of the connected agent in the host agent absolute reference frame. (RTE)
-        # self.x_ca_r = np.zeros(3)
-        # # s_ca_r : Relative position of connected agent wrt the position of the connected agent expressed in the spherical coordinates.
-        # self.s_ca_r = np.zeros(3)
-        # # x_ca_0 : Position of the connected agent in the absolute reference frame of the host agent at connection time.
-        # self.x_ca_0 = np.zeros(3)
-        # # h_ca : Heading of the connected agent in the absolute reference frame of the host agent.
-        # self.h_ca = 0
         # sigma_x_ca_0 : Uncertainty on the start position of the connected agent
         self.sigma_x_ca_0 = 0
         # sigma_x_ca : Uncertainty on the current position of the connected agent
@@ -155,10 +121,6 @@ class TargetTrackingUKF:
         self.sigma_dh_ca = 0
         self.sigma_dx_ca = 0
 
-        # ---- NLOS detection variables:
-        self.minimum_likelihood = 0.0
-        self.minimum_likelihood_factor = minimun_likelihood_factor
-
         # ---- Data logging variables:
         self.time_i = None
         self.data_logging_bool = data_logging_bool
@@ -186,9 +148,6 @@ class TargetTrackingUKF:
         self.calculate_x_ca()
         self.calculate_P_x_ca()
 
-    def set_NLOS_parameters(self, minimum_likelihood_factor, nlos_degradation):
-        self.minimum_likelihood_factor = minimum_likelihood_factor
-        self.nlos_degradation = nlos_degradation
     # -------------------------------------------------------------------------------------- #
     # --- Filter functions: Main function
     # -------------------------------------------------------------------------------------- #
@@ -197,10 +156,7 @@ class TargetTrackingUKF:
         self.t_oi_si = x_ha
         self.set_host_agent_uncertainty(P_x_ha)
         self.predict(dx_ca, q_ca)
-        if self.los_state:
-            self.update(measurement, x_ha, P_x_ha, sigma_uwb, bool_drift)
-        else:
-            self.nlos_update()
+        self.update(measurement, x_ha, P_x_ha, sigma_uwb, bool_drift)
         self.calculate_x_ca()
         self.calculate_P_x_ca()
         self.weight = self.weight * self.kf.likelihood
@@ -372,19 +328,6 @@ class TargetTrackingUKF:
                 self.kf.P[-1, -1] = np.pi**2
         self.q_ha = np.zeros((4,4))
 
-
-    # -------------------------------------------------------------------------------------- #
-    # --- NLOS functions
-    # -------------------------------------------------------------------------------------- #
-    def switch_los_state(self):
-        self.los_state = not self.los_state
-        self.minimum_likelihood = self.kf.likelihood * self.minimum_likelihood_factor
-
-    def nlos_update(self):
-        self.kf._likelihood = self.nlos_degradation * self.kf.likelihood
-        if self.kf._likelihood < self.minimum_likelihood:
-            self.kf._likelihood = self.minimum_likelihood
-
     # -------------------------------------------------------------------------------------- #
     # --- Copy functions
     # -------------------------------------------------------------------------------------- #
@@ -483,7 +426,6 @@ class Datalogger():
             self.sigma_h_ca = []
             self.likelihood = []
             self.weight = []
-            self.los_state = []
 
             self.ca_s = []
             self.ha_s = []
@@ -545,8 +487,6 @@ class Datalogger():
         self.sigma_x_ca.append(self.ukf.sigma_x_ca)
         self.sigma_x_ca_r.append(self.ukf.sigma_x_ca_r)
         self.sigma_h_ca.append(self.ukf.sigma_h_ca)
-
-        self.los_state.append(1 if self.ukf.los_state else 0)
 
     def log_spherical_data(self, i):
         ca_p_real = self.connected_agent.x_real[i]
@@ -846,7 +786,6 @@ class Datalogger():
 
             ax[3, -1].plot(self.likelihood, color="black", label="Likelihood")
             ax[3, -1].plot(self.weight, color="red", label="Weight")
-            ax[3, -1].plot(self.los_state, color="Green", label="LOS state")
 
             for i in ax[:, -1]:
                 # for i in a:
@@ -903,7 +842,6 @@ class Datalogger():
         copyDL.sigma_x_ca = copy.deepcopy(self.sigma_x_ca)
         copyDL.sigma_x_ca_r = copy.deepcopy(self.sigma_x_ca_r)
 
-        copyDL.los_state = copy.deepcopy(self.los_state)
         copyDL.likelihood = copy.deepcopy(self.likelihood)
         copyDL.weight = copy.deepcopy(self.weight)
 

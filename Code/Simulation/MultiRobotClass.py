@@ -786,7 +786,7 @@ class TwoAgentSystem():
         # self.d0 = init_distance
         # init drone0
         x_ha_0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
-        upf0 = UPFConnectedAgent(id="drone_1", x_ha_0=x_ha_0, drift_correction_bool=drift_bool, NLOS_bool=NLOS_bool, naive_sampling_bool=naive_sampling_bool)
+        upf0 = UPFConnectedAgent(id="drone_1", x_ha_0=x_ha_0, drift_correction_bool=drift_bool)
         upf0.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
         upf0.split_sphere_in_equal_areas(r=self.d0, sigma_uwb=self.sigma_uwb,
                                          n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
@@ -797,7 +797,7 @@ class TwoAgentSystem():
 
         # init drone1
         x_ha_1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
-        upf1 = UPFConnectedAgent(id="drone_0", x_ha_0=x_ha_1, drift_correction_bool=drift_bool , NLOS_bool=NLOS_bool,  naive_sampling_bool=naive_sampling_bool)
+        upf1 = UPFConnectedAgent(id="drone_0", x_ha_0=x_ha_1, drift_correction_bool=drift_bool)
         upf1.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
         upf1.split_sphere_in_equal_areas(r=self.d0, sigma_uwb=self.sigma_uwb,
                                          n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)

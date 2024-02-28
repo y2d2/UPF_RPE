@@ -240,7 +240,7 @@ class TestConnectedAgent(unittest.TestCase):
                 if agent1 != agent:
                     other_drone : NewRobot = self.agents[agent1]["drone"]
             x_0 = np.concatenate((drone.x_start, np.array([drone.h_start])))
-            upf = UPFConnectedAgent(agent, x_ha_0=x_0, NLOS_bool=NLOS_bool)
+            upf = UPFConnectedAgent(agent, x_ha_0=x_0)
             upf.set_ukf_parameters(kappa=-1, alpha=1, beta=2, drift_correction_bool=True)
             upf.set_nlos_detection_parameters(min_likelihood=0.1, degeneration_factor=0.9, min_likelihood_factor=0.2)
             upf.split_sphere_in_equal_areas(self.distances[0], self.sigma_uwb,
