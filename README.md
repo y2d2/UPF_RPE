@@ -5,7 +5,7 @@ The UPF is capable of tracking the complex solution space when the relative pose
 Additionally, the repository also provides  measurement and simulation data as well as the implementations of an NLS and algebraic method for comparison. 
 
 ## Paper 
-The preprint of the paper accompanying this algorithm can be found in the repository. 
+The paper is currently under revision. 
 
 ## Usage of the UPF: 
 To use the UPF use the following code: 
