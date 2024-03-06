@@ -46,11 +46,12 @@ class Test_TargetTrackingUKF(unittest.TestCase):
         self.bool_host_agent_drift = True
 
     def init_saves(self, save_bool=True):
-        now = datetime.now()
-        self.folder_name = os.path.realpath("/") + "/Results_UKF/"
-        self.folder_name += str(now.year) + "_" + str(now.month) + "_" + str(now.day)
-        if not os.path.exists(self.folder_name):
-            os.mkdir(self.folder_name)
+        if save_bool:
+            now = datetime.now()
+            self.folder_name = os.path.realpath("/") + "/Results_UKF/"
+            self.folder_name += str(now.year) + "_" + str(now.month) + "_" + str(now.day)
+            if not os.path.exists(self.folder_name):
+                os.mkdir(self.folder_name)
         self.save_bool = save_bool
 
 
@@ -154,7 +155,7 @@ class Test_TargetTrackingUKF(unittest.TestCase):
     def test_TC1_HostAgent_Standing_Still(self):
         TEST_CASE_NAME = "TC1: Fix host agent, Random Connected Agent"
         self.initTest()
-        run_simulation(self.uwb_time_steps, self.host, self.drone, fix_host_random_movement_connected)
+        run_simulation(self.simulation_time_steps, self.host, self.drone, fix_host_random_movement_connected)
         self.setUKF()
 
         self.run_test(TEST_CASE_NAME)

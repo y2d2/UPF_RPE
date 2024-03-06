@@ -150,7 +150,7 @@ class NewRobot:
         self.slowrate_w = slowrate_w
         self.max_v = max_v
         self.max_w = max_w
-        self.set_new_random_target()
+        # self.set_new_random_target()
 
     def set_start_speed(self, v, w):
         self.v_slam = v

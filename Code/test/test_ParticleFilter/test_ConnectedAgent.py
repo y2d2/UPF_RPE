@@ -16,8 +16,8 @@ from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnec
 from Code.Simulation.BiRobotMovement import random_movements_host_random_movements_connected, \
     drone_flight, run_simulation
 from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
-from Code.Simulation import MultiRobotSingleSimulation
-from Code.Simulation import NewRobot
+from Code.Simulation.MultiRobotClass import MultiRobotSingleSimulation
+from Code.Simulation.RobotClass import NewRobot
 from Code.Simulation.NLOS_Manager import NLOS_Manager
 
 
@@ -90,7 +90,7 @@ class TestConnectedAgent(unittest.TestCase):
                     x_ha = np.concatenate([x_ha, np.array([h_ha])])
 
                 self.ca.ha.update(x_ha, q_ha)
-                self.ca.run_model(dx_ca, uwb_measurement, q_ca=q, bool_ha_drift=self.drifting_host)
+                self.ca.run_model(dx_ca, uwb_measurement, q_ca=q)
 
                 self.dl.log_data(i)
 
@@ -107,7 +107,7 @@ class TestConnectedAgent(unittest.TestCase):
         # Length of NLOS  is proportional to error on odom?
         self.init_test(sigma_v=0.1, sigma_w=0.01, sigma_uwb=0.2,
                        drifting_host=True)
-        self.init_drones(np.array([0, 0, -5]), 0, max_range=5)
+        self.init_drones(np.array([0, 0, -5]), 0, max_range=20)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
                        random_movements_host_random_movements_connected)
         self.ca = UPFConnectedAgent("0x000", x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])))
