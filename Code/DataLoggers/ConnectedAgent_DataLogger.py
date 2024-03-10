@@ -30,9 +30,10 @@ class UPFConnectedAgentDataLogger:
         for particle_log in self.particle_logs:
             if particle_log.ukf == particle:
                 return particle_log
-        return None
+        self.add_particle(particle)
+        return self.particle_logs[-1]
 
-    def get_best_particle_log(self):
+    def get_best_particle_log(self) -> UKFDatalogger:
         return self.find_particle_log(self.upf_connected_agent.best_particle)
 
     def add_particle(self, particle):
@@ -55,10 +56,7 @@ class UPFConnectedAgentDataLogger:
         self.log_ha_data()
         for particle in self.upf_connected_agent.particles:
             particle_log: UKFDatalogger= self.find_particle_log(particle)
-            if particle_log is not None:
-                particle_log.log_data(i)
-            else:
-                self.add_particle(particle)
+            particle_log.log_data(i)
 
 
     def log_ha_data(self):

@@ -794,8 +794,9 @@ class TwoAgentSystem():
 
         dl0 = UPFConnectedAgentDataLogger(drone0, drone1, upf0)
 
-        upf0.set_logging(dl0)
+        # upf0.set_logging(dl0)
         self.agents["drone_0"][self.test_name] = upf0
+        self.agents["drone_1"]["log"] = dl0
 
         # init drone1
         x_ha_1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
@@ -804,15 +805,18 @@ class TwoAgentSystem():
         upf1.split_sphere_in_equal_areas(r=self.d0, sigma_uwb=self.sigma_uwb,
                                          n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
         dl1 = UPFConnectedAgentDataLogger(drone1, drone0, upf1)
-        upf1.set_logging(dl1)
+        # upf1.set_logging(dl1)
         self.agents["drone_1"][self.test_name] = upf1
-
+        self.agents["drone_1"]["log"] = dl1
     def run_upf_simulation(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
 
         upf0: UPFConnectedAgent = self.agents["drone_0"][self.test_name]
         upf1: UPFConnectedAgent = self.agents["drone_1"][self.test_name]
+        upf0log: UPFConnectedAgentDataLogger = self.agents["drone_0"]["log"]
+        upf1log: UPFConnectedAgentDataLogger = self.agents["drone_1"]["log"]
+
 
         # Not sure if this is needed.
         upf0.ha.predict(dx_ha=dx_0, Q_ha=q_0)
@@ -830,7 +834,7 @@ class TwoAgentSystem():
         upf0.run_model(dx_1, uwb_measurement, q_ca=q_1, time_i=i)
         t2 = time.time()
         # Logging
-        upf0.upf_connected_agent_logger.log_data(i, t2 - t1)
+        upf0log.log_data(i, t2 - t1)
 
         # Drone 1
         x_ha = drone1.x_slam[i]
@@ -842,7 +846,7 @@ class TwoAgentSystem():
         upf1.run_model(dx_0, uwb_measurement, q_ca=q_0, time_i=i)
         t4 = time.time()
         # Logging
-        upf1.upf_connected_agent_logger.log_data(i, t4 - t3)
+        upf1log.log_data(i, t4 - t3)
 
         if self.debug_bool:
             print("UPF time 1: ", t4 - t3)
@@ -865,8 +869,9 @@ class TwoAgentSystem():
         for drone_id in self.agents:
             # UPF Results
             upf: UPFConnectedAgent = self.agents[drone_id][self.test_name]
-            dl_ca: UPFConnectedAgentDataLogger = upf.upf_connected_agent_logger
-            dl_bp: UKFDatalogger = upf.best_particle.datalogger
+            dl_ca: UPFConnectedAgentDataLogger = self.agents[drone_id]["log"]
+            # dl_ca: UPFConnectedAgentDataLogger = upf.upf_connected_agent_logger
+            dl_bp: UKFDatalogger = dl_ca.get_best_particle_log().datalogger
 
             upf_result = {"number_of_particles": dl_ca.number_of_particles,
                           "calculation_time": dl_ca.calulation_time,
