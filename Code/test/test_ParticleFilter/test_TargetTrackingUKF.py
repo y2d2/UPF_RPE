@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 # Have to use this since Spyder_WS is a project.
 from Code.UtilityCode.utility_fuctions import cartesianToSpherical, limit_angle, get_4d_rot_matrix
 
-from Code.ParticleFilter.TargetTrackingUKF import TargetTrackingUKF, load_dataFile
+from Code.ParticleFilter.TargetTrackingUKF import TargetTrackingUKF
+from Code.DataLoggers.TargetTrackingUKF_DataLogger import load_dataFile, UKFDatalogger
 from Code.Simulation.BiRobotMovement import moving_gps_tracked_host_fix_connected, \
     moving_sinusoidal_gps_tracked_host_random_connected, random_movements_host_random_movements_connected, \
     fix_host_jumping_y_connected, fix_host_random_movement_connected, \
@@ -80,7 +81,7 @@ class Test_TargetTrackingUKF(unittest.TestCase):
 
 
     def run_test(self, name="Unidentified Testcase", nlos_function= None):
-        self.ukf.set_datalogger(self.host, self.drone, name)
+        self.datalogger= UKFDatalogger(self.host, self.drone, self.ukf, name)
         # self.ukf.datalogger.save_graphs(self.folder_name)
         self.ukf.weight = 0.
         # self.ukf.datalogger.log_data(0)
@@ -92,7 +93,7 @@ class Test_TargetTrackingUKF(unittest.TestCase):
         dx_ha = np.zeros(4)
         x_ha = np.concatenate((self.host.x_start, np.array([self.host.h_start])))
         x_ha_est = x_ha
-        self.ukf.datalogger.log_data(0)
+        self.datalogger.log_data(0)
         for i in range(1,self.simulation_time_steps):
             print("Simulation step: ", i," /",self.simulation_time_steps)
             try:
@@ -137,7 +138,7 @@ class Test_TargetTrackingUKF(unittest.TestCase):
                     #
                     # self.ukf.update(uwb_measurement, x_ha)
 
-                    self.ukf.datalogger.log_data(i)
+                    self.datalogger.log_data(i)
 
 
 
@@ -147,9 +148,9 @@ class Test_TargetTrackingUKF(unittest.TestCase):
                 print(self.ukf.kf.P, self.ukf.q_ca)
                 break
 
-        self.ukf.datalogger.create_3d_plot()
-        self.ukf.datalogger.plot_error_graph()
-        self.ukf.datalogger.plot_ukf_states()
+        self.datalogger.create_3d_plot()
+        self.datalogger.plot_error_graph()
+        self.datalogger.plot_ukf_states()
 
     # ---- Test cases : fix host
     def test_TC1_HostAgent_Standing_Still(self):

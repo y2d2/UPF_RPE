@@ -15,7 +15,8 @@ from filterpy.kalman import KalmanFilter
 
 from matplotlib.gridspec import GridSpec
 
-from Code.ParticleFilter.TargetTrackingUKF import TargetTrackingUKF, Datalogger
+from Code.ParticleFilter.TargetTrackingUKF import TargetTrackingUKF
+from Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from Code.Simulation.RobotClass import NewRobot
 from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix, cartesianToSpherical
 
@@ -153,13 +154,13 @@ class UPFConnectedAgent:
         self.set_ukf_parameters()
 
         # Logging variables:
-        self.logging = False
-        self.upf_connected_agent_logger = None
+        # self.logging = False
+        # self.upf_connected_agent_logger = None
         self.time_i = None
 
-    def set_logging(self, ca_logger):
-        self.logging = True
-        self.upf_connected_agent_logger = ca_logger
+    # def set_logging(self, ca_logger):
+    #     self.logging = True
+    #     self.upf_connected_agent_logger = ca_logger
 
     def set_ukf_parameters(self, kappa=-1, alpha=1, beta=2):
         self.kappa = kappa
@@ -174,7 +175,7 @@ class UPFConnectedAgent:
         sigma_heading = (2*np.pi / heading_n) / np.sqrt(-8 * np.log(0.5))
         sigma_s = [sigma_uwb,sigma_azimuth, sigma_altitude]
 
-        particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1., drift_correction_bool = self.drift_correction_bool)
+        particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1., drift_correction_bool=self.drift_correction_bool)
         particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
         s = cartesianToSpherical(x_ca_0[:3]).tolist()
         # sigma_heading = np.sqrt(P_x_ca_0[3, 3])
@@ -223,7 +224,8 @@ class UPFConnectedAgent:
             for azimuth in azimuths:
                 s = np.array([r, azimuth, altitude], dtype=float)
                 for heading in headings:
-                    particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1, drift_correction_bool = self.drift_correction_bool)#weight=weights[i] / len(headings))
+                    particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1,
+                                                 drift_correction_bool=self.drift_correction_bool)  #weight=weights[i] / len(headings))
                     particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
                     particle.set_initial_state(s, sigma_s, heading, sigma_heading, sigma_uwb)
                     self.particles.append(particle)
@@ -348,7 +350,7 @@ class UPFConnectedAgentDataLogger:
         self.connected_agent = connected_agent
         self.upf_connected_agent = upf_connected_agent
         self.particle_count = 0
-        self.particles = []
+        self.particle_logs = []
         self.init_variables()
         self.i = 0
 
@@ -362,16 +364,24 @@ class UPFConnectedAgentDataLogger:
         # Timing variables:
         self.calulation_time = []
 
+    def find_particle_log(self, particle) -> UKFDatalogger:
+        for particle_log in self.particle_logs:
+            if particle_log.ukf == particle:
+                return particle_log
+        return None
+
+    def get_best_particle_log(self):
+        return self.find_particle_log(self.upf_connected_agent.best_particle)
+
     def add_particle(self, particle):
         # particle.set_datalogger(self.host_agent, self.connected_agent, name="Particle " + str(self.particle_count))
+        particle_log = UKFDatalogger(self.host_agent, self.connected_agent, particle, name="Particle " + str(self.particle_count))
         self.particle_count += 1
-        self.particles.append(particle)
+        self.particle_logs.append(particle_log)
 
     def init_variables(self):
-        for i, particle in enumerate(self.upf_connected_agent.particles):
-            particle.set_datalogger(self.host_agent, self.connected_agent, name="Particle " + str(i))
-            self.particles.append(particle)
-            self.particle_count = i
+        for particle in self.upf_connected_agent.particles:
+            self.add_particle(particle)
             # self.ukfs_logger.append(Datalogger(self.host_agent, self.connected_agent, particle, name="Particle "+ str(i)))
 
     def log_data(self, i, calculation_time=0):
@@ -382,9 +392,12 @@ class UPFConnectedAgentDataLogger:
             self.i = self.upf_connected_agent.time_i
         self.log_ha_data()
         for particle in self.upf_connected_agent.particles:
-            particle.datalogger.log_data(i)
-            if particle not in self.particles:
+            particle_log: UKFDatalogger= self.find_particle_log(particle)
+            if particle_log is not None:
+                particle_log.log_data(i)
+            else:
                 self.add_particle(particle)
+
 
     def log_ha_data(self):
         self.number_of_particles.append(len(self.upf_connected_agent.particles))
@@ -430,13 +443,14 @@ class UPFConnectedAgentDataLogger:
         # self.connected_agent.plot_slam_position(ax, annotation="Connected Agent SLAM", alpha=alpha)
 
     def plot_estimated_trajectory(self, ax, color="k", alpha=0.1, name = "connected agent"):
-        for particle in self.particles:
-            particle.datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=0.1,linestyle=":", label=None)
+        for particle_log in self.particle_logs:
+            particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=0.1,linestyle=":", label=None)
         for particle in self.upf_connected_agent.particles:
-            particle.datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color,  alpha=1, label=None)
+            particle_log = self.find_particle_log(particle)
+            particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color,  alpha=1, label=None)
 
     def plot_self(self, los=None, host_id="No host id"):
-        bp_dl: Datalogger = self.upf_connected_agent.best_particle.datalogger
+        bp_dl: UKFDatalogger =self.find_particle_log(self.upf_connected_agent.best_particle)
         fig = plt.figure(figsize=(18, 10))  # , layout="constrained")
         fig.suptitle("Host Agent: " + host_id + "; Connected agent: " + self.upf_connected_agent.id)
         ax = []
@@ -514,22 +528,25 @@ class UPFConnectedAgentDataLogger:
 
     def plot_best_particle(self, ax, color="gold", alpha=1., history=None):
         # print(self.upf_connected_agent.best_particle)
-        self.upf_connected_agent.best_particle.datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=alpha,
-                                                                                       label="Best Particle",  history=history)
+        best_particle_log = self.find_particle_log(self.upf_connected_agent.best_particle)
+        best_particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=alpha,
+                                                                   label="Best Particle",  history=history)
 
     def plot_best_particle_variance_graph(self):
-        self.upf_connected_agent.best_particle.datalogger.plot_error_graph()
+        best_particle_log = self.find_particle_log(self.upf_connected_agent.best_particle)
+        best_particle_log.plot_error_graph()
         for particles in self.upf_connected_agent.particles:
-            particles.datalogger.plot_error_graph()
+            particle_log = self.find_particle_log(particles)
+            particle_log.plot_error_graph()
 
     def plot_connected_agent(self, ax):
-        bp_dl = self.upf_connected_agent.best_particle.datalogger
+        bp_dl = self.find_particle_log(self.upf_connected_agent.best_particle)
         bp_dl.plot_ukf_drift(ax[:2])
 
         likelihood_ax = ax[2]
         likelihood_ax.plot(bp_dl.likelihood, color="darkred", label="Likelihood")
         likelihood_ax.plot(bp_dl.weight, color="darkblue", label="Weigth")
-        likelihood_ax.plot(bp_dl.los_state, color="darkgreen", label="LOS state")
+        # likelihood_ax.plot(bp_dl.los_state, color="darkgreen", label="LOS state")
         likelihood_ax.plot(0, color="k", label="# particles")
         likelihood_ax.legend()
         likelihood_ax.grid(True)
@@ -539,16 +556,16 @@ class UPFConnectedAgentDataLogger:
 
 
     def plot_ca_best_particle(self, ax, i, color, history):
-        bp_dl = self.upf_connected_agent.best_particle.datalogger
+        bp_dl = self.find_particle_log(self.upf_connected_agent.best_particle)
         bp_dl.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i=i, history=history)
 
     def plot_ca_active_particles(self, ax, i, color, history):
         active_particles = []
-        for par in self.particles:
-            if par.datalogger.i > i:
-                # active_particles.append(par)
-                par.datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i =i, history=history)
-                # par.datalogger.plot_ca_estimated_trajectory(ax, color="b", alpha=0.3, label=None, i = int(i/10)+1)
+        for par_log in self.particle_logs:
+            if par_log.i > i:
+                # active_particles.append(par_log)
+                par_log.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i =i, history=history)
+                # par_log.datalogger.plot_ca_estimated_trajectory(ax, color="b", alpha=0.3, label=None, i = int(i/10)+1)
         # self.plot_connected_agent_trajectory(ax, i = i)
 
 

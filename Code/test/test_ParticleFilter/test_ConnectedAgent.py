@@ -11,7 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Have to use this since Spyder_WS is a project.
-from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
+from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
+from Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger
 
 from Code.Simulation.BiRobotMovement import random_movements_host_random_movements_connected, \
     drone_flight, run_simulation
@@ -55,7 +56,7 @@ class TestConnectedAgent(unittest.TestCase):
 
     def run_test(self, nlos_function, name="Unidentified Test"):
         self.dl = UPFConnectedAgentDataLogger(self.host, self.drone, self.ca)
-        self.ca.set_logging(self.dl)
+        # self.ca.set_logging(self.dl)
         # self.dl.log_data(0)
         dx_ca = np.zeros(4)
         q = np.zeros((4, 4))
@@ -118,9 +119,9 @@ class TestConnectedAgent(unittest.TestCase):
         self.run_test(nlos_function=self.nlos_man.los)
 
         self.dl.plot_self(self.los)
-        self.ca.best_particle.datalogger.create_3d_plot()
-        self.ca.best_particle.datalogger.plot_error_graph()
-        self.ca.best_particle.datalogger.plot_ukf_states()
+        self.dl.get_best_particle_log().create_3d_plot()
+        self.dl.get_best_particle_log().plot_error_graph()
+        self.dl.get_best_particle_log().plot_ukf_states()
         plt.show()
 
     def test_tc1_known_start_pose(self):

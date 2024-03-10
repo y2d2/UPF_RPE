@@ -20,8 +20,9 @@ from Code.UtilityCode.utility_fuctions import sphericalToCartesian, limit_angle,
 from Code.Simulation.BiRobotMovement import run_multi_drone_simulation, drone_flight, random_moving_drones
 from Code.Simulation.RobotClass import load_trajectory_from_dict, NewRobot
 from Code.Simulation.NLOS_Manager import NLOS_Manager
-from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgentDataLogger, UPFConnectedAgent
-from Code.ParticleFilter.TargetTrackingUKF import Datalogger
+from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
+from Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger
+from Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from Code.BaseLines.AlgebraicMethod4DoF import AlgebraicMethod4DoF, Algebraic4DoF_Logger
 from Code.BaseLines.NLS import NLS, NLSDataLogger
 
@@ -792,6 +793,7 @@ class TwoAgentSystem():
                                          n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
 
         dl0 = UPFConnectedAgentDataLogger(drone0, drone1, upf0)
+
         upf0.set_logging(dl0)
         self.agents["drone_0"][self.test_name] = upf0
 
@@ -864,7 +866,7 @@ class TwoAgentSystem():
             # UPF Results
             upf: UPFConnectedAgent = self.agents[drone_id][self.test_name]
             dl_ca: UPFConnectedAgentDataLogger = upf.upf_connected_agent_logger
-            dl_bp: Datalogger = upf.best_particle.datalogger
+            dl_bp: UKFDatalogger = upf.best_particle.datalogger
 
             upf_result = {"number_of_particles": dl_ca.number_of_particles,
                           "calculation_time": dl_ca.calulation_time,
@@ -881,7 +883,7 @@ class TwoAgentSystem():
         # if "slam" not in self.data[self.current_sim_name]:
         self.data[self.current_sim_name]["slam"] = {}
         for drone_id in self.agents:
-            dl_bp: Datalogger = self.agents[drone_id][self.test_name].best_particle.datalogger
+            dl_bp: UKFDatalogger = self.agents[drone_id][self.test_name].best_particle.datalogger
             slam_result = {"error_x_relative": dl_bp.error_relative_transformation_slam,
                            "error_h_relative": dl_bp.error_relative_heading_slam}
             self.data[self.current_sim_name]["slam"][drone_id] = slam_result
