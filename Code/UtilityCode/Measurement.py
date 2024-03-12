@@ -6,6 +6,7 @@ from Code.UtilityCode.turtlebot4 import Turtlebot4
 from Code.Simulation.MultiRobotClass import TwoAgentSystem
 import numpy as np
 import pickle as pkl
+# import Experiments
 
 from Code.UtilityCode.UWB import UWB
 from Code.UtilityCode.Transformation_Matrix_Fucntions import inv_transformation_matrix,transformation_matrix_from_rot_vect
@@ -121,8 +122,8 @@ class Measurement:
         meas_dict = {}
         meas_dict["name"] = self.name
         meas_dict["save_folder"] = self.save_folder
-        meas_dict["tb2"] = self.tb2
-        meas_dict["tb3"] = self.tb3
+        meas_dict["tb2"]: Turtlebot4 = self.tb2
+        meas_dict["tb3"]: Turtlebot4 = self.tb3
         meas_dict["uwb"] = self.uwb
         return meas_dict
 
@@ -146,6 +147,7 @@ class Measurement:
     def save_sampled_data(self):
         meas_dict = self.get_raw_dict()
         meas_dict["sampled_frequency"] = self.sample_frequency
+
         with open(self.save_folder + self.name + "_sampled.pkl", "wb") as f:
             pkl.dump(meas_dict, f)
 

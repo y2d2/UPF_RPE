@@ -593,7 +593,8 @@ class TwoAgentSystem():
             self.result_file = os.path.join(self.result_folder, result_name + ".pkl")
 
     def get_data(self):
-        self.get_results_file()
+        if self.result_file is None:
+            self.get_results_file()
         if self.data is None:
             if os.path.isfile(self.result_file):
                 with open(self.result_file, "rb") as f:
@@ -607,6 +608,11 @@ class TwoAgentSystem():
                                            "sigma_uwb": self.sigma_uwb,
                                            "alpha": self.alpha, "kappa": self.kappa, "beta": self.beta,
                                            "number_of_agents": self.number_of_agents}
+
+    def get_data_from_file(self, file):
+        self.result_file = file
+        self.get_data()
+        return self.data
 
     def get_sim(self, sim):
         sim_folder = self.trajectory_folder + "/" + sim
@@ -796,7 +802,7 @@ class TwoAgentSystem():
 
         # upf0.set_logging(dl0)
         self.agents["drone_0"][self.test_name] = upf0
-        self.agents["drone_1"]["log"] = dl0
+        self.agents["drone_0"]["log"] = dl0
 
         # init drone1
         x_ha_1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
@@ -855,7 +861,8 @@ class TwoAgentSystem():
         if self.plot_bool and self.debug_bool:
             for agent in self.agents:
                 try:
-                    self.agents[agent]["upf"].upf_connected_agent_logger.plot_self(self.los_state)
+                    # self.agents[agent]["upf"].upf_connected_agent_logger.plot_self(self.los_state)
+                    self.agents[agent]["log"].plot_self(self.los_state)
                     plt.pause(2)
                     plt.close()
                 except KeyError:
@@ -871,12 +878,12 @@ class TwoAgentSystem():
             upf: UPFConnectedAgent = self.agents[drone_id][self.test_name]
             dl_ca: UPFConnectedAgentDataLogger = self.agents[drone_id]["log"]
             # dl_ca: UPFConnectedAgentDataLogger = upf.upf_connected_agent_logger
-            dl_bp: UKFDatalogger = dl_ca.get_best_particle_log().datalogger
+            dl_bp: UKFDatalogger = dl_ca.get_best_particle_log()
 
             upf_result = {"number_of_particles": dl_ca.number_of_particles,
                           "calculation_time": dl_ca.calulation_time,
-                          "los_state": dl_bp.los_state,
-                          "los_error": np.abs(np.array(self.los_state) - np.array(dl_bp.los_state)),
+                          # "los_state": dl_bp.los_state,
+                          # "los_error": np.abs(np.array(self.los_state) - np.array(dl_bp.los_state)),
                           "error_x_relative": dl_bp.error_relative_transformation_est,
                           "error_h_relative": dl_bp.error_relative_heading_est}
             self.data[self.current_sim_name][self.test_name][drone_id] = upf_result
@@ -888,7 +895,7 @@ class TwoAgentSystem():
         # if "slam" not in self.data[self.current_sim_name]:
         self.data[self.current_sim_name]["slam"] = {}
         for drone_id in self.agents:
-            dl_bp: UKFDatalogger = self.agents[drone_id][self.test_name].best_particle.datalogger
+            dl_bp: UKFDatalogger = self.agents[drone_id]["log"].get_best_particle_log()
             slam_result = {"error_x_relative": dl_bp.error_relative_transformation_slam,
                            "error_h_relative": dl_bp.error_relative_heading_slam}
             self.data[self.current_sim_name]["slam"][drone_id] = slam_result

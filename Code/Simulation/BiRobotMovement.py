@@ -9,6 +9,7 @@ from typing import List
 
 import numpy as np
 from Code.Simulation.RobotClass import NewRobot
+from Code.UtilityCode.utility_fuctions import limit_angle
 
 
 def drone_flight(start_pose, start_velocity=np.zeros(4), sigma_dv=0.01, sigma_dw=0.01, max_range=None,
@@ -33,6 +34,13 @@ def run_simulation(time_steps, host_agent: NewRobot, connected_agent: NewRobot, 
     for i in range(time_steps):
         kwargs["i"] = i
         move_function(host_agent, connected_agent, **kwargs)
+
+
+def fix_connected_2D_host(host: NewRobot, connected: NewRobot, **kwargs):
+    control2d = kwargs.get("control2d")
+    control2d.set_control()
+    connected.move(w=0, v=np.array([0, 0, 0]))
+
 
 
 def fix_host_random_movement_connected(host: NewRobot, connected: NewRobot, **kwargs):
@@ -73,3 +81,79 @@ def random_moving_drones(list_of_drones: List[NewRobot], **kwargs):
 
 
 # 2 agent scenarios
+
+class Control2D():
+    def __init__(self, agent: NewRobot,
+                 max_v=0.5, max_dot_v=0.2, max_w=0.5, max_dot_w = 0.1, p_angle=1., p_pos = 1. ):
+        self.max_v = max_v
+        self.max_dot_v = max_dot_v
+        self.max_w = max_w
+        self.max_dot_w = max_dot_w
+
+        self.center = np.array([0,0])
+        self.radius = 2
+
+        self.target = np.array([0,0])
+
+        self.p_angle = p_angle
+        self.p_pos = p_pos
+
+        self.w = 0
+        self.v = 0
+
+        self.agent = agent
+
+    def set_boundries(self, center=np.array([0,0]), radius = 2):
+        self.center = center
+        self.radius = radius
+
+    def set_random_target(self):
+        r = np.random.uniform(0, self.radius)
+        theta = np.random.uniform(0, 2*np.pi)
+        self.target = self.center + np.array([r*np.cos(theta), r*np.sin(theta)])
+
+
+    def set_control(self):
+        x = self.agent.x_real[:2]
+        theta =  self.agent.h_real
+        v_real = self.agent.v_slam_real
+        v_norm = np.linalg.norm(v_real)
+        v_ax = v_real/v_norm
+        w_real = self.agent.w_slam_real
+
+        dx = np.linalg.norm(self.target - x)
+        if dx < 0.1:
+            self.set_random_target()
+            dx = np.linalg.norm(self.target - x)
+
+        angle = limit_angle(np.arctan2(dx[1], dx[0]) - theta)
+
+        #Define turn angle
+        w_tar = self.p_angle*angle
+        dot_w_tar = w_tar - w_real
+        if np.abs(dot_w_tar) > self.max_dot_w:
+            w_tar = w_real +  self.max_dot_w * np.sign(dot_w_tar)
+        if np.abs(w_tar) > self.max_w:
+            w_tar = self.max_w * np.sign(w_tar)
+
+        # Slow down to halt to turn
+        if np.abs(angle) > 0.1:
+            if np.abs(self.agent.v_slam_real) < self.max_dot_v:
+                v_tar = 0
+            else:
+                v_tar = v_norm - self.max_dot_v
+        # Move towards target.
+        else:
+            v_tar = self.p_pos * dx
+            dot_v_tar = v_tar - v_norm
+            if np.abs(dot_v_tar) > self.max_dot_v:
+                v_tar  = v_norm + self.max_dot_v * np.sign(dot_v_tar)
+            if np.abs(v_tar) > self.max_v:
+                v_tar = self.max_v * np.sign(v_tar)
+
+        v = v_ax * v_tar
+        self.agent.move(w_tar, v)
+
+
+
+

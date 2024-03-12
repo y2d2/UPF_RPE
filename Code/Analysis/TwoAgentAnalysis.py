@@ -313,8 +313,9 @@ class TwoAgentAnalysis:
                 print(method, variable, df_c[df_c["Method"] == method]["value"].mean(), " pm ", df_c[df_c["Method"] == method]["value"].std(), "; median: " , df_c[df_c["Method"] == method]["value"].median())
 
             order = ["losupf", "nodriftupf", "algebraic", "NLS"]
+            custom_colors = {"losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS": "tab:blue"}
             g = sns.boxplot(data=df[df["Variable"] == variable], x='Method', y='value', hue='Method', dodge=False,
-                        ax=axes[i], order = order) #, hue_order=order)
+                        ax=axes[i], order = order, palette=custom_colors)
 
 
             axes[i].set_title("")

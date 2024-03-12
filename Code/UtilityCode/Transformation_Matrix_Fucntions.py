@@ -1,5 +1,6 @@
 import numpy as np
 import quaternion as quaternion
+from Code.UtilityCode.utility_fuctions import limit_angle
 import warnings
 # warnings.filterwarnings("error")
 def transformation_matrix_from_R(R, t):
@@ -36,10 +37,7 @@ def get_rotation_vector(T):
     if w_amplitutede == 0:
         return np.zeros(3)
     w_unit = w/np.linalg.norm(w)
-    while w_amplitutede >= np.pi:
-        w_amplitutede -= 2*np.pi
-    while w_amplitutede < -np.pi:
-        w_amplitutede += 2*np.pi
+    w_amplitutede = limit_angle(w_amplitutede)
     w = w_unit*w_amplitutede
     return w
     # except ValueError:

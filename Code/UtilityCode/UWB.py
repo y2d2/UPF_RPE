@@ -149,6 +149,7 @@ class UWB:
         ax.plot([d for i, d in enumerate(self.sampled_d) if (i % factor == 0)], '--', color="tab:purple",  label=r"Measured $\tilde{d}$ [m]", linewidth=3)
         er = np.abs(np.array(self.sampled_d) - self.real_d)
         ax.plot([d for i, d in enumerate(er) if (i % factor == 0)], '--', color="tab:red", label=r"Error $\epsilon_{d} = |d - \tilde{d} |$ [m]", linewidth=3)
+        print("mean error: ", np.mean(er), "std error: ", np.std(er))
         # ax.legend(fontsize=12, loc="upper left")
         # plt.grid()
 

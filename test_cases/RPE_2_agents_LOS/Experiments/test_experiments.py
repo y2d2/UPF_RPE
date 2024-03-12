@@ -4,7 +4,7 @@ import rosbags.rosbag2 as rb2
 import unittest
 from rosbags.serde import deserialize_cdr
 
-import Code.Simulation.MultiRobotClass
+import Code.Simulation.MultiRobotClass as MRC
 from Code.UtilityCode.turtlebot4 import Turtlebot4
 import numpy as np
 
@@ -256,13 +256,13 @@ class MyTestCase(unittest.TestCase):
 
     def test_check_sampling(self):
         self.set_test_case()
-        sampled_pkl = "LOS_exp1_sampled.pkl"
+        sampled_pkl = "Measurements/exp2_los_sampled.pkl"
 
         pikle_file = self.name + "_raw.pkl"
         measurement = Measurement()
         measurement.load_sampled_data(sampled_pkl)
         # measurement.sample(10)
-        measurement.save_sampled_data()
+        # measurement.save_sampled_data()
         measurement.uwb.plot_sampled()
         measurement.tb2.vio_frame.plot_sampled()
         measurement.tb3.vio_frame.plot_sampled()
@@ -282,7 +282,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_uwb_Transforms(self):
         # self.set_test_case()
-        sampled_pkl = "exp4_nlos_sampled.pkl"
+        sampled_pkl = "Measurements/exp5_los_sampled.pkl"
         measurement = Measurement()
         measurement.load_sampled_data(sampled_pkl)
         measurement.get_uwb_distances()
@@ -291,16 +291,58 @@ class MyTestCase(unittest.TestCase):
         measurement.uwb.plot_real()
         plt.show()
 
+    def test_vio_rejection(self):
+        # TODO: make rejection strategy for VIO. (Maybe can help.)
+        self.set_test_case()
+        sampled_pkl = "Measurements/exp1_los_sampled.pkl"
+        measurement = Measurement()
+        measurement.load_sampled_data(sampled_pkl)
+        measurement.tb2.vio_frame.outlier_rejection()
+
+    def test_resave_the_sample_data(self):
+        self.set_test_case()
+        for i in range(1, 6):
+            sampled_pkl = "Measurements/exp"+str(i)+"_los_sampled.pkl"
+            measurement = Measurement()
+            measurement.load_sampled_data(sampled_pkl)
+            measurement.save_folder = "Meas_new/"
+            measurement.name = "exp"+str(i)+"_los"
+            measurement.save_sampled_data()
+        # sampled_pkl = "Measurements/exp4_los_sampled.pkl"
+        # measurement = Measurement()
+        # measurement.load_sampled_data(sampled_pkl)
+        # measurement.save_sampled_data()
 
     def test_vio_error(self):
         self.set_test_case()
-        sampled_pkl = "exp4_nlos_a_sampled.pkl"
+        sampled_pkl = "Measurements/exp5_los_sampled.pkl"
+        # sampled_pkl = "Meas_new/exp1_sec1_los_sampled.pkl"
         measurement = Measurement()
         measurement.load_sampled_data(sampled_pkl)
+        measurement.tb2.vio_frame.outlier_rejection(max_a = 0.5)
+        measurement.tb3.vio_frame.outlier_rejection(max_a = 0.5)
+
         measurement.get_VIO_error(plot=True)
         measurement.tb2.plot_vio_error()
         measurement.tb3.plot_vio_error()
         plt.show()
+
+    def test_set_vio_correction(self):
+        self.set_test_case()
+        for i in range(1, 6):
+            sampled_pkl = "Measurements/exp" + str(i) + "_los_sampled.pkl"
+            measurement = Measurement()
+            measurement.load_sampled_data(sampled_pkl)
+            measurement.tb2.vio_frame.outlier_rejection(max_a=0.5)
+            measurement.tb3.vio_frame.outlier_rejection(max_a=0.5)
+            measurement.tb2.vio_frame.sampled_v = measurement.tb2.vio_frame.v_cor
+            measurement.tb3.vio_frame.sampled_v = measurement.tb3.vio_frame.v_cor
+            measurement.name = "exp" + str(i) + "_los"
+            measurement.save_folder = "Measurements_correction/"
+            measurement.save_sampled_data()
+
+
+
 
     def test_new_robot_population(self):
         # self.set_test_case()
@@ -339,65 +381,65 @@ class MyTestCase(unittest.TestCase):
         plt.show()
         return tb2, tb3
 
-    @DeprecationWarning
-    def create_experimental_data(self, data_folder, sig_v, sig_w, sig_uwb):
-        experiments=[]
-        measurements = []
-        # check wether data_folder is a file or a folder
+    # @DeprecationWarning
+    # def create_experimental_data(self, data_folder, sig_v, sig_w, sig_uwb):
+    #     experiments=[]
+    #     measurements = []
+    #     # check wether data_folder is a file or a folder
+    #
+    #     if os.path.isfile(data_folder):
+    #         list_of_files = [data_folder]
+    #     else:
+    #         list_of_files = os.listdir(data_folder)
+    #     for sampled_data in list_of_files:
+    #         name = sampled_data.split(".")[-2].split("/")[-1]
+    #         measurement = Measurement()
+    #         measurement.load_sampled_data(sampled_data)
+    #         sample_freq = measurement.sample_frequency
+    #
+    #         #
+    #         sig_d = sig_v / sample_freq
+    #         sig_phi = sig_w / sample_freq
+    #         Q_vio = np.diag([sig_d ** 2, sig_d ** 2, sig_d ** 2, sig_phi ** 2])
+    #
+    #         # measurement.get_uwb_distances()
+    #         uwb = measurement.uwb.sampled_d
+    #         uwb_los = measurement.get_uwb_LOS(sig_uwb)
+    #         DT_vio_tb2 = measurement.tb2.vio_frame.get_relative_motion_in_T()
+    #         DT_vio_tb3 = measurement.tb3.vio_frame.get_relative_motion_in_T()
+    #         T_vicon_tb2 = measurement.tb2.vicon_frame.sampled_T
+    #         T_vicon_tb3 = measurement.tb3.vicon_frame.sampled_T
+    #
+    #         experiment_data = {}
+    #         experiment_data["name"] = name
+    #         experiment_data["sample_freq"] = sample_freq
+    #         experiment_data["drones"] = {}
+    #         experiment_data["drones"]["drone_0"] = {"DT_slam": DT_vio_tb2, "T_real": T_vicon_tb2, "Q_slam": Q_vio}
+    #         experiment_data["drones"]["drone_1"] = {"DT_slam": DT_vio_tb3, "T_real": T_vicon_tb3, "Q_slam": Q_vio}
+    #         experiment_data["uwb"] = uwb
+    #         experiment_data["los_state"] = uwb_los
+    #
+    #
+    #         measurements.append(measurement)
+    #         # experiment_data["eps_d"] = np.abs(measurement.uwb.real_d - measurement.uwb.sampled_d)
+    #
+    #         experiments.append(experiment_data)
+    #     return experiments, measurements
 
-        if os.path.isfile(data_folder):
-            list_of_files = [data_folder]
-        else:
-            list_of_files = os.listdir(data_folder)
-        for sampled_data in list_of_files:
-            name = sampled_data.split(".")[-2].split("/")[-1]
-            measurement = Measurement()
-            measurement.load_sampled_data(sampled_data)
-            sample_freq = measurement.sample_frequency
-
-            #
-            sig_d = sig_v / sample_freq
-            sig_phi = sig_w / sample_freq
-            Q_vio = np.diag([sig_d ** 2, sig_d ** 2, sig_d ** 2, sig_phi ** 2])
-
-            # measurement.get_uwb_distances()
-            uwb = measurement.uwb.sampled_d
-            uwb_los = measurement.get_uwb_LOS(sig_uwb)
-            DT_vio_tb2 = measurement.tb2.vio_frame.get_relative_motion_in_T()
-            DT_vio_tb3 = measurement.tb3.vio_frame.get_relative_motion_in_T()
-            T_vicon_tb2 = measurement.tb2.vicon_frame.sampled_T
-            T_vicon_tb3 = measurement.tb3.vicon_frame.sampled_T
-
-            experiment_data = {}
-            experiment_data["name"] = name
-            experiment_data["sample_freq"] = sample_freq
-            experiment_data["drones"] = {}
-            experiment_data["drones"]["drone_0"] = {"DT_slam": DT_vio_tb2, "T_real": T_vicon_tb2, "Q_slam": Q_vio}
-            experiment_data["drones"]["drone_1"] = {"DT_slam": DT_vio_tb3, "T_real": T_vicon_tb3, "Q_slam": Q_vio}
-            experiment_data["uwb"] = uwb
-            experiment_data["los_state"] = uwb_los
-
-
-            measurements.append(measurement)
-            # experiment_data["eps_d"] = np.abs(measurement.uwb.real_d - measurement.uwb.sampled_d)
-
-            experiments.append(experiment_data)
-        return experiments, measurements
-
-    @DeprecationWarning
-    def create_experiment(self, results_folder, sig_v, sig_w, sig_uwb, alpha = 1., kappa = -1., beta = 2. , n_azimuth = 4, n_altitude = 3, n_heading = 4):
-
-
-        tas = Code.Simulation.MultiRobotClass.TwoAgentSystem(trajectory_folder="./", result_folder=results_folder)
-        tas.debug_bool = True
-        tas.plot_bool = True
-        tas.set_ukf_properties(kappa=kappa, alpha=alpha, beta=beta, n_azimuth=n_azimuth, n_altitude=n_altitude,
-                               n_heading=n_heading)
-        tas.set_uncertainties(sig_v, sig_w, sig_uwb)
-        return tas
+    # @DeprecationWarning
+    # def create_experiment(self, results_folder, sig_v, sig_w, sig_uwb, alpha = 1., kappa = -1., beta = 2. , n_azimuth = 4, n_altitude = 3, n_heading = 4):
+    #
+    #
+    #     tas = MRC.TwoAgentSystem(trajectory_folder="./", result_folder=results_folder)
+    #     tas.debug_bool = True
+    #     tas.plot_bool = True
+    #     tas.set_ukf_properties(kappa=kappa, alpha=alpha, beta=beta, n_azimuth=n_azimuth, n_altitude=n_altitude,
+    #                            n_heading=n_heading)
+    #     tas.set_uncertainties(sig_v, sig_w, sig_uwb)
+    #     return tas
 
     def test_single_exp(self):
-        sig_v = 0.15
+        sig_v = 0.10
         sig_w = 0.03
         sig_uwb = 0.25
 
@@ -423,67 +465,66 @@ class MyTestCase(unittest.TestCase):
         sig_uwb = 0.25
 
         main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/NLS_10hz_20n/"
-        data_folder = main_folder + "Measurements/"
+        results_folder = main_folder + "Results/experiment_outlier_rejection/"
+        data_folder = "Measurements_correction/"
 
         experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
-        tas.debug_bool= False
-        tas.factor = 1
-        tas.run_experiment(methods=["NLS"], redo_bool=True, experiment_data=experiment_data)
+        # tas.debug_bool= True
+        # tas.plot_bool = True
+        tas.factor = 10
+        tas.run_experiment(methods=["losupf", "nodriftupf", "NLS", "algebraic"], redo_bool=True, experiment_data=experiment_data)
         plt.show()
         return tas, measurements
 
     def test_plot_LOS_error_time(self):
-        tas, measurements = self.test_run_LOS_exp()
-        agent_nr = 0
-        agent_name = "drone_"+str(agent_nr)
+        main_folder = "./Experiments/LOS_exp/"
+        results_folder = main_folder + "Results/new_experiment/"
+        tas = MRC.TwoAgentSystem(trajectory_folder="./", result_folder=results_folder)
+        data = tas.get_data_from_file(results_folder + "number_of_agents_2_sigma_dv_0c15_sigma_dw_0c05_sigma_uwb_0c25_alpha_1c0_kappa_neg1c0_beta_2c0.pkl")
+        exp = 2
+        for i in range(2):
+            agent_name = "drone_"+str(i)
 
-        exp_name = "exp1_sec1_los_sampled"
-        upf_x_error_0 = tas.data[exp_name]["upf"][agent_name]["error_x_relative"]
-        NLS_x_error_0 = tas.data[exp_name]["NLS"][agent_name]["error_x_relative"]
-        losupf_x_error_0 = tas.data[exp_name]["losupf"][agent_name]["error_x_relative"]
-        slam_x_error_0 = tas.data[exp_name]["slam"][agent_name]["error_x_relative"]
+            exp_name = "exp"+str(exp)+"_los_sampled"
+            upf_x_error_0 = data[exp_name]["nodriftupf"][agent_name]["error_x_relative"]
+            NLS_x_error_0 = data[exp_name]["NLS"][agent_name]["error_x_relative"]
+            losupf_x_error_0 = data[exp_name]["losupf"][agent_name]["error_x_relative"]
+            slam_x_error_0 = data[exp_name]["slam"][agent_name]["error_x_relative"]
 
-        upf_h_error_0 = tas.data[exp_name]["upf"][agent_name]["error_h_relative"]
-        NLS_h_error_0 = tas.data[exp_name]["NLS"][agent_name]["error_h_relative"]
-        losupf_h_error_0 = tas.data[exp_name]["losupf"][agent_name]["error_h_relative"]
-        slam_h_error_0 = tas.data[exp_name]["slam"][agent_name]["error_h_relative"]
+            upf_h_error_0 = data[exp_name]["nodriftupf"][agent_name]["error_h_relative"]
+            NLS_h_error_0 = data[exp_name]["NLS"][agent_name]["error_h_relative"]
+            losupf_h_error_0 = data[exp_name]["losupf"][agent_name]["error_h_relative"]
+            slam_h_error_0 = data[exp_name]["slam"][agent_name]["error_h_relative"]
+
+            _, ax = plt.subplots(2, 1)
+            ax[0].plot(NLS_x_error_0, label="NLS [7]", color="tab:blue", linewidth=2)
+            ax[0].plot(losupf_x_error_0, label="upf ours", color="tab:green", linewidth=2)
+            ax[0].plot(upf_x_error_0, label="No drift UPF", color="tab:red", linewidth=2)
+            ax[0].plot(slam_x_error_0, label="slam", color="tab:orange", linewidth=2)
+            ax[0].set_xlabel("Time [s]", fontsize=12)
+            ax[0].set_ylabel(r"$\epsilon_{\hat{p}^t}$ [m]", fontsize=12)
+            ax[0].grid()
+            ax[0].legend()
+
+            ax[1].plot(NLS_h_error_0, label="NLS [7]", color="tab:blue", linewidth=2)
+            ax[1].plot(losupf_h_error_0, label=r"upf ours", color="tab:green", linewidth=2)
+            ax[1].plot(upf_h_error_0, label="No drift UPF", color="tab:red", linewidth=2)
+            ax[1].plot(slam_h_error_0, label="slam", color="tab:orange", linewidth=2)
+            ax[1].set_xlabel("Time [s]", fontsize=12)
+            ax[1].set_ylabel(r"$\epsilon_{\hat{\theta}^t}$ [(rad))]", fontsize=12)
+            ax[1].grid()
+            ax[1].set_ylim([0., 0.5])
+
+            ax[1].legend()
 
 
-        agent_nr = 1
-        agent_name = "drone_"+str(agent_nr)
-        upf_x_error_1 = tas.data[exp_name]["upf"][agent_name]["error_x_relative"]
-        NLS_x_error_1 = tas.data[exp_name]["NLS"][agent_name]["error_x_relative"]
-        losupf_x_error_1 = tas.data[exp_name]["losupf"][agent_name]["error_x_relative"]
-        slam_x_error_1 = tas.data[exp_name]["slam"][agent_name]["error_x_relative"]
-
-        _, ax  = plt.subplots(1, 2)
-        ax[0].plot(NLS_x_error_0, label="NLS [7]", color="tab:blue", linewidth=3)
-        ax[0].plot(losupf_x_error_0, label="", color="tab:red", linewidth=3)
-        ax[0].plot(upf_x_error_0, label="UPF (ours)", color="tab:green", linewidth=3)
-        # ax[0].plot(slam_x_error_0, label="slam")
-        ax[0].set_xlabel("Time [s]", fontsize=12)
-        ax[0].set_ylabel(r"$\epsilon_{\hat{p}^t}$ [m]", fontsize=12)
-        ax[0].grid()
-        # ax[0].legend()
-
-
-        ax[1].plot(NLS_h_error_0, label="NLS [7]", color="tab:blue", linewidth=3)
-        ax[1].plot(losupf_h_error_0, label=r"UPF $\tilde{w}$ $s_{LOS}$ (ours)",color="tab:red", linewidth=3)
-        ax[1].plot(upf_h_error_0, label="UPF (ours)", color="tab:green",  linewidth=3)
-        ax[1].set_xlabel("Time [s]", fontsize=12)
-        ax[1].set_ylabel(r"$\epsilon_{\hat{\theta}^t}$ [(rad))]", fontsize=12)
-        ax[1].grid()
-        ax[1].set_ylim([0., 0.5])
-        # ax[1].plot(slam_h_error_0, label="slam")
-        ax[1].legend()
 
         plt.show()
 
 
     def test_exp_analysis(self):
-        result_folder = "./Experiments/LOS_exp/Results/sim2real/merged"
+        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         taa.delete_data()
         taa.create_panda_dataframe()
@@ -492,7 +533,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_exp_time_analysis(self):
         # result_folder = "./Experiments/LOS_exp/Results/new_nls_correct_init_test/"
-        result_folder = ("./Experiments/LOS_exp/Results/experiments/")
+        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection/"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         taa.delete_data()
         taa.create_panda_dataframe()
