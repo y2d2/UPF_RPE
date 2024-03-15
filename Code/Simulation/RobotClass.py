@@ -180,6 +180,8 @@ class NewRobot:
         dh = 0
         dx = dx + get_rot_matrix(dh) @ v * self.simulation_time_step
         dh += w * self.simulation_time_step
+        self.v_slam = v
+        self.w_slam = np.array([w])
         self.update_run_time_variables(dx, dh)
 
     def set_random_target_boundaries(self,origin = np.zeros(3), ranges=np.zeros(3) ):

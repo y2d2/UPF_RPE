@@ -325,7 +325,7 @@ class Test_TargetTrackingUKF(unittest.TestCase):
             self.run_test(TEST_CASE_NAME)
         plt.show()
 
-    def ztest_TC4b_MovingHostAgent_MovingConnectedAgent_WrongIntialEstimate(self):
+    def test_TC4b_MovingHostAgent_MovingConnectedAgent_WrongIntialEstimate(self):
         TEST_CASE_NAME = "TC4b: Both agents moving randomly, wrong initial estimate \n Azimuth += $\pi$/4 Altitude += $\pi$/8 , heading += $\pi$/4"
         self.initTest()
         run_simulation(self.simulation_time_steps, self.host, self.drone, random_movements_host_random_movements_connected)

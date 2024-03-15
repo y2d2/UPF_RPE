@@ -129,6 +129,10 @@ class UPFConnectedAgent:
         self.dh_ha = 0
         self.p_dx_ha = np.zeros((4, 4))
 
+        # UWB Extrinsicty variables:
+        self.t_si_uwb = np.zeros(4)
+        self.t_sj_uwb = np.zeros(4)
+
         # Measurement variables:
         self.measurement = 0
 
@@ -162,12 +166,21 @@ class UPFConnectedAgent:
     #     self.logging = True
     #     self.upf_connected_agent_logger = ca_logger
 
+    def set_uwb_extrinsicity(self, t_si_uwb, t_sj_uwb):
+        self.t_si_uwb = t_si_uwb
+        self.t_sj_uwb = t_sj_uwb
+
     def set_ukf_parameters(self, kappa=-1, alpha=1, beta=2):
         self.kappa = kappa
         self.alpha = alpha
         self.beta = beta
         # self.drift_correction_bool = drift_correction_bool
 
+    def create_particle(self) -> TargetTrackingUKF:
+        particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1., drift_correction_bool=self.drift_correction_bool)
+        particle.set_uwb_extrinsicity(self.t_si_uwb, self.t_sj_uwb)
+        particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
+        return particle
 
     def add_particle_with_know_start_pose(self, x_ca_0, azimuth_n, altitude_n, heading_n , sigma_uwb):
         sigma_azimuth = (2 * np.pi / azimuth_n) / np.sqrt(-8 * np.log(0.5))
@@ -175,8 +188,7 @@ class UPFConnectedAgent:
         sigma_heading = (2*np.pi / heading_n) / np.sqrt(-8 * np.log(0.5))
         sigma_s = [sigma_uwb,sigma_azimuth, sigma_altitude]
 
-        particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1., drift_correction_bool=self.drift_correction_bool)
-        particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
+        particle = self.create_particle()
         s = cartesianToSpherical(x_ca_0[:3]).tolist()
         # sigma_heading = np.sqrt(P_x_ca_0[3, 3])
         # d = np.linalg.norm(x_ca_0[:3])
@@ -224,9 +236,7 @@ class UPFConnectedAgent:
             for azimuth in azimuths:
                 s = np.array([r, azimuth, altitude], dtype=float)
                 for heading in headings:
-                    particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1,
-                                                 drift_correction_bool=self.drift_correction_bool)  #weight=weights[i] / len(headings))
-                    particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
+                    particle = self.create_particle()
                     particle.set_initial_state(s, sigma_s, heading, sigma_heading, sigma_uwb)
                     self.particles.append(particle)
         # for alt in [-np.pi/2, np.pi/2]:

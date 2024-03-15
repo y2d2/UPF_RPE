@@ -90,10 +90,10 @@ class Control2D():
         self.max_w = max_w
         self.max_dot_w = max_dot_w
 
-        self.center = np.array([0,0])
+        self.center = np.array([0,0,0])
         self.radius = 2
 
-        self.target = np.array([0,0])
+        self.target = np.array([0,0,0])
 
         self.p_angle = p_angle
         self.p_pos = p_pos
@@ -103,28 +103,32 @@ class Control2D():
 
         self.agent = agent
 
-    def set_boundries(self, center=np.array([0,0]), radius = 2):
+    def set_boundries(self, center=np.array([0,0,0]), radius = 2):
         self.center = center
         self.radius = radius
 
     def set_random_target(self):
         r = np.random.uniform(0, self.radius)
         theta = np.random.uniform(0, 2*np.pi)
-        self.target = self.center + np.array([r*np.cos(theta), r*np.sin(theta)])
+        self.target = self.center + np.array([r*np.cos(theta), r*np.sin(theta), 0])
 
 
     def set_control(self):
-        x = self.agent.x_real[:2]
-        theta =  self.agent.h_real
-        v_real = self.agent.v_slam_real
+        x = self.agent.x_real[-1]
+        theta =  self.agent.h_real[-1]
+        v_real = self.agent.v_slam_real[-1]
         v_norm = np.linalg.norm(v_real)
-        v_ax = v_real/v_norm
-        w_real = self.agent.w_slam_real
+        if v_norm == 0:
+            v_ax = np.array([1,0,0])
+        else:
+            v_ax = v_real/v_norm
+        w_real = self.agent.w_slam_real[-1]
 
-        dx = np.linalg.norm(self.target - x)
-        if dx < 0.1:
+        dx = self.target - x
+
+        if np.linalg.norm(dx) < 0.1:
             self.set_random_target()
-            dx = np.linalg.norm(self.target - x)
+            dx = self.target - x
 
         angle = limit_angle(np.arctan2(dx[1], dx[0]) - theta)
 
@@ -138,13 +142,13 @@ class Control2D():
 
         # Slow down to halt to turn
         if np.abs(angle) > 0.1:
-            if np.abs(self.agent.v_slam_real) < self.max_dot_v:
+            if np.linalg.norm(v_real) < self.max_dot_v:
                 v_tar = 0
             else:
                 v_tar = v_norm - self.max_dot_v
         # Move towards target.
         else:
-            v_tar = self.p_pos * dx
+            v_tar = self.p_pos * np.linalg.norm(dx)
             dot_v_tar = v_tar - v_norm
             if np.abs(dot_v_tar) > self.max_dot_v:
                 v_tar  = v_norm + self.max_dot_v * np.sign(dot_v_tar)

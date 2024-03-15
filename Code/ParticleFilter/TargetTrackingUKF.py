@@ -31,6 +31,8 @@ from Code.UtilityCode.utility_fuctions import cartesianToSpherical, sphericalToC
     get_4d_rot_matrix, transform_matrix, inv_transformation_matrix, \
     get_states_of_transform, get_covariance_of_transform
 
+import Code.UtilityCode.Transformation_Matrix_Fucntions as TMF
+
 
 def subtract(x, y):
     # dx = np.zeros(x.shape)
@@ -94,6 +96,10 @@ class TargetTrackingUKF:
         self.t_cji_sj = np.zeros(4)
         self.D_t_sj = np.zeros(4)
 
+        # transformation from VIO reference frame to UWB antenna
+        self.t_si_uwb = np.zeros(4)
+        self.t_sj_uwb = np.zeros(4)
+
         # ---- Kalman filter variables:
         # kf_variables = r_0, theta_0, phi_0, h_ca_0,  x_ca_odom, y_ca_odom, z_ca_odom, h_ca_odom
         # r_0, theta_0, phi_0: Relative position of the connected agent wrt the host agent at connection time expressed in spherical coordinates.
@@ -136,13 +142,47 @@ class TargetTrackingUKF:
         self.kf = ModifiedUnscentedKalmanFilter(dim_x=self.kf_variables, dim_z=1, dt=self.dt, fx=self.fx, hx=self.hx,
                                                 points=points, residual_x=subtract)
 
+
+    def calculate_initial_state(self, s, ca_heading):
+        # Due to UWB having extrinsicity, the initial state of the connected agent has to be calculated using this and
+        # The measured distance to the connected agent.
+        r = s[0]
+        s[0] = 1 # Unity vector of the direction of the connected agent.
+        T_si_uwb = TMF.transformation_matrix_from_4D_t(self.t_si_uwb)
+        T_sj_uwb = TMF.transformation_matrix_from_4D_t(self.t_sj_uwb)
+        t_1_cijcji = sphericalToCartesian(s)
+        R_1_cijcji = TMF.get_rotation(TMF.transformation_matrix_from_4D_t(np.array([0,0,0,ca_heading])))
+        R_si_uwb = TMF.get_rotation(T_si_uwb)
+        t_si_uwb = TMF.get_translation(T_si_uwb)
+        t_sj_uwb = TMF.get_translation(T_sj_uwb)
+
+        t_star= t_si_uwb + R_si_uwb @ R_1_cijcji @ t_sj_uwb
+        t_plus = R_si_uwb @ t_1_cijcji
+        b = 2*np.dot(t_plus, t_star)
+        c = np.linalg.norm(t_star)**2 - r**2
+
+        D = b**2 - 4*c
+        if D < 0:
+            raise ValueError("No real solution")
+        sol1 = (-b + np.sqrt(D))/2
+        if sol1 < 0 :
+            raise ValueError("No real solution")
+        return np.array([sol1, s[1], s[2]])
+
+
+
+
     def set_initial_state(self, s, sigma_s, ca_heading, ca_sigma_heading, sigma_uwb):
+        s = self.calculate_initial_state(s, ca_heading)
         self.kf.x = np.array([s[0], s[1], s[2], ca_heading, 0, 0, 0, 0, 0])
         self.kf.P = np.diag(
             [(sigma_s[0]) ** 2, sigma_s[1] ** 2, sigma_s[2] ** 2, ca_sigma_heading ** 2, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8])
         self.calculate_x_ca()
         self.calculate_P_x_ca()
 
+    def set_uwb_extrinsicity(self,t_si_uwb, t_sj_uwb):
+        self.t_si_uwb = t_si_uwb
+        self.t_sj_uwb = t_sj_uwb
     # -------------------------------------------------------------------------------------- #
     # --- Filter functions: Main function
     # -------------------------------------------------------------------------------------- #
@@ -234,8 +274,11 @@ class TargetTrackingUKF:
         T_si_oi = inv_transformation_matrix(self.t_oi_si)
         # T_sj_sj = transform_matrix(self.Dt_sj)
         T_si_sj = T_si_oi @ T_oi_cij @ T_cij_cji @ T_cji_sj
-        t_si_sj = get_states_of_transform(T_si_sj)
-        r = np.linalg.norm(t_si_sj[:3])
+        # t_si_sj = get_states_of_transform(T_si_sj)
+        T_uwbi_uwbj = inv_transformation_matrix(self.t_si_uwb) @ T_si_sj @ transform_matrix(self.t_sj_uwb)
+        t_uwbi_uwbj = get_states_of_transform(T_uwbi_uwbj)
+        r = np.linalg.norm(t_uwbi_uwbj[:3])
+        # r = np.linalg.norm(t_si_sj[:3])
 
         # # Calculate the cartesian start position in the absolute reference frame of the host agent.
         # x_ca_0 = self.x_ha_0[:3] + get_rot_matrix(self.x_ha_0[-1]) @ sphericalToCartesian(x[:3])

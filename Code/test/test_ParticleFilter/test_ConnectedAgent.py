@@ -28,8 +28,8 @@ class TestConnectedAgent(unittest.TestCase):
         # Paper = Relative Transformation Estimation Based on Fusion of Odometry and UWB.py Ranging Data
 
         self.uwb_time_steps = 300  # (120 // 0.03)          # Paper simulation time = 120s
-        self.odom_time_step = 0.2
-        self.uwb_time_step = 1  # Paper experiments UWB.py frequency = 37 Hz
+        self.odom_time_step = 0.1
+        self.uwb_time_step = 0.1  # Paper experiments UWB.py frequency = 37 Hz
         self.factor = int(self.uwb_time_step / self.odom_time_step)
         self.simulation_time_steps = self.uwb_time_steps * self.factor
 
@@ -106,14 +106,14 @@ class TestConnectedAgent(unittest.TestCase):
 
     def test_tc1(self):
         # Length of NLOS  is proportional to error on odom?
-        self.init_test(sigma_v=0.1, sigma_w=0.01, sigma_uwb=0.2,
+        self.init_test(sigma_v=0.01, sigma_w=0.001, sigma_uwb=0.1,
                        drifting_host=True)
-        self.init_drones(np.array([0, 0, -5]), 0, max_range=20)
+        self.init_drones(np.array([2, 0, 0]), 0, max_range=3)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
                        random_movements_host_random_movements_connected)
         self.ca = UPFConnectedAgent("0x000", x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])))
         self.ca.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
-        self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], self.sigma_uwb,
+        self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], 2*self.sigma_uwb,
                                             n_altitude=3, n_azimuth=4, n_heading=4)
 
         self.run_test(nlos_function=self.nlos_man.los)

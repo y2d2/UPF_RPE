@@ -15,6 +15,12 @@ def transformation_matrix_from_q(q, t):
     T[:3,-1] = t
     return T
 
+def transformation_matrix_from_4D_t(t):
+    """
+    t is a transfromation vector where the first 3 are the coordinates and the last element is the orientation arround the z-axis.
+    """
+    return transformation_matrix_from_rot_vect(t[3]*np.array([0,0,1]), t[:3])
+
 def transformation_matrix_from_rot_vect(w, t):
     T = np.eye(4)
     T[:3,:3] = quaternion.as_rotation_matrix(quaternion.from_rotation_vector(w))
