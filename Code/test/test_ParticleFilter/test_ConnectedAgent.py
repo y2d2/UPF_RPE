@@ -15,7 +15,7 @@ from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
 from Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger
 
 from Code.Simulation.BiRobotMovement import random_movements_host_random_movements_connected, \
-    drone_flight, run_simulation
+    drone_flight, run_simulation, fix_host_fix_connected
 from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
 from Code.Simulation.MultiRobotClass import MultiRobotSingleSimulation
 from Code.Simulation.RobotClass import NewRobot
@@ -106,7 +106,7 @@ class TestConnectedAgent(unittest.TestCase):
 
     def test_tc1(self):
         # Length of NLOS  is proportional to error on odom?
-        self.init_test(sigma_v=0.01, sigma_w=0.001, sigma_uwb=0.1,
+        self.init_test(sigma_v=0.1, sigma_w=0.01, sigma_uwb=0.1,
                        drifting_host=True)
         self.init_drones(np.array([2, 0, 0]), 0, max_range=3)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
@@ -148,6 +148,28 @@ class TestConnectedAgent(unittest.TestCase):
         self.dl.plot_self(self.los)
         # self.dl.plot_start_poses()
         # self.dl.plot_best_particle_variance_graph()
+        plt.show()
+
+
+
+    def test_tc2(self):
+        # Length of NLOS  is proportional to error on odom?
+        self.init_test(sigma_v=0.1, sigma_w=0.001, sigma_uwb=0.1,
+                       drifting_host=True)
+        self.init_drones(np.array([2, 0, 0]), 0, max_range=3)
+        run_simulation(self.simulation_time_steps, self.host, self.drone,
+                       fix_host_fix_connected)
+        self.ca = UPFConnectedAgent("0x000", x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])))
+        self.ca.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
+        self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], 2*self.sigma_uwb,
+                                            n_altitude=3, n_azimuth=4, n_heading=4)
+
+        self.run_test(nlos_function=self.nlos_man.los)
+
+        self.dl.plot_self(self.los)
+        self.dl.get_best_particle_log().create_3d_plot()
+        self.dl.get_best_particle_log().plot_error_graph()
+        self.dl.get_best_particle_log().plot_ukf_states()
         plt.show()
 
     # -----------------------

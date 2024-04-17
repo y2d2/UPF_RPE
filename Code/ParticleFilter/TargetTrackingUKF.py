@@ -147,10 +147,11 @@ class TargetTrackingUKF:
         # Due to UWB having extrinsicity, the initial state of the connected agent has to be calculated using this and
         # The measured distance to the connected agent.
         r = s[0]
-        s[0] = 1 # Unity vector of the direction of the connected agent.
+        s_1 = s.copy()
+        s_1[0] = 1 # Unity vector of the direction of the connected agent.
         T_si_uwb = TMF.transformation_matrix_from_4D_t(self.t_si_uwb)
         T_sj_uwb = TMF.transformation_matrix_from_4D_t(self.t_sj_uwb)
-        t_1_cijcji = sphericalToCartesian(s)
+        t_1_cijcji = sphericalToCartesian(s_1)
         R_1_cijcji = TMF.get_rotation(TMF.transformation_matrix_from_4D_t(np.array([0,0,0,ca_heading])))
         R_si_uwb = TMF.get_rotation(T_si_uwb)
         t_si_uwb = TMF.get_translation(T_si_uwb)
@@ -167,14 +168,11 @@ class TargetTrackingUKF:
         sol1 = (-b + np.sqrt(D))/2
         if sol1 < 0 :
             raise ValueError("No real solution")
-        return np.array([sol1, s[1], s[2]])
-
-
-
+        return np.array([sol1, s_1[1], s_1[2]])
 
     def set_initial_state(self, s, sigma_s, ca_heading, ca_sigma_heading, sigma_uwb):
-        s = self.calculate_initial_state(s, ca_heading)
-        self.kf.x = np.array([s[0], s[1], s[2], ca_heading, 0, 0, 0, 0, 0])
+        s_cor = self.calculate_initial_state(s, ca_heading)
+        self.kf.x = np.array([s_cor[0], s_cor[1], s_cor[2], ca_heading, 0, 0, 0, 0, 0])
         self.kf.P = np.diag(
             [(sigma_s[0]) ** 2, sigma_s[1] ** 2, sigma_s[2] ** 2, ca_sigma_heading ** 2, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8])
         self.calculate_x_ca()
@@ -195,6 +193,7 @@ class TargetTrackingUKF:
         self.calculate_x_ca()
         self.calculate_P_x_ca()
         self.weight = self.weight * self.kf.likelihood
+        return None
         # self.weight = self.kf.likelihood
     # -------------------------------------------------------------------------------------- #
     # --- Prediction functions

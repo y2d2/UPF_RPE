@@ -15,6 +15,13 @@ def transformation_matrix_from_q(q, t):
     T[:3,-1] = t
     return T
 
+
+def get_4D_t_from_matrix(T):
+    p = get_translation(T)
+    w = [get_rotation_vector(T)[-1]]
+    return np.concatenate((p, w))
+
+
 def transformation_matrix_from_4D_t(t):
     """
     t is a transfromation vector where the first 3 are the coordinates and the last element is the orientation arround the z-axis.

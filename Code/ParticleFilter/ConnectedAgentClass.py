@@ -11,6 +11,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List
+
+import scipy.spatial.distance
 from filterpy.kalman import KalmanFilter
 
 from matplotlib.gridspec import GridSpec
@@ -19,6 +21,7 @@ from Code.ParticleFilter.TargetTrackingUKF import TargetTrackingUKF
 from Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from Code.Simulation.RobotClass import NewRobot
 from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix, cartesianToSpherical
+
 
 
 class KFHostAgent:
@@ -256,11 +259,19 @@ class UPFConnectedAgent:
     def run_model(self, dx_ca, measurement, q_ca=None, time_i=None):
         # self.iterations += 1
         self.time_i = time_i
+        self.check_validity(dx_ca, q_ca)
         self.run_predict_update_los(dx_ca, measurement, q_ca)
         self.resample()
+        self.calculate_average_particle()
         if len(self.particles) > 5000:
             raise Exception("Too many particles")
 
+    def check_validity(self, dx_ca, q_ca):
+        if q_ca is not None:
+            dis = scipy.spatial.distance.mahalanobis(np.zeros(4), dx_ca, np.linalg.inv(q_ca))
+            print(dis)
+        else:
+            print("No distance can be calculated")
     def run_predict_update_los(self, dx_ca, measurement, q_ca=None):
         """"
         Debug function to force los behaviour when debugging.
@@ -277,7 +288,8 @@ class UPFConnectedAgent:
                 keep.append(particle)
                 self.weights.append(particle.weight)
                 self.totalWeight += particle.weight
-            except np.linalg.LinAlgError:
+            except np.linalg.LinAlgError as e:
+                print(e)
                 pass
         self.particles = keep
 
@@ -329,6 +341,18 @@ class UPFConnectedAgent:
 
         if not self.particles:
             raise Exception("No particles left")
+
+    def calculate_average_particle(self):
+        #TODO calculate avarega particle + uncertainty.
+        self.average_t_si_sj = np.zeros(4)
+        self.t_si_sj = np.empty((0, 4))
+        for particle in self.particles:
+            self.average_t_si_sj = particle.t_si_sj * particle.weight + self.average_t_si_sj
+            self.t_si_sj = np.concatenate((self.t_si_sj, particle.t_si_sj.reshape(1, 4)), axis=0)
+
+        self.t_si_sj_sig = np.max(self.t_si_sj, axis=0) - np.min(self.t_si_sj, axis=0)
+
+
 
     def set_best_particle(self, best_particle):
         self.best_particle = best_particle

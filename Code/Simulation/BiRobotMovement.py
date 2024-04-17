@@ -35,6 +35,9 @@ def run_simulation(time_steps, host_agent: NewRobot, connected_agent: NewRobot, 
         kwargs["i"] = i
         move_function(host_agent, connected_agent, **kwargs)
 
+def fix_host_fix_connected(host: NewRobot, connected: NewRobot, **kwargs):
+    connected.move(w=0, v=np.array([0, 0, 0]))
+    host.move(w=0, v=np.array([0, 0, 0]))
 
 def fix_connected_2D_host(host: NewRobot, connected: NewRobot, **kwargs):
     control2d = kwargs.get("control2d")
