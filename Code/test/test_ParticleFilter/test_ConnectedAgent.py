@@ -29,7 +29,7 @@ class TestConnectedAgent(unittest.TestCase):
 
         self.uwb_time_steps = 300  # (120 // 0.03)          # Paper simulation time = 120s
         self.odom_time_step = 0.1
-        self.uwb_time_step = 0.1  # Paper experiments UWB.py frequency = 37 Hz
+        self.uwb_time_step = 1. # Paper experiments UWB.py frequency = 37 Hz
         self.factor = int(self.uwb_time_step / self.odom_time_step)
         self.simulation_time_steps = self.uwb_time_steps * self.factor
 
@@ -106,6 +106,8 @@ class TestConnectedAgent(unittest.TestCase):
 
     def test_tc1(self):
         # Length of NLOS  is proportional to error on odom?
+        # TODO: There is an interplay between sigma_v and sigma_uwb:
+        #  More specifically if sigma_dx = sigma_dv* dt > sigma_uwb/10 it seems the UPF becomes over confident.
         self.init_test(sigma_v=0.1, sigma_w=0.01, sigma_uwb=0.1,
                        drifting_host=True)
         self.init_drones(np.array([2, 0, 0]), 0, max_range=3)
@@ -115,6 +117,7 @@ class TestConnectedAgent(unittest.TestCase):
         self.ca.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
         self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], 2*self.sigma_uwb,
                                             n_altitude=3, n_azimuth=4, n_heading=4)
+        self.ca.set_regeneration_parameters()
 
         self.run_test(nlos_function=self.nlos_man.los)
 

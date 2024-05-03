@@ -94,7 +94,7 @@ class TargetTrackingUKF:
         self.t_oi_sj = np.zeros(4)
         self.t_oi_cji = np.zeros(4)
         self.t_cji_sj = np.zeros(4)
-        self.D_t_sj = np.zeros(4)
+        self.D_t_sj = np.zeros(4) # Apperently not uses, self.Dt_sj is used.
 
         # transformation from VIO reference frame to UWB antenna
         self.t_si_uwb = np.zeros(4)

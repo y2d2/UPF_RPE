@@ -160,6 +160,10 @@ class UPFConnectedAgent:
         self.drift_correction_bool = drift_correction_bool
         self.set_ukf_parameters()
 
+        # Regeneration variables:
+        self.regeneration_bool = False
+        self.max_number_of_particles = 0
+
         # Logging variables:
         # self.logging = False
         # self.upf_connected_agent_logger = None
@@ -178,6 +182,31 @@ class UPFConnectedAgent:
         self.alpha = alpha
         self.beta = beta
         # self.drift_correction_bool = drift_correction_bool
+
+    def set_regeneration_parameters(self, max_number_of_particles = 10, regeneration= True,  ):
+        self.regeneration_bool = regeneration
+        self.max_number_of_particles = max_number_of_particles
+        # self.regenaration_sigmas = regeneration_sigmas
+
+    def generate_new_particles(self):
+        if self.regeneration_bool:
+            while len(self.particles) < self.max_number_of_particles:
+                self.generate_new_particle()
+
+    def generate_new_particle(self):
+        azimuth = np.random.uniform(-np.pi, np.pi)
+        altitude = np.random.uniform(-np.pi/2, np.pi/2)
+        heading = np.random.uniform(-np.pi, np.pi)
+        #TODO should make something that is parameterized.
+        sigma_azimuth = (2 * np.pi / 8) / np.sqrt(-8 * np.log(0.5))
+        sigma_altitude = (np.pi / 5) / np.sqrt(-8 * np.log(0.5))
+        sigma_heading = (2 * np.pi / 8) / np.sqrt(-8 * np.log(0.5))
+        particle = self.create_particle()
+        particle.weight = 0.1
+        s = np.array([self.uwb_measurement, azimuth, altitude], dtype=float)
+        sigma_s = [2*self.sigma_uwb, sigma_azimuth, sigma_altitude]
+        particle.set_initial_state(s, sigma_s, heading, sigma_heading, self.sigma_uwb)
+        self.particles.append(particle)
 
     def create_particle(self) -> TargetTrackingUKF:
         particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1., drift_correction_bool=self.drift_correction_bool)
@@ -258,8 +287,9 @@ class UPFConnectedAgent:
 
     def run_model(self, dx_ca, measurement, q_ca=None, time_i=None):
         # self.iterations += 1
+        self.uwb_measurement = measurement
         self.time_i = time_i
-        self.check_validity(dx_ca, q_ca)
+        # self.check_validity(dx_ca, q_ca)
         self.run_predict_update_los(dx_ca, measurement, q_ca)
         self.resample()
         self.calculate_average_particle()
@@ -267,11 +297,12 @@ class UPFConnectedAgent:
             raise Exception("Too many particles")
 
     def check_validity(self, dx_ca, q_ca):
-        if q_ca is not None:
+        if q_ca is not None or q_ca == np.zeros((4, 4)):
             dis = scipy.spatial.distance.mahalanobis(np.zeros(4), dx_ca, np.linalg.inv(q_ca))
             print(dis)
         else:
             print("No distance can be calculated")
+
     def run_predict_update_los(self, dx_ca, measurement, q_ca=None):
         """"
         Debug function to force los behaviour when debugging.
@@ -339,8 +370,10 @@ class UPFConnectedAgent:
         best_particle = self.particles[np.where(new_weights == np.max(new_weights))[0][0]]
         self.set_best_particle(best_particle)
 
+        self.generate_new_particles()
         if not self.particles:
             raise Exception("No particles left")
+
 
     def calculate_average_particle(self):
         #TODO calculate avarega particle + uncertainty.
