@@ -148,6 +148,7 @@ class QCQP:
         if self.dij_s.size == self.meas_horizon:
             self.PO = self.B.T @ np.linalg.inv(self.S) @ self.B
         return
+
     def update(self, dt_i, dt_j, dij):
         self.dt_i_s = np.append(self.dt_i_s, np.array([dt_i]), axis=0)
         self.dt_j_s = np.append(self.dt_j_s,  np.array([dt_j]), axis=0)

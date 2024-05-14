@@ -16,7 +16,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 # import Experiments.RealRobot
-from Code.UtilityCode.utility_fuctions import sphericalToCartesian, limit_angle, transform_matrix, inv_transformation_matrix, get_states_of_transform
+from Code.UtilityCode.utility_fuctions import sphericalToCartesian, limit_angle, transform_matrix, \
+    inv_transformation_matrix, get_states_of_transform
 from Code.Simulation.BiRobotMovement import run_multi_drone_simulation, drone_flight, random_moving_drones
 from Code.Simulation.RobotClass import load_trajectory_from_dict, NewRobot
 from Code.Simulation.NLOS_Manager import NLOS_Manager
@@ -25,6 +26,8 @@ from Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogg
 from Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from Code.BaseLines.AlgebraicMethod4DoF import AlgebraicMethod4DoF, Algebraic4DoF_Logger
 from Code.BaseLines.NLS import NLS, NLSDataLogger
+from Code.BaseLines.QCQP import QCQP
+from Code.DataLoggers.QCQP_DataLogger import QCQP_Log
 
 
 class MultiRobotSingleSimulation:
@@ -621,6 +624,7 @@ class TwoAgentSystem():
         self.factor = int(self.uwb_rate / self.sim.parameters["simulation_time_step"])
         if self.plot_bool:
             self.sim.init_plot(interactive=True)
+
     #-----------------------------
     # ---- Experiments Functions
     #-----------------------------
@@ -633,8 +637,8 @@ class TwoAgentSystem():
             experiment_data = [experiment_data]
 
         for exp_data in experiment_data:
-            if self.save_bool and not os.path.exists(self.save_folder+"/"+exp_data["name"]):
-                os.mkdir(self.save_folder+"/"+exp_data["name"])
+            if self.save_bool and not os.path.exists(self.save_folder + "/" + exp_data["name"]):
+                os.mkdir(self.save_folder + "/" + exp_data["name"])
             self.experiment_data = exp_data
             self.current_sim_name = self.experiment_data["name"]
             self.get_data()
@@ -653,7 +657,7 @@ class TwoAgentSystem():
             print("-----------------------------------")
 
     def reset_agents_w_exp_data(self):
-        self.agents={}
+        self.agents = {}
         self.factor = int(self.uwb_rate * self.experiment_data["sample_freq"])
         for drone_name in self.experiment_data["drones"]:
             T_vicon = self.experiment_data["drones"][drone_name]["T_real"]
@@ -663,7 +667,6 @@ class TwoAgentSystem():
             drone = NewRobot()
             drone.from_experimental_data(T_vicon, DT_vio, Q_vio, self.experiment_data["sample_freq"])
             self.agents[drone_name] = {"drone": drone}
-
 
     def run_exp(self, test_name):
         self.test_name = test_name
@@ -680,7 +683,7 @@ class TwoAgentSystem():
         # drone1.set_vio_slam(self.experiment_data["drone_1"], self.experiment_data["Q_vio"])
         distances = self.experiment_data["uwb"]
         exp_len = len(self.experiment_data["uwb"])
-        for i in range(0, exp_len-1):
+        for i in range(0, exp_len - 1):
             if self.debug_bool:
                 print(datetime.now(), " Experiment step: ", i, " /", exp_len)
             if self.plot_bool:
@@ -785,7 +788,7 @@ class TwoAgentSystem():
     def init_upfnaive_test(self):
         self.init_gen_upf_test(NLOS_bool=True, drift_bool=True, naive_sampling_bool=True)
 
-    def init_gen_upf_test(self, NLOS_bool=True, drift_bool=True, naive_sampling_bool = False, logger = True):
+    def init_gen_upf_test(self, NLOS_bool=True, drift_bool=True, naive_sampling_bool=False, logger=True):
         self.method = "upf"
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
@@ -814,6 +817,7 @@ class TwoAgentSystem():
         # upf1.set_logging(dl1)
         self.agents["drone_1"][self.test_name] = upf1
         self.agents["drone_1"]["log"] = dl1
+
     def run_upf_simulation(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
@@ -822,7 +826,6 @@ class TwoAgentSystem():
         upf1: UPFConnectedAgent = self.agents["drone_1"][self.test_name]
         upf0log: UPFConnectedAgentDataLogger = self.agents["drone_0"]["log"]
         upf1log: UPFConnectedAgentDataLogger = self.agents["drone_1"]["log"]
-
 
         # Not sure if this is needed.
         upf0.ha.predict(dx_ha=dx_0, Q_ha=q_0)
@@ -889,8 +892,10 @@ class TwoAgentSystem():
             self.data[self.current_sim_name][self.test_name][drone_id] = upf_result
 
             if self.save_bool:
-                with open(self.save_folder + "/" + self.current_sim_name + "/" + drone_id + "_" + self.test_name + ".pkl", 'wb') as file:
-                    pkl.dump(upf,file)
+                with open(
+                        self.save_folder + "/" + self.current_sim_name + "/" + drone_id + "_" + self.test_name + ".pkl",
+                        'wb') as file:
+                    pkl.dump(upf, file)
 
         # if "slam" not in self.data[self.current_sim_name]:
         self.data[self.current_sim_name]["slam"] = {}
@@ -899,8 +904,6 @@ class TwoAgentSystem():
             slam_result = {"error_x_relative": dl_bp.error_relative_transformation_slam,
                            "error_h_relative": dl_bp.error_relative_heading_slam}
             self.data[self.current_sim_name]["slam"][drone_id] = slam_result
-
-
 
             # A new file will be created
             # self.data[self.current_sim_name]["slam"][drone_id]["error_x_relative"] = dl_bp.error_relative_transformation_est
@@ -987,6 +990,7 @@ class TwoAgentSystem():
                         self.save_folder + "/" + self.current_sim_name + "/" + drone_id + "_" + self.test_name + ".pkl",
                         'wb') as file:
                     pkl.dump(self.agents[drone_id]["algebraic"], file)
+
     # ---- NLS test_na_5_na_8_nh_8 functions ----
     def init_NLS_test(self):
         self.method = self.test_name
@@ -1066,17 +1070,45 @@ class TwoAgentSystem():
         self.data[self.current_sim_name][self.test_name] = {}
         for drone_id in self.agents:
             self.data[self.current_sim_name][self.test_name][drone_id] = \
-            self.agents["drone_0"][self.test_name].nls_logger.results[drone_id]["NLS"]
+                self.agents["drone_0"][self.test_name].nls_logger.results[drone_id]["NLS"]
         if self.save_bool:
             with open(
                     self.save_folder + "/" + self.current_sim_name + "/" + self.test_name + ".pkl",
                     'wb') as file:
                 pkl.dump(self.agents["drone_0"][self.test_name], file)
 
+    # ---- QCQP ----
+    def init_QCQP_test(self):
+        self.method = "QCQP"
+        # agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
+        self.agents["drone_0"][self.test_name] = QCQP(meas_horizon=20, sigma_uwb=self.sigma_uwb)
+        self.agents["drone_1"][self.test_name] = QCQP(meas_horizon=20, sigma_uwb=self.sigma_uwb)
+        self.agents["drone_0"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_0"][self.test_name], self.agents["drone_0"]["drone"], self.agents["drone_1"]["drone"])
+        self.agents["drone_1"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_1"][self.test_name], self.agents["drone_1"]["drone"], self.agents["drone_0"]["drone"])
+
+    def run_QCQP_test(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
+
+        t1 = time.time()
+        self.agents["drone_0"][self.test_name].update(dx_0, dx_1, uwb_measurement)
+        t2 = time.time()
+        self.agents["drone_0"][self.test_name+"_log"].log(i, t2 - t1)
+        t3 = time.time()
+        self.agents["drone_1"][self.test_name].update(dx_0, dx_1, uwb_measurement)
+        t4 = time.time()
+        self.agents["drone_1"][self.test_name + "_log"].log(i, t4 - t3)
+
+        if self.debug_bool:
+            print("QCQP time 0 + 1: ", t2 - t1 + t4 - t3)
 
 
-    def set_save_results(self, folder):
-        self.save_bool = True
-        self.save_folder = folder
-        if not os.path.exists(self.save_folder):
-            os.mkdir(self.save_folder )
+    def end_QCQP_test(self):
+        self.data[self.current_sim_name][self.test_name] = {}
+        for drone_id in self.agents:
+            self.data[self.current_sim_name][self.test_name][drone_id] = \
+                self.agents["drone_0"][self.test_name+"_log"].results["QCQP"]
+        if self.save_bool:
+            with open(
+                    self.save_folder + "/" + self.current_sim_name + "/" + self.test_name + ".pkl",
+                    'wb') as file:
+                pkl.dump(self.agents["drone_0"][self.test_name+"_log"], file)
+
