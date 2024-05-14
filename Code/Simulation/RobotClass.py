@@ -337,15 +337,17 @@ class NewRobot:
         ax.plot3D(self.x_real[i, 0], self.x_real[i, 1], self.x_real[i, 2],
                   color=self.color, marker="x", linestyle=self.linestyle, alpha=alpha)
 
-    def plot_slam_position(self, ax, annotation="", linestyle=":", alpha=1, i=-1):
+    def plot_slam_position(self, ax, annotation="", linestyle=":", color = None, alpha=1, i=-1):
+        if color is None:
+            color = self.color
 
         ax.plot3D(self.x_slam[:i, 0], self.x_slam[:i, 1], self.x_slam[:i, 2],
-                  color=self.color, marker=self.mark, linestyle=linestyle, alpha=alpha,
+                  color=color, marker=self.mark, linestyle=linestyle, alpha=alpha,
                   label=annotation + " " + "slam position")
         ax.plot3D(self.x_slam[0, 0], self.x_slam[0, 1], self.x_slam[0, 2],
-                  color=self.color, marker="o", linestyle=linestyle, alpha=alpha)
+                  color=color, marker="o", linestyle=linestyle, alpha=alpha)
         ax.plot3D(self.x_slam[i, 0], self.x_slam[i, 1], self.x_slam[i, 2],
-                  color=self.color, marker="x", linestyle=linestyle, alpha=alpha)
+                  color=color, marker="x", linestyle=linestyle, alpha=alpha)
 
     def plot_trajectory(self, ax, color="k"):
         ax.plot3D(self.x_real[:, 0], self.x_real[:, 1], self.x_real[:, 2], color=color)

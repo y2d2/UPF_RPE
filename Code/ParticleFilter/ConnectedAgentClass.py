@@ -183,7 +183,7 @@ class UPFConnectedAgent:
         self.beta = beta
         # self.drift_correction_bool = drift_correction_bool
 
-    def set_regeneration_parameters(self, max_number_of_particles = 10, regeneration= True,  ):
+    def set_regeneration_parameters(self, max_number_of_particles = 10, regeneration= True ):
         self.regeneration_bool = regeneration
         self.max_number_of_particles = max_number_of_particles
         # self.regenaration_sigmas = regeneration_sigmas
@@ -209,7 +209,8 @@ class UPFConnectedAgent:
         self.particles.append(particle)
 
     def create_particle(self) -> TargetTrackingUKF:
-        particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=1., drift_correction_bool=self.drift_correction_bool)
+        weight = 1./self.n_azimuth/self.n_altitude/self.n_heading
+        particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=weight, drift_correction_bool=self.drift_correction_bool)
         particle.set_uwb_extrinsicity(self.t_si_uwb, self.t_sj_uwb)
         particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
         return particle
@@ -237,6 +238,11 @@ class UPFConnectedAgent:
         Starting from the n_altitude that has to be uneven (will be made uneven).
         For each altitude
         """
+        self.n_altitude = n_altitude
+        self.n_azimuth = n_azimuth
+        self.n_heading = n_heading
+        self.sigma_uwb = sigma_uwb
+
         if n_altitude % 2 == 0:
             n_altitude += 1
         # n_altitude = n_altitude+2
@@ -279,10 +285,7 @@ class UPFConnectedAgent:
         #             particle.set_initial_state(np.array([r, az, alt]), np.array([sigma_uwb, 2*np.pi/3, sigma_altitude]),
         #                                        heading, sigma_heading, sigma_uwb)
         #             self.particles.append(particle)
-        self.n_altitude = n_altitude
-        self.n_azimuth = n_azimuth
-        self.n_heading = n_heading
-        self.sigma_uwb = sigma_uwb
+
         self.set_best_particle(self.particles[0])
 
     def run_model(self, dx_ca, measurement, q_ca=None, time_i=None):
