@@ -473,7 +473,7 @@ class MyTestCase(unittest.TestCase):
         # tas.debug_bool= True
         # tas.plot_bool = True
         tas.factor = 10
-        tas.run_experiment(methods=["losupf", "nodriftupf", "NLS", "algebraic"], redo_bool=True, experiment_data=experiment_data)
+        tas.run_experiment(methods=["losupf", "nodriftupf", "NLS", "algebraic", "QCQP"], redo_bool=False, experiment_data=experiment_data)
         plt.show()
         return tas, measurements
 

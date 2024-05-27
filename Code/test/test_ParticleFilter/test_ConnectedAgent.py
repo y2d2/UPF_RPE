@@ -110,14 +110,18 @@ class TestConnectedAgent(unittest.TestCase):
         #  More specifically if sigma_dx = sigma_dv* dt > sigma_uwb/10 it seems the UPF becomes over confident.
         self.init_test(sigma_v=0.1, sigma_w=0.01, sigma_uwb=0.1,
                        drifting_host=True)
-        self.init_drones(np.array([2, 0, 0]), 0, max_range=3)
+        self.init_drones(np.array([22., 0, 0]), 0, max_range=40)
+        # self.init_drones(np.array([22,0,0]), 0, max_range=40)
+        # run_simulation(self.simulation_time_steps, self.host, self.drone,
+        #                random_movements_host_random_movements_connected)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
-                       random_movements_host_random_movements_connected)
+                       fix_host_fix_connected)
+
         self.ca = UPFConnectedAgent("0x000", x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])))
         self.ca.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
-        self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], 2*self.sigma_uwb,
+        self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], self.sigma_uwb,
                                             n_altitude=3, n_azimuth=4, n_heading=4)
-        self.ca.set_regeneration_parameters()
+        # self.ca.set_regeneration_parameters()
 
         self.run_test(nlos_function=self.nlos_man.los)
 

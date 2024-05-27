@@ -270,7 +270,7 @@ class UPFConnectedAgent:
 
         for i, altitude in enumerate(altitudes):
             azimuths = [-np.pi + (2 * np.pi / azimuth_bins[i]) * j for j in range(azimuth_bins[i])]
-            sigma_s = [sigma_uwb, sigma_azimuths[i], sigma_altitude]
+            sigma_s = [2*sigma_uwb, sigma_azimuths[i], sigma_altitude]
             for azimuth in azimuths:
                 s = np.array([r, azimuth, altitude], dtype=float)
                 for heading in headings:
@@ -338,7 +338,7 @@ class UPFConnectedAgent:
         new_weights = []
 
         # Lowerd the average_weight such that depletion is less fast.
-        average_weight = 0.2 / len(self.particles)
+        average_weight = 0.05 / len(self.particles)
 
         # First let's do best particle.
         # best_particle.weight = best_particle.weight / self.totalWeight

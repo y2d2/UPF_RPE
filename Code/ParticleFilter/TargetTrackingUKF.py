@@ -101,7 +101,7 @@ class TargetTrackingUKF:
         self.t_sj_uwb = np.zeros(4)
 
         # ---- Kalman filter variables:
-        # kf_variables = r_0, theta_0, phi_0, h_ca_0,  x_ca_odom, y_ca_odom, z_ca_odom, h_ca_odom
+        # kf_variables = r_0, theta_0, phi_0, h_ca_0,  x_ca_odom, y_ca_odom, z_ca_odom, h_ca_odom, h_ha_drift
         # r_0, theta_0, phi_0: Relative position of the connected agent wrt the host agent at connection time expressed in spherical coordinates.
         # h_ca_0: Heading of the connected agent at connection time in the reference frame of the host agent at connection time.
         # x_ca_odom, y_ca_odom, z_ca_odom, h_ca_odom : Odometry of the connected agent wrt the position of the connected agent at connection time.
@@ -174,7 +174,7 @@ class TargetTrackingUKF:
         s_cor = self.calculate_initial_state(s, ca_heading)
         self.kf.x = np.array([s_cor[0], s_cor[1], s_cor[2], ca_heading, 0, 0, 0, 0, 0])
         self.kf.P = np.diag(
-            [(sigma_s[0]) ** 2, sigma_s[1] ** 2, sigma_s[2] ** 2, ca_sigma_heading ** 2, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8])
+            [(sigma_s[0]) ** 2, sigma_s[1] ** 2, sigma_s[2] ** 2, ca_sigma_heading ** 2, sigma_s[0] ** 2, sigma_s[0] ** 2, sigma_s[0] ** 2, 1e-8, 1e-8])
         self.calculate_x_ca()
         self.calculate_P_x_ca()
 

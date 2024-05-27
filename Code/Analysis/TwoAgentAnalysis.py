@@ -20,7 +20,7 @@ class TwoAgentAnalysis:
         self.df = None
         # LOS Paper names
         # self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "UPF (ours, proposed)", "losupf": r"UPF $\tilde{w}$ $s_{LOS}$ (ours)", "nodriftupf": r"UPF $\tilde{w}$ $\theta_d$ (ours)"}
-        self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "upf", "losupf": "Ours, proposed", "nodriftupf": "Ours, without pseudo-state"}
+        self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "upf", "losupf": "Ours, proposed", "nodriftupf": "Ours, without pseudo-state", "QCQP": "QCQP"}
         # NLOS paper names
         # self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "NLOS UPF (ours)", "losupf":  "UPF (ours)" , "nodriftupf": r"UPF $\tilde{w}$ $\theta_d$ (ours)"}
         self.y_label = {
@@ -234,7 +234,7 @@ class TwoAgentAnalysis:
             # # print(df.mean(), df.std())
 
 
-            order = ["NLS", "losupf", "nodriftupf", "algebraic"]
+            order = ["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"]
             g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
                             dodge=False, height=3, aspect=0.65, order=order)
 
@@ -295,7 +295,7 @@ class TwoAgentAnalysis:
         if self.df is None:
             self.create_panda_dataframe()
 
-        order = ["losupf", "nodriftupf", "algebraic", "NLS"]
+        order = ["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"]
 
         # Filter the DataFrame for the desired variables and methods
         df = self.df.loc[
@@ -429,8 +429,8 @@ class TwoAgentAnalysis:
     def boxplot_LOS_comp_time(self, number_of_bins=5, save_fig=False):
         if self.df is None:
             self.create_panda_dataframe()
-        method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple"}
-        order = ["losupf", "nodriftupf", "algebraic", "NLS"]
+        method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple", "QCQP":"tab:purple"}
+        order = ["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"]
         # order = [ "NLS", "NLS_p"]
 
         # plt.figure(figsize=(8, 4))
@@ -477,9 +477,11 @@ class TwoAgentAnalysis:
                           Line2D([0], [0], color='tab:red', linewidth=2.5),
                           Line2D([0], [0], color='tab:orange', linewidth=2.5),
                           Line2D([0], [0], color='tab:blue', linewidth=2.5),
+                          Line2D([0], [0], color='tab:purple', linewidth=2.5),
+
                           # Line2D([0], [0], color='tab:purple', linewidth=2.5)
                         ]
-        legend_labels = ['Ours, proposed', "Ours, without pseudo-state", 'Algebraic', "NLS"]
+        legend_labels = ['Ours, proposed', "Ours, without pseudo-state", 'Algebraic', "NLS", "QCQP"]
         # legend_labels = ["NLS with good initial guess", "NLS with perfect initial guess"]
         fig.suptitle("Average error evolution of the experiments")
         fig.legend( handles=legend_handles, labels=legend_labels, ncol=4, fontsize=12, loc="upper center", bbox_to_anchor=(0.5, 0.92))
