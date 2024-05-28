@@ -61,7 +61,7 @@ class MyTestCase(unittest.TestCase):
         TAS.plot_bool = True
         TAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)
         TAS.set_ukf_properties(alpha, beta, kappa, n_azimuth, n_altitude, n_heading)
-        TAS.run_test(methods=["upf", "losupf", "nodriftupf", "NLS", "algebraic"])
+        TAS.run_simulations(methods=["upf", "losupf", "nodriftupf", "NLS", "algebraic"])
 
         plt.show()
         # TODO Launch mnassive NLOS simulation on Ares
@@ -99,7 +99,7 @@ class MyTestCase(unittest.TestCase):
                 TAS.set_uncertainties(sigma_v, sigma_w, sigma_d)
                 TAS.set_ukf_properties(alpha=alpha, beta=beta, kappa= kappa,
                                        n_azimuth=n_azimuth, n_altitude=n_altitude, n_heading = n_heading)
-                TAS.run_test(methods=["upf", "losupf"], nlos_function=TAS.nlos_man.nlos_2, redo_bool=True)
+                TAS.run_simulations(methods=["upf", "losupf"], nlos_function=TAS.nlos_man.nlos_2, redo_bool=True)
         # plt.show()
         # plt.close("all")
 

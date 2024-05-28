@@ -708,7 +708,7 @@ class TwoAgentSystem():
         eval("self.end_" + self.method + "_test()")
 
     # ---- Test functions.
-    def run_test(self, methods=[], nlos_function=None, redo_bool=False):
+    def run_simulations(self, methods=[], nlos_function=None, redo_bool=False):
         if nlos_function == None:
             nlos_function = self.nlos_man.los
 

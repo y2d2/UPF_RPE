@@ -174,7 +174,7 @@ class TargetTrackingUKF:
         s_cor = self.calculate_initial_state(s, ca_heading)
         self.kf.x = np.array([s_cor[0], s_cor[1], s_cor[2], ca_heading, 0, 0, 0, 0, 0])
         self.kf.P = np.diag(
-            [(sigma_s[0]) ** 2, sigma_s[1] ** 2, sigma_s[2] ** 2, ca_sigma_heading ** 2, sigma_s[0] ** 2, sigma_s[0] ** 2, sigma_s[0] ** 2, 1e-8, 1e-8])
+            [(sigma_s[0]) ** 2, sigma_s[1] ** 2, sigma_s[2] ** 2, ca_sigma_heading ** 2, sigma_s[0] ** 2, sigma_s[0] ** 2, sigma_s[0] ** 2, 1e-1, 1e-1])
         self.calculate_x_ca()
         self.calculate_P_x_ca()
 

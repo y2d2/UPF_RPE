@@ -28,4 +28,4 @@ if __name__ == "__main__":
     TAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)
     TAS.set_ukf_properties(alpha = alpha, beta =  beta, kappa = kappa,
                            n_azimuth = n_azimuth, n_altitude=n_altitude, n_heading=n_heading)
-    TAS.run_test(methods=["NLS"], redo_bool=True)
+    TAS.run_simulations(methods=["NLS"], redo_bool=True)

@@ -19,7 +19,7 @@ class MyTestCase(unittest.TestCase):
         n_azimuth = 4
         n_altitude = 3
         n_heading = 4
-        sigma_dv = 0.001
+        sigma_dv = 0.01
         sigma_dw = 0.1 * sigma_dv
         sigma_uwb = 0.1
 
@@ -35,8 +35,8 @@ class MyTestCase(unittest.TestCase):
         TAS.save_bool = True
         TAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)
         TAS.set_ukf_properties(alpha, beta, kappa, n_azimuth, n_altitude, n_heading)
-        # TAS.run_test(methods=["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"], redo_bool=True )
-        TAS.run_test(methods=["losupf"], redo_bool=True )
+        TAS.run_simulations(methods=["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"], redo_bool=True)
+        # TAS.run_test(methods=["losupf"], redo_bool=True )
 
         # plt.show()
         # TODO Launch mnassive NLOS simulation on Ares

@@ -36,8 +36,8 @@ class Test_TargetTrackingUKF(unittest.TestCase):
         self.max_range = 20
 
         self.sigma_uwb = 0.1  # Paper sigma uwb = 0.1
-        self.sigma_dv = 0.1  # Paper sigma odom = 0.001 m -> not sure how this relates with the heading error.
-        self.sigma_dw = 0.01 #/ 180 * np.pi  # division by 2 since I am not sure what error they took in the paper. I think they assumed the host agent has no drift so no error.
+        self.sigma_dv = 0.01  # Paper sigma odom = 0.001 m -> not sure how this relates with the heading error.
+        self.sigma_dw = 0.001 #/ 180 * np.pi  # division by 2 since I am not sure what error they took in the paper. I think they assumed the host agent has no drift so no error.
 
         self.drone = drone_flight(np.array([0,0, 5, np.pi/4]), sigma_dv=self.sigma_dv, sigma_dw=self.sigma_dw,
                                   max_range=self.max_range, origin_bool=True, simulation_time_step=self.odom_time_step)
