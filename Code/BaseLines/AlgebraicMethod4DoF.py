@@ -105,6 +105,7 @@ class AlgebraicMethod4DoF:
 
         self.x_ca_r_alg = np.zeros(4)
 
+        self.horizon  = 10
         self.wls_bool = False
         # Logging variables:
         self.logging = False
@@ -143,7 +144,7 @@ class AlgebraicMethod4DoF:
 
 
     def trim_to_latest_measurements(self):
-        if len(self.eps) > 10:
+        if len(self.eps) > self.horizon:
             self.eps.pop(1)
             self.d.pop(1)
             self.x_ha_odom = np.delete(self.x_ha_odom, 1, axis=0)

@@ -20,13 +20,13 @@ class NLS:
 
     """
 
-    def __init__(self, agents, n=1, sigma_uwb=0.1):
+    def __init__(self, agents, horizon=1, sigma_uwb=0.1):
         """
         x_0 will be a vector of the initial positions of the drones in the common reference frame.
         x_0 will have shape (m,4) where m is the number of drones.
         """
         # number of frames
-        self.n = n
+        self.horizon = horizon
 
         # Dict of agents (names + drone)
         # number of agents
@@ -44,14 +44,14 @@ class NLS:
         # Input should be a list of start positions of the different drones in the common reference frame.
 
         # list of distance measurements:
-        self.d = np.zeros((self.n, self.m, self.m))
+        self.d = np.zeros((self.horizon, self.m, self.m))
         # list of odom measurements:
-        self.x_odom = np.zeros((self.n, self.m, 4))
-        self.q = np.zeros((self.n, self.m, 4, 4))
+        self.x_odom = np.zeros((self.horizon, self.m, 4))
+        self.q = np.zeros((self.horizon, self.m, 4, 4))
 
         # list of estimated transformations:
-        self.x_origin = np.ones((self.n, self.m, 4))
-        for s in range(self.n):
+        self.x_origin = np.ones((self.horizon, self.m, 4))
+        for s in range(self.horizon):
             self.x_origin[s] = x_0
             for i in range(self.m):
                 self.q[s, i] = np.eye(4) * 1e-6
@@ -65,7 +65,7 @@ class NLS:
         self.vi_uwb = np.array([sigma_uwb ** -2])
         # single_agent_cov = np.eye(4) * 1.
 
-        self.x_cov = np.zeros((self.n * self.m * 4, self.n * self.m * 4))
+        self.x_cov = np.zeros((self.horizon * self.m * 4, self.horizon * self.m * 4))
         # for i in range(self.n * self.m):
         #     self.x_cov[i * 4:(i + 1) * 4, i * 4:(i + 1) * 4] = single_agent_cov
         self.res = []
@@ -78,12 +78,12 @@ class NLS:
     def set_best_guess(self, dict_of_best_guesses):
         for agent in dict_of_best_guesses:
             i = self.names.index(agent)
-            for j in range(self.n):
+            for j in range(self.horizon):
                 self.x_origin[j, i] = dict_of_best_guesses[agent]
             self.x[i] = dict_of_best_guesses[agent]
 
     def calculate_original_d(self):
-        for s in range(self.n):
+        for s in range(self.horizon):
             for i in range(self.m):
                 for k in range(self.m - i - 1):
                     j = i + k + 1
@@ -100,7 +100,7 @@ class NLS:
             x = np.ravel(x)
             sol = root(self.optimise, x, method="lm")
             self.x_cov = sol.cov_x.copy()
-            x = sol.x.reshape(self.n, self.m, 4)
+            x = sol.x.reshape(self.horizon, self.m, 4)
             self.x_origin = x
             self.calculate_relative_poses()
         except AttributeError:
@@ -116,14 +116,14 @@ class NLS:
         self.q = np.vstack((self.q, q_odom.reshape(1, *q_odom.shape)))
 
         # Remove old odom measurements:
-        if self.x_odom.shape[0] > self.n:
+        if self.x_odom.shape[0] > self.horizon:
             self.x_odom = np.delete(self.x_odom, 0, 0)
             self.d = np.delete(self.d, 0, 0)
             self.q = np.delete(self.q, 0, 0)
 
     def optimise(self, x):
         x_test = x.copy()
-        x_test = x_test.reshape(self.n, self.m, 4)
+        x_test = x_test.reshape(self.horizon, self.m, 4)
         res = []
         res = self.calculate_mesurement_error(x_test, res)
         res = self.calculate_drift_error(x_test, res)
@@ -134,18 +134,18 @@ class NLS:
         x_prev = self.x_origin.copy()
         x_prev = np.ravel(x_prev)
         dx = x - x_prev
-        for i in range(self.n * self.m * 4):
+        for i in range(self.horizon * self.m * 4):
             if self.x_cov[i, i] != 0:
                 dx[i] = mahalanobis(np.array([0]), np.array([dx[i]]), np.array([1 / self.x_cov[i, i]]))
             res.append(dx[i])
         return res
 
     def calculate_mesurement_error(self, x_origin, res):
-        x = np.zeros((self.n, self.m, 4))
-        for s in range(self.n):
+        x = np.zeros((self.horizon, self.m, 4))
+        for s in range(self.horizon):
             for i in range(self.m):
                 x[s, i] = x_origin[s, i] + get_4d_rot_matrix(x_origin[s, i, -1]) @ self.x_odom[s, i, :]
-        for s in range(self.n):
+        for s in range(self.horizon):
             for i in range(self.m):
                 for k in range(self.m - i - 1):
                     j = i + k + 1
@@ -155,7 +155,7 @@ class NLS:
         return res
 
     def calculate_drift_error(self, x, res):
-        for s in range(self.n):
+        for s in range(self.horizon):
             for i in range(self.m):
                 dx = x[s, i] - self.x_origin[s, i]
                 dx[3] = limit_angle(dx[3])

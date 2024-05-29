@@ -21,6 +21,7 @@ if __name__ == "__main__":
     sigma_dw_factor = 0.1
     sigma_uwb = 0.1
 
+    uwb_rate
     sigma_dw = sigma_dw_factor * sigma_dv
     TAS = MRC.TwoAgentSystem(trajectory_folder=trajectory_folder, result_folder=result_folder)
     TAS.debug_bool = False

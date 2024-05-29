@@ -590,6 +590,7 @@ class TwoAgentSystem():
             result_name += "_sigma_dv_" + str(np.round(self.sigma_dv, 3)) + "_sigma_dw_" + str(
                 np.round(self.sigma_dw, 3)) \
                            + "_sigma_uwb_" + str(np.round(self.sigma_uwb, 3))
+            result_name += "_freq_" + str(self.uwb_rate)
             result_name += "_alpha_" + str(self.alpha) + "_kappa_" + str(self.kappa) + "_beta_" + str(self.beta)
             result_name = "c".join(result_name.split("."))
             result_name = "neg".join(result_name.split("-"))
@@ -608,7 +609,7 @@ class TwoAgentSystem():
 
             if not "parameters" in self.data:
                 self.data["parameters"] = {"sigma_dv": self.sigma_dv, "sigma_dw": self.sigma_dw,
-                                           "sigma_uwb": self.sigma_uwb,
+                                           "sigma_uwb": self.sigma_uwb, "uwb_rate": self.uwb_rate,
                                            "alpha": self.alpha, "kappa": self.kappa, "beta": self.beta,
                                            "number_of_agents": self.number_of_agents}
 
@@ -745,11 +746,21 @@ class TwoAgentSystem():
         for drone_name in self.sim.drones:
             self.agents[drone_name] = {"drone": self.sim.drones[drone_name]}
 
-    def run_simulation(self, test_name, nlos_function=None):
+    def parse_test_name(self, test_name):
         self.test_name = test_name
+        parsing_test_name = test_name.split("|")
+        parameters = {}
+        for i in range(1, len(parsing_test_name)):
+            parameter = parsing_test_name[i].split("=")
+            parameters[parameter[0]] = float(parameter[1])
+        eval("self.init_"+parsing_test_name[0]+"_test(parameters)")
+
+
+
+    def run_simulation(self, test_name, nlos_function=None):
         self.reset_agents()
         self.d0 = self.sim.get_uwb_measurements("drone_0", "drone_1")[0]
-        eval("self.init_" + self.test_name + "_test()")
+        self.parse_test_name(test_name)
 
         self.los_state = []
         drone0: NewRobot = self.agents["drone_0"]["drone"]
@@ -781,19 +792,19 @@ class TwoAgentSystem():
 
     # --- UPF functions
 
-    def init_upf_test(self):
-        self.init_gen_upf_test(NLOS_bool=True, drift_bool=True)
+    def init_upf_test(self, parameters = {}):
+        self.init_gen_upf_test(NLOS_bool=True, drift_bool=True, parameters=parameters)
 
-    def init_losupf_test(self):
-        self.init_gen_upf_test(NLOS_bool=False, drift_bool=True)
+    def init_losupf_test(self,  parameters = {}):
+        self.init_gen_upf_test(NLOS_bool=False, drift_bool=True, parameters=parameters)
 
-    def init_nodriftupf_test(self):
-        self.init_gen_upf_test(NLOS_bool=False, drift_bool=False)
+    def init_nodriftupf_test(self,  parameters = {}):
+        self.init_gen_upf_test(NLOS_bool=False, drift_bool=False, parameters=parameters)
 
-    def init_upfnaive_test(self):
-        self.init_gen_upf_test(NLOS_bool=True, drift_bool=True, naive_sampling_bool=True)
+    def init_upfnaive_test(self,  parameters = {}):
+        self.init_gen_upf_test(NLOS_bool=True, drift_bool=True, naive_sampling_bool=True, parameters=parameters)
 
-    def init_gen_upf_test(self, NLOS_bool=True, drift_bool=True, naive_sampling_bool=False, logger=True):
+    def init_gen_upf_test(self, NLOS_bool=True, drift_bool=True, naive_sampling_bool=False, logger=True, parameters={}):
         self.method = "upf"
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
@@ -802,8 +813,12 @@ class TwoAgentSystem():
         # init drone0
         x_ha_0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
         upf0 = UPFConnectedAgent(id="drone_1", x_ha_0=x_ha_0, drift_correction_bool=drift_bool)
+        if "resample_factor" in parameters:
+            upf0.resample_factor = parameters["resample_factor"]
+        if "sigma_uwb_factor" in parameters:
+            upf0.sigma_uwb_factor = parameters["sigma_uwb_factor"]
         upf0.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
-        upf0.split_sphere_in_equal_areas(r=self.d0, sigma_uwb=2* self.sigma_uwb,
+        upf0.split_sphere_in_equal_areas(r=self.d0, sigma_uwb= self.sigma_uwb,
                                          n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
 
         dl0 = UPFConnectedAgentDataLogger(drone0, drone1, upf0)
@@ -815,8 +830,12 @@ class TwoAgentSystem():
         # init drone1
         x_ha_1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
         upf1 = UPFConnectedAgent(id="drone_0", x_ha_0=x_ha_1, drift_correction_bool=drift_bool)
+        if "resample_factor" in parameters:
+            upf1.resample_factor = parameters["resample_factor"]
+        if "sigma_uwb_factor" in parameters:
+            upf1.sigma_uwb_factor = parameters["sigma_uwb_factor"]
         upf1.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
-        upf1.split_sphere_in_equal_areas(r=self.d0, sigma_uwb=2* self.sigma_uwb,
+        upf1.split_sphere_in_equal_areas(r=self.d0, sigma_uwb= self.sigma_uwb,
                                          n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
         dl1 = UPFConnectedAgentDataLogger(drone1, drone0, upf1)
         # upf1.set_logging(dl1)
@@ -893,7 +912,9 @@ class TwoAgentSystem():
                           # "los_state": dl_bp.los_state,
                           # "los_error": np.abs(np.array(self.los_state) - np.array(dl_bp.los_state)),
                           "error_x_relative": dl_bp.error_relative_transformation_est,
-                          "error_h_relative": dl_bp.error_relative_heading_est}
+                          "error_h_relative": dl_bp.error_relative_heading_est,
+                          "sigma_h_relative": dl_bp.sigma_h_ca,
+                          "sigma_x_relative": dl_bp.sigma_x_ca}
             self.data[self.current_sim_name][self.test_name][drone_id] = upf_result
 
             if self.save_bool:
@@ -930,7 +951,7 @@ class TwoAgentSystem():
     # ----------------------------
 
     # ---- Algebraic functions ----
-    def init_algebraic_test(self):
+    def init_algebraic_test(self, parameters={}):
         self.method = self.test_name
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
@@ -941,6 +962,8 @@ class TwoAgentSystem():
         alg_log = Algebraic4DoF_Logger(alg_solver=AM0, host=drone0, connect=drone1)
         # alg_log.
         AM0.init_logging(alg_log)
+        if "horizon" in parameters:
+            AM0.horizon = parameters["horizon"]
         self.agents["drone_0"][self.test_name] = AM0
 
         x_ha = np.concatenate((drone1.x_start, [drone1.h_start]))
@@ -948,6 +971,8 @@ class TwoAgentSystem():
         alg_log = Algebraic4DoF_Logger(alg_solver=AM1, host=drone1, connect=drone0)
         # alg_log.
         AM1.init_logging(alg_log)
+        if "horizon" in parameters:
+            AM1.horizon = parameters["horizon"]
         self.agents["drone_1"][self.test_name] = AM1
 
     def run_algebraic_simulation(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
@@ -997,10 +1022,12 @@ class TwoAgentSystem():
                     pkl.dump(self.agents[drone_id]["algebraic"], file)
 
     # ---- NLS test_na_5_na_8_nh_8 functions ----
-    def init_NLS_test(self):
+    def init_NLS_test(self, parameters={}):
         self.method = self.test_name
         agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
         self.agents["drone_0"][self.test_name] = NLS(agents, 10, self.sigma_uwb)
+        if "horizon" in parameters:
+            self.agents["drone_0"][self.test_name].horizon = parameters["horizon"]
         best_guess = self.find_best_initial_guess()
         #initial_t = self.find_initial_t()
         self.agents["drone_0"][self.test_name].set_best_guess({"drone_1": best_guess})
@@ -1083,11 +1110,13 @@ class TwoAgentSystem():
                 pkl.dump(self.agents["drone_0"][self.test_name], file)
 
     # ---- QCQP ----
-    def init_QCQP_test(self):
+    def init_QCQP_test(self, parameters={}):
         self.method = "QCQP"
         # agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
-        self.agents["drone_0"][self.test_name] = QCQP(meas_horizon=10, sigma_uwb=self.sigma_uwb)
-        self.agents["drone_1"][self.test_name] = QCQP(meas_horizon=10, sigma_uwb=self.sigma_uwb)
+        self.agents["drone_0"][self.test_name] = QCQP(horizon=10, sigma_uwb=self.sigma_uwb)
+        if "horizon" in parameters:
+            self.agents["drone_0"][self.test_name].horizon = parameters["horizon"]
+        self.agents["drone_1"][self.test_name] = QCQP(horizon=10, sigma_uwb=self.sigma_uwb)
         self.agents["drone_0"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_0"][self.test_name], self.agents["drone_0"]["drone"], self.agents["drone_1"]["drone"])
         self.agents["drone_1"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_1"][self.test_name], self.agents["drone_1"]["drone"], self.agents["drone_0"]["drone"])
 

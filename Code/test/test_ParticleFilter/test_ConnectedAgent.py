@@ -27,9 +27,9 @@ class TestConnectedAgent(unittest.TestCase):
     def init_test(self, sigma_v=0.1, sigma_w=0.1, sigma_uwb=0.1, drifting_host=False):
         # Paper = Relative Transformation Estimation Based on Fusion of Odometry and UWB.py Ranging Data
 
-        self.uwb_time_steps = 300  # (120 // 0.03)          # Paper simulation time = 120s
+        self.uwb_time_steps = 3000  # (120 // 0.03)          # Paper simulation time = 120s
         self.odom_time_step = 0.1
-        self.uwb_time_step = 1. # Paper experiments UWB.py frequency = 37 Hz
+        self.uwb_time_step = 0.1 # Paper experiments UWB.py frequency = 37 Hz
         self.factor = int(self.uwb_time_step / self.odom_time_step)
         self.simulation_time_steps = self.uwb_time_steps * self.factor
 
@@ -110,17 +110,17 @@ class TestConnectedAgent(unittest.TestCase):
         #  More specifically if sigma_dx = sigma_dv* dt > sigma_uwb/10 it seems the UPF becomes over confident.
         self.init_test(sigma_v=0.1, sigma_w=0.01, sigma_uwb=0.1,
                        drifting_host=True)
-        self.init_drones(np.array([15., 15., 0]), 0, max_range=20)
+        self.init_drones(np.array([15., 15., 0]), 0, max_range=25)
         # self.init_drones(np.array([22,0,0]), 0, max_range=40)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
                        random_movements_host_random_movements_connected)
         # run_simulation(self.simulation_time_steps, self.host, self.drone,
         #                fix_host_fix_connected)
 
-        self.ca = UPFConnectedAgent("0x000", x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])))
+        self.ca = UPFConnectedAgent("0x000", x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])), sigma_uwb_factor=1., resample_factor=0.1)
         # self.ca.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
         # self.ca.set_normal_resampling(resample_factor=0.1, uwb_sigma_factor=2.)
-        self.ca.set_branch_kill_resampling(resample_factor=0.5, sigma_uwb_factor=1.5)
+        # self.ca.set_branch_kill_resampling(resample_factor=0.5, sigma_uwb_factor=2.)
         self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], self.sigma_uwb,
                                             n_altitude=3, n_azimuth=4, n_heading=4)
 

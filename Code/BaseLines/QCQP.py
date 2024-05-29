@@ -12,8 +12,8 @@ import numpy as np
 import Code.UtilityCode.Transformation_Matrix_Fucntions as TMF
 
 class QCQP:
-    def __init__(self, meas_horizon = 10, sigma_uwb=0.1):
-        self.meas_horizon = meas_horizon
+    def __init__(self, horizon = 10, sigma_uwb=0.1):
+        self.horizon = horizon
         self.sigma_uwb = 1.5*sigma_uwb
 
         # QCQP model
@@ -33,8 +33,8 @@ class QCQP:
 
         # Variables for the optimization problem
         self.B = np.empty((0, 9))
-        self.S = np.zeros((self.meas_horizon,self.meas_horizon))
-        self.Sigma = self.sigma_uwb**2 * np.eye(self.meas_horizon)
+        self.S = np.zeros((self.horizon, self.horizon))
+        self.Sigma = self.sigma_uwb**2 * np.eye(self.horizon)
         self.PO = np.zeros((9,9))
 
         # Constrains see eq 45 in paper
@@ -69,7 +69,7 @@ class QCQP:
         self.r5 = None
 
     def prune_matrices(self):
-        if len(self.dt_i_s) > self.meas_horizon:
+        if len(self.dt_i_s) > self.horizon:
             self.dt_i_s = self.dt_i_s[1:]
             self.dt_j_s = self.dt_j_s[1:]
             self.dij_s = self.dij_s[1:]
@@ -126,7 +126,7 @@ class QCQP:
     def calculate_S_matrix(self):
         # See equation 35 in paper.
         # It seems the Si,j is zero by construction makes sense if we assume i.i.d measurements.
-        self.S= np.zeros((self.meas_horizon, self.meas_horizon))
+        self.S= np.zeros((self.horizon, self.horizon))
         for i, d_i in enumerate(self.dij_s):
             self.S[i][i] = self.sigma_uwb ** 2 * (4 * d_i ** 2 + self.sigma_uwb ** 2)
             # self.S[i][i] = self.sigma_uwb ** 2
@@ -145,7 +145,7 @@ class QCQP:
     def calculate_P0(self):
         self.calculate_S_matrix()
         self.calculate_B_matrix()
-        if self.dij_s.size == self.meas_horizon:
+        if self.dij_s.size == self.horizon:
             self.PO = self.B.T @ np.linalg.inv(self.S) @ self.B
         return
 
@@ -154,7 +154,7 @@ class QCQP:
         self.dt_j_s = np.append(self.dt_j_s,  np.array([dt_j]), axis=0)
         self.dij_s = np.append(self.dij_s,  np.array([dij]), axis=0)
 
-        if self.dij_s.size >= self.meas_horizon:
+        if self.dij_s.size >= self.horizon:
             self.prune_matrices()
             self.r5 = self.dij_s[0] ** 2
             self.calculate_trajectories()
@@ -176,7 +176,7 @@ class QCQP:
             print("no solution found")
 
     def optimize(self):
-        if self.dij_s.size == self.meas_horizon:
+        if self.dij_s.size == self.horizon:
             self.m = Model("qcqp")
             self.m.Params.NonConvex = 2
             # self.m.Params.Threads = 1

@@ -104,7 +104,8 @@ class UPFConnectedAgent:
     on the estimation of the trajectory of the connected agents.
     """
 
-    def __init__(self, id="0x000", x_ha_0=np.zeros(4), drift_correction_bool=True):
+    def __init__(self, id="0x000", x_ha_0=np.zeros(4), drift_correction_bool=True, sigma_uwb_factor=1.0,
+                 resample_factor=1.0):
 
         self.id = id
         # State variables:
@@ -119,7 +120,7 @@ class UPFConnectedAgent:
         self.particles: List[TargetTrackingUKF] = []
         self.weights = []
         self.totalWeight = 1.
-        self.best_particle: TargetTrackingUKF = None
+        self.best_particle: TargetTrackingUKF | None = None
         # self.min_likelihood = 5e-1
         self.min_likelihood = 1e-1
         self.degeneration_factor = 0.8
@@ -169,9 +170,9 @@ class UPFConnectedAgent:
         # self.upf_connected_agent_logger = None
         self.time_i = None
 
-        self.resample_factor = 0.1
-        self.resample = self.normal_resampling
-        self.sigma_uwb_factor = 1.
+        self.resample = self.branch_kill_resampling
+        self.resample_factor = resample_factor
+        self.sigma_uwb_factor = sigma_uwb_factor
 
         # def set_logging(self, ca_logger):
 
@@ -399,7 +400,7 @@ class UPFConnectedAgent:
         new_weight = 0
         new_weights = []
         # Lowerd the average_weight such that depletion is less fast.
-        average_weight = self.resample_factor * self.totalWeight / len(self.particles)
+        average_weight = self.resample_factor / len(self.particles)
 
         for particle in self.particles:
             particle.weight = particle.weight / self.totalWeight
@@ -441,7 +442,7 @@ class UPFConnectedAgent:
 
         # Lowerd the average_weight such that depletion is less fast.
         # average_weight = 1. / factor / len(self.particles)
-        average_weight = self.resample_factor * self.totalWeight / len(self.particles)
+        average_weight = self.resample_factor / len(self.particles)
 
         # First let's do best particle.
         # best_particle.weight = best_particle.weight / self.totalWeight
@@ -454,17 +455,21 @@ class UPFConnectedAgent:
             weight = int(particle.weight / average_weight)
 
             if weight > 0:
+                if weight > 1/self.resample_factor:
+                    weight = 2.
+                else:
+                    weight = 1.
                 # weight = int(size / factor) + 1.
                 merged = False
                 for i, kept_particle in enumerate(new_particles):
                     if self.compare_particle(kept_particle, particle):
-                        kept_particle.weight += 1.
-                        new_weight += 1.
+                        kept_particle.weight += weight
+                        new_weight += weight
                         new_weights[i] += particle.kf.likelihood
                         merged = True
                         break
                 if not merged:
-                    particle.weight = 1.
+                    particle.weight = weight
                     new_particles.append(particle)
                     new_weights.append(particle.kf.likelihood)
                     new_weight += particle.weight

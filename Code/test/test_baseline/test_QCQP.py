@@ -73,7 +73,7 @@ class MyTestCase(unittest.TestCase):
         run_simulation(self.simulation_time_steps, self.host, self.drone,
                        random_movements_host_random_movements_connected)
 
-        self.qcqp = QCQP(meas_horizon=20, sigma_uwb=self.sigma_uwb)
+        self.qcqp = QCQP(horizon=20, sigma_uwb=self.sigma_uwb)
         self.qcqp_log = QCQP_Log(self.qcqp, self.host, self.drone)
 
         self.run_test(name="Move Randomly LOS")

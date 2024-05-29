@@ -11,16 +11,16 @@ class MyTestCase(unittest.TestCase):
     def test_generate_trajectories(self):
         test = "test"
         # Create a trajectory
-        folder_name = 'robot_trajectories/test'
+        folder_name = 'robot_trajectories'
         MRS = MRC.MultiRobotSimulation()
         MRS.set_simulation_parameters(max_v=1, max_w=0.05, slowrate_v=0.1, slowrate_w=0.005,
-                                      simulation_time_step=0.2, simulation_time=600,
-                                      number_of_drones=2, max_range=20, range_origin_bool=True,
+                                      simulation_time_step=0.05, simulation_time=5*60,
+                                      number_of_drones=2, max_range=25, range_origin_bool=True,
                                       trajectory_folder_name=folder_name, reset_trajectories=True)
-        MRS.create_trajectories(5)
+        MRS.create_trajectories(50)
 
     def test_generate_sim_data(self):
-        folder_name = 'robot_trajectories/test'
+        folder_name = 'robot_trajectories'
         MRS = MRC.MultiRobotSimulation(trajectory_folder_name=folder_name)
         sigma_vs = [0.1, 0.01, 0.001]
         sigma_ds = [1, 0.1, 0.01]
