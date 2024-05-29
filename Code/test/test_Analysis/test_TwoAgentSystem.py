@@ -55,7 +55,7 @@ class MyTestCase(unittest.TestCase):
         # plt.show()
 
     def test_analysis_freq_simulation(self):
-        result_folder = "Results/upf_parameters"
+        result_folder = "Results/test"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         taa.create_panda_dataframe()
         taa.boxplot_freq_comp(save_fig=False)

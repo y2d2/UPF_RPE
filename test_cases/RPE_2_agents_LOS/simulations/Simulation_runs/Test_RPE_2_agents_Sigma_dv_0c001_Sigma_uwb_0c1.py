@@ -1,9 +1,6 @@
 import os
 os.environ["OPENBLAS_NUM_THREADS"]= "2"
 
-import matplotlib
-matplotlib.use('Qt5Agg')
-
 import Code.Simulation.MultiRobotClass as MRC
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ name: RPE_simulation
 
 pre_window:
    - cd ../
-   - echo "Activate proper venv for python ? "
+   - source .venv/bin/activate
 startup_window: Simulation_runs
 
 windows:

@@ -717,11 +717,11 @@ class TwoAgentSystem():
         # Possible methods are Algebraic, NLS, UPF
 
         self.get_data()
-        total_sims = len(os.listdir(self.trajectory_folder))
-        sims = 1
+        self.total_sims = len(os.listdir(self.trajectory_folder))
+        self.sims = 1
         for sim in os.listdir(self.trajectory_folder):
-            print(datetime.now(), " ", sims, " of ", total_sims, " simulations.")
-            sims += 1
+            print(datetime.now(), " ", self.sims, " of ", self.total_sims, " simulations.")
+
             if self.save_bool and not os.path.exists(self.save_folder + "/" + sim):
                 os.mkdir(self.save_folder + "/" + sim)
 
@@ -739,6 +739,7 @@ class TwoAgentSystem():
                         pkl.dump(self.data, f)
                     f.close()
             print("-----------------------------------")
+            self.sims += 1
 
     def reset_agents(self):
         self.agents = {}
@@ -767,8 +768,6 @@ class TwoAgentSystem():
         drone1: NewRobot = self.agents["drone_1"]["drone"]
         distances = self.sim.get_uwb_measurements("drone_0", "drone_1")
         for i in range(1, self.sim.parameters["simulation_time_steps"]):
-            if self.debug_bool:
-                print(datetime.now(), " Simulation step: ", i, " /", self.sim.parameters["simulation_time_steps"])
             if self.plot_bool:
                 self.sim.plot_trajectories_evolution(i, 50)
 
@@ -777,6 +776,9 @@ class TwoAgentSystem():
                 self.agents[drone]["drone"].integrate_odometry(i)
 
             if i % self.factor == 0:
+                if self.debug_bool:
+                    print(datetime.now(), self.sims, "/", self.total_sims, self.test_name, " Simulation step: ", i,
+                          " /", self.sim.parameters["simulation_time_steps"])
                 dx_0, q_0 = drone0.reset_integration()
                 dx_1, q_1 = drone1.reset_integration()
 
