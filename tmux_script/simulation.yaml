@@ -1,0 +1,29 @@
+name: RPE_simulation
+#root: .
+
+pre_window:
+   - cd ../
+   - echo "Activate proper venv for python ? "
+startup_window: Simulation_runs
+
+windows:
+   - Simulation_runs:
+      panes:
+         - dv_0c1_dd_0c1:
+            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c1
+         - dv_0c1_dd_0c01:
+            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c01
+         - dv_0c1_dd_1:
+            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_1
+         - dv_0c01_dd_0c1:
+            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c1
+         - dv_0c01_dd_0c01:
+            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c01
+         - dv_0c01_dd_1:
+            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_1
+         - dv_0c001_dd_0c1:
+            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c1
+         - dv_0c001_dd_0c01:
+            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c01
+         - dv_0c001_dd_1:
+            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_1

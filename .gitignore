@@ -135,3 +135,4 @@ dmypy.json
 /test_cases/RPE_2_agents_LOS/simulations/robot_trajectories/
 /Code/test/test_Analysis/Results/
 /Code/test/test_Analysis/small_robot_trajectories/
+/Data/Results/

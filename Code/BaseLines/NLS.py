@@ -20,7 +20,7 @@ class NLS:
 
     """
 
-    def __init__(self, agents, horizon=1, sigma_uwb=0.1):
+    def __init__(self, agents, horizon=10, sigma_uwb=0.1):
         """
         x_0 will be a vector of the initial positions of the drones in the common reference frame.
         x_0 will have shape (m,4) where m is the number of drones.

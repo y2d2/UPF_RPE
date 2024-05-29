@@ -8,7 +8,7 @@ import pickle as pkl
 class MyTestCase(unittest.TestCase):
 
     def test_TAS_RPE(self):
-        test = "upf_parameters"
+        test = "test"
         result_folder = "Results/" + test
         # shutil.rmtree(result_folder)
         # os.mkdir(result_folder)
@@ -28,17 +28,23 @@ class MyTestCase(unittest.TestCase):
         #     mrss  = MRC.MultiRobotSingleSimulation(folder = "robot_trajectories/"+test_na_5_na_8_nh_8+"/sim_"+str(i))
         #     mrss.delete_sim(sigma_dv, sigma_dw, sigma_uwb)
         for uwb_rate in uwb_rates:
-            TAS = MRC.TwoAgentSystem(trajectory_folder="robot_trajectories/",
+            TAS = MRC.TwoAgentSystem(trajectory_folder="small_robot_trajectories/",
                                      result_folder=result_folder)
             TAS.uwb_rate = uwb_rate
             TAS.debug_bool = True
             TAS.plot_bool = False
-            TAS.save_folder = ("./save_data")
+            TAS.save_folder = ("./save_data_test")
             TAS.save_bool = True
             TAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)
             TAS.set_ukf_properties(alpha, beta, kappa, n_azimuth, n_altitude, n_heading)
             # TAS.run_simulations(methods=["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"], redo_bool=True)
-            TAS.run_simulations(methods=["losupf|resample_factor=0.1|sigma_uwb_factor=2.0", "losupf|resample_factor=0.1|sigma_uwb_factor=1.0", "losupf|resample_factor=0.5|sigma_uwb_factor=2.0", "NLS", "algebraic"], redo_bool=False )
+            methods = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
+                       "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
+                       "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
+                       "NLS|horizon=10", #"NLS|horizon=100",
+                       "algebraic|horizon=10","algebraic|horizon=100",
+                       "QCQP|horizon=10", "QCQP|horizon=100"]
+            TAS.run_simulations(methods=methods, redo_bool=False )
 
     def test_UPF_detail(self):
         upfs = []

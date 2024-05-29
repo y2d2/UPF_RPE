@@ -952,7 +952,7 @@ class TwoAgentSystem():
 
     # ---- Algebraic functions ----
     def init_algebraic_test(self, parameters={}):
-        self.method = self.test_name
+        self.method = "algebraic"
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
         start_distance = self.d0
@@ -963,7 +963,7 @@ class TwoAgentSystem():
         # alg_log.
         AM0.init_logging(alg_log)
         if "horizon" in parameters:
-            AM0.horizon = parameters["horizon"]
+            AM0.horizon = int(parameters["horizon"])
         self.agents["drone_0"][self.test_name] = AM0
 
         x_ha = np.concatenate((drone1.x_start, [drone1.h_start]))
@@ -972,7 +972,7 @@ class TwoAgentSystem():
         # alg_log.
         AM1.init_logging(alg_log)
         if "horizon" in parameters:
-            AM1.horizon = parameters["horizon"]
+            AM1.horizon = int(parameters["horizon"])
         self.agents["drone_1"][self.test_name] = AM1
 
     def run_algebraic_simulation(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
@@ -1002,32 +1002,34 @@ class TwoAgentSystem():
 
     def end_algebraic_test(self):
         self.data[self.current_sim_name][self.test_name] = {}
-        self.data[self.current_sim_name]["WLS"] = {}
+        self.data[self.current_sim_name][self.test_name+"_WLS"] = {}
         for drone_id in self.agents:
-            am_log: Algebraic4DoF_Logger = self.agents[drone_id]["algebraic"].logger
+            am_log: Algebraic4DoF_Logger = self.agents[drone_id][self.test_name].logger
             alg_results = {"calculation_time": am_log.calculation_time_alg,
                            "error_x_relative": am_log.x_ca_r_alg_error,
                            "error_h_relative": am_log.x_ca_r_alg_heading_error, }
-            self.data[self.current_sim_name]["algebraic"][drone_id] = alg_results
+            self.data[self.current_sim_name][self.test_name][drone_id] = alg_results
 
             wls_results = {"calculation_time": am_log.calculation_time_wls,
                            "error_x_relative": am_log.x_ca_r_WLS_error,
                            "error_h_relative": am_log.x_ca_r_WLS_heading_error}
-            self.data[self.current_sim_name]["WLS"][drone_id] = wls_results
+            self.data[self.current_sim_name][self.test_name+"_WLS"][drone_id] = wls_results
 
             if self.save_bool:
                 with open(
                         self.save_folder + "/" + self.current_sim_name + "/" + drone_id + "_" + self.test_name + ".pkl",
                         'wb') as file:
-                    pkl.dump(self.agents[drone_id]["algebraic"], file)
+                    pkl.dump(self.agents[drone_id][self.test_name], file)
 
     # ---- NLS test_na_5_na_8_nh_8 functions ----
     def init_NLS_test(self, parameters={}):
-        self.method = self.test_name
-        agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
-        self.agents["drone_0"][self.test_name] = NLS(agents, 10, self.sigma_uwb)
         if "horizon" in parameters:
-            self.agents["drone_0"][self.test_name].horizon = parameters["horizon"]
+            horizon = int(parameters["horizon"])
+        else:
+            horizon = 10
+        self.method = "NLS"
+        agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
+        self.agents["drone_0"][self.test_name]  = NLS(agents, horizon = horizon, sigma_uwb=self.sigma_uwb)
         best_guess = self.find_best_initial_guess()
         #initial_t = self.find_initial_t()
         self.agents["drone_0"][self.test_name].set_best_guess({"drone_1": best_guess})
@@ -1113,12 +1115,16 @@ class TwoAgentSystem():
     def init_QCQP_test(self, parameters={}):
         self.method = "QCQP"
         # agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
+        # ---- Drone 0
         self.agents["drone_0"][self.test_name] = QCQP(horizon=10, sigma_uwb=self.sigma_uwb)
-        if "horizon" in parameters:
-            self.agents["drone_0"][self.test_name].horizon = parameters["horizon"]
-        self.agents["drone_1"][self.test_name] = QCQP(horizon=10, sigma_uwb=self.sigma_uwb)
         self.agents["drone_0"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_0"][self.test_name], self.agents["drone_0"]["drone"], self.agents["drone_1"]["drone"])
+        if "horizon" in parameters:
+            self.agents["drone_0"][self.test_name].horizon = int(parameters["horizon"])
+        # ---- Drone 1
+        self.agents["drone_1"][self.test_name] = QCQP(horizon=10, sigma_uwb=self.sigma_uwb)
         self.agents["drone_1"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_1"][self.test_name], self.agents["drone_1"]["drone"], self.agents["drone_0"]["drone"])
+        if "horizon" in parameters:
+            self.agents["drone_1"][self.test_name].horizon = int(parameters["horizon"])
 
     def run_QCQP_simulation(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
 
@@ -1140,9 +1146,14 @@ class TwoAgentSystem():
         for drone_id in self.agents:
             self.data[self.current_sim_name][self.test_name][drone_id] = \
                 self.agents["drone_0"][self.test_name+"_log"].results["QCQP"]
-        if self.save_bool:
-            with open(
-                    self.save_folder + "/" + self.current_sim_name + "/" + self.test_name + ".pkl",
-                    'wb') as file:
-                pkl.dump(self.agents["drone_0"][self.test_name+"_log"], file)
+
+            if self.save_bool:
+                with open(
+                        self.save_folder + "/" + self.current_sim_name + "/" + drone_id + "_" + self.test_name + ".pkl",
+                        'wb') as file:
+                    qcqp_log = self.agents[drone_id][self.test_name+"_log"]
+                    qcqp_log.qcqp = None
+                    pkl.dump(qcqp_log, file)
+
+
 
