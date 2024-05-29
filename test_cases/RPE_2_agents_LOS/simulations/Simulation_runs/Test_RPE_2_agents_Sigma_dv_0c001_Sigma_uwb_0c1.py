@@ -24,7 +24,7 @@ if __name__ == "__main__":
     methods = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
                "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
                "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
-               "NLS|horizon=10", "NLS|horizon=100",
+               "NLS|horizon=10", #"NLS|horizon=100",
                "algebraic|horizon=10", "algebraic|horizon=100",
                "QCQP|horizon=10", "QCQP|horizon=100"]
 
