@@ -236,6 +236,7 @@ class QCQP:
             self.m.addQConstr(self.x[0]*self.x[0] + self.x[1]*self.x[1] + self.x[2]*self.x[2], GRB.EQUAL, self.r5, "c5")
 
             self.m.setParam('TimeLimit', 5*60)
+            self.m.setParam('OutputFlag', 0)
             self.m.update()
 
             self.m.optimize()
