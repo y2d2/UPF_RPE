@@ -179,7 +179,7 @@ class QCQP:
         if self.dij_s.size == self.horizon:
             self.m = Model("qcqp")
             self.m.Params.NonConvex = 2
-            # self.m.Params.Threads = 1
+            self.m.Params.Threads = 1
             self.x = [self.m.addVar(name=name, vtype= GRB.CONTINUOUS) for name in self.names]
 
             #Bound sin and cos
