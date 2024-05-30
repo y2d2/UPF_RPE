@@ -4,7 +4,7 @@ name: RPE_simulation
 pre_window:
    - cd ../
    - source .venv/bin/activate
-startup_window: Simulation_runs
+startup_window: Monitor
 
 windows:
    - Simulation_runs_1hz:
