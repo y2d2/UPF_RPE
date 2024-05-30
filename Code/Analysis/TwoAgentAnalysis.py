@@ -23,6 +23,13 @@ class TwoAgentAnalysis:
         self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "upf", "losupf": "Ours, proposed", "nodriftupf": "Ours, without pseudo-state", "QCQP": "QCQP",
                        "losupf | resampling_factor = 0.1 | sigma_uwb_factor = 2.0" : "losupf|resampling_factor=0.1|sigma_uwb_factor=2.0"}
 
+        # self.names = { "losupf|resample_factor=0.1|sigma_uwb_factor=2.0" : ,
+        #        "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
+        #        "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
+        #        "NLS|horizon=10", #"NLS|horizon=100",
+        #        "algebraic|horizon=10", "algebraic|horizon=100",
+        #        "QCQP|horizon=10", "QCQP|horizon=100"}
+
         # NLOS paper names
         # self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "NLOS UPF (ours)", "losupf":  "UPF (ours)" , "nodriftupf": r"UPF $\tilde{w}$ $\theta_d$ (ours)"}
         self.y_label = {

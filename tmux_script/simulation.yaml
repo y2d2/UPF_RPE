@@ -4,49 +4,50 @@ name: RPE_simulation
 pre_window:
    - cd ../
    - source .venv/bin/activate
+   - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Generate_Tests
 startup_window: Monitor
 
 windows:
    - Simulation_runs_1hz:
       panes:
          - dv_0c1_dd_0c1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c1_1hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c1_1hz
          - dv_0c1_dd_0c01:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c01_1hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c01_1hz
          - dv_0c1_dd_1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_1_1hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_1c0_1hz
          - dv_0c01_dd_0c1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c1_1hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c1_1hz
          - dv_0c01_dd_0c01:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c01_1hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c01_1hz
          - dv_0c01_dd_1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_1_1hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_1c0_1hz
          - dv_0c001_dd_0c1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c1_1hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c1_1hz
          - dv_0c001_dd_0c01:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c01_1hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c01_1hz
          - dv_0c001_dd_1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_1_1hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_1c0_1hz
    - Simulation_runs_10hz:
       panes:
          - dv_0c1_dd_0c1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c1_10hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c1_10hz
          - dv_0c1_dd_0c01:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c01_10hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_0c01_10hz
          - dv_0c1_dd_1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_1_10hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c1_Sigma_uwb_1c0_10hz
          - dv_0c01_dd_0c1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c1_10hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c1_10hz
          - dv_0c01_dd_0c01:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c01_10hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_0c01_10hz
          - dv_0c01_dd_1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_1_10hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c01_Sigma_uwb_1c0_10hz
          - dv_0c001_dd_0c1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c1_10hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c1_10hz
          - dv_0c001_dd_0c01:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c01_10hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_0c01_10hz
          - dv_0c001_dd_1:
-            - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_1_10hz
+            - python3 -m generated_tests.Test_RPE_2_agents_Sigma_dv_0c001_Sigma_uwb_1c0_10hz
    - Monitor:
       panes:
          - Monitor:
