@@ -20,15 +20,18 @@ class TwoAgentAnalysis:
         self.df = None
         # LOS Paper names
         # self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "UPF (ours, proposed)", "losupf": r"UPF $\tilde{w}$ $s_{LOS}$ (ours)", "nodriftupf": r"UPF $\tilde{w}$ $\theta_d$ (ours)"}
-        self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "upf", "losupf": "Ours, proposed", "nodriftupf": "Ours, without pseudo-state", "QCQP": "QCQP",
-                       "losupf | resampling_factor = 0.1 | sigma_uwb_factor = 2.0" : "losupf|resampling_factor=0.1|sigma_uwb_factor=2.0"}
+        # self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "upf", "losupf": "Ours, proposed", "nodriftupf": "Ours, without pseudo-state", "QCQP": "QCQP",
+        #                "losupf | resampling_factor = 0.1 | sigma_uwb_factor = 2.0" : "losupf|resampling_factor=0.1|sigma_uwb_factor=2.0"}
 
-        # self.names = { "losupf|resample_factor=0.1|sigma_uwb_factor=2.0" : ,
-        #        "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
-        #        "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
-        #        "NLS|horizon=10", #"NLS|horizon=100",
-        #        "algebraic|horizon=10", "algebraic|horizon=100",
-        #        "QCQP|horizon=10", "QCQP|horizon=100"}
+        self.names = { "losupf|resample_factor=0.1|sigma_uwb_factor=2.0" : "UPF, RF=0.1, $\sigma_uwb_f$=2.0",
+                        "losupf|resample_factor=0.1|sigma_uwb_factor=1.0" : "UPF, RF=0.1, $\sigma_uwb_f$=1.0",
+                        "losupf|resample_factor=0.5|sigma_uwb_factor=2.0" : "UPF, RF=0.5, $\sigma_uwb_f$=2.0",
+                        "NLS|horizon=10" : "NLS, horizon=10",
+                        #"NLS|horizon=100",
+                        "algebraic|horizon=10" : "Algebraic, horizon=10",
+                        "algebraic|horizon=100": "Algebraic, horizon=10",
+                        "QCQP|horizon=10": "QCQP, horizon=10",
+                        "QCQP|horizon=100": "QCQP, horizon=10"}
 
         # NLOS paper names
         # self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "NLOS UPF (ours)", "losupf":  "UPF (ours)" , "nodriftupf": r"UPF $\tilde{w}$ $\theta_d$ (ours)"}
@@ -67,7 +70,6 @@ class TwoAgentAnalysis:
 
                 if "panda_date" not in data:
                     self.reformat_data_to_pandas(data)
-
 
     def reformat_data(self, data):
         data["numerical_data"] = {}
