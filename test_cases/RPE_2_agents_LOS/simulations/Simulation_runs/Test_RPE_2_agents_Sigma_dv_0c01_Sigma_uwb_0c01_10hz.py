@@ -14,13 +14,13 @@ if __name__ == "__main__":
     n_altitude = 3
     n_heading = 4
 
-    sigma_dv = 0.001
+    sigma_dv = 0.01
     sigma_dw_factor = 0.1
-    sigma_uwb = 0.1
+    sigma_uwb = 0.01
 
     sigma_dw = sigma_dw_factor * sigma_dv
 
-    uwb_rates = [0.1, 1.0]
+    uwb_rate = 0.1
     methods = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
                "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
                "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
@@ -28,12 +28,12 @@ if __name__ == "__main__":
                "algebraic|horizon=10", "algebraic|horizon=100",
                "QCQP|horizon=10", "QCQP|horizon=100"]
 
-    for uwb_rate in uwb_rates:
-        TAS = MRC.TwoAgentSystem(trajectory_folder=trajectory_folder, result_folder=result_folder)
-        TAS.uwb_rate = uwb_rate
-        TAS.debug_bool = False
-        TAS.plot_bool = False
-        TAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)
-        TAS.set_ukf_properties(alpha=alpha, beta=beta, kappa=kappa,
-                               n_azimuth=n_azimuth, n_altitude=n_altitude, n_heading=n_heading)
-        TAS.run_simulations(methods=methods, redo_bool=False)
+
+    TAS = MRC.TwoAgentSystem(trajectory_folder=trajectory_folder, result_folder=result_folder)
+    TAS.uwb_rate = uwb_rate
+    TAS.debug_bool = False
+    TAS.plot_bool = False
+    TAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)
+    TAS.set_ukf_properties(alpha=alpha, beta=beta, kappa=kappa,
+                           n_azimuth=n_azimuth, n_altitude=n_altitude, n_heading=n_heading)
+    TAS.run_simulations(methods=methods, redo_bool=False)
