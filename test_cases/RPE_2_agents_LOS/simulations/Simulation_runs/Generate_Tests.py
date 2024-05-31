@@ -7,7 +7,6 @@ if __name__ == "__main__":
     generated_tests_folder = "generated_tests"
     if generated_tests_folder in os.listdir("./"):
         shutil.rmtree("./" + generated_tests_folder)
-        os.rmdir("./"+generated_tests_folder)
     os.mkdir("./"+generated_tests_folder)
 
 
