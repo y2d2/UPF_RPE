@@ -20,7 +20,7 @@ if __name__ == "__main__":
                "QCQP|horizon=10", "QCQP|horizon=100"]
     dvs = [0.1, 0.01, 0.001]
     sigma_dw_factor = 0.1
-    d_uwbs = [1, 0.1, 0.01]
+    d_uwbs = [1.0, 0.1, 0.01]
     uwb_rates = [1.0,10.]
 
     file_content_start = "import os \n"
