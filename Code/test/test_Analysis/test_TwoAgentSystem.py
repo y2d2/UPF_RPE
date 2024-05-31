@@ -62,10 +62,11 @@ class MyTestCase(unittest.TestCase):
         plt.show()
 
     def test_analysis_LOS_simulation(self):
-        result_folder = "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/1hz"
+        result_folder = "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/New/1hz"
         # result_folder = "./Results/test/1hz"
 
         methods_order = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
+                         "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0",
                          # "NLS|horizon=10",
                          # "algebraic|horizon=10",
                          "algebraic|horizon=100",
@@ -73,6 +74,7 @@ class MyTestCase(unittest.TestCase):
                       "QCQP|horizon=100"]
 
         methods_color = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "tab:blue",
+                         "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0": "tab:orange",
                          # "NLS|horizon=10": "tab:red",
                          # "algebraic|horizon=10": "tab:green",
                          "algebraic|horizon=100": "tab:green",
@@ -80,6 +82,7 @@ class MyTestCase(unittest.TestCase):
                          "QCQP|horizon=100": "tab:red"}
 
         methods_legend = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "Proposed, ours",
+                          "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0" : "Ours, without drift correction",
                         # "NLS|horizon=10": "NLS_10",
                          # "algebraic|horizon=10": "Algebraic_10",
                          "algebraic|horizon=100": "Algebraic",

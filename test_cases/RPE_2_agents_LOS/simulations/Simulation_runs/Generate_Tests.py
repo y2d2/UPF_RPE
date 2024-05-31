@@ -10,17 +10,18 @@ if __name__ == "__main__":
     os.mkdir("./"+generated_tests_folder)
 
 
-    methods = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
-               "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0",
-               "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
-               "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
-               "NLS|horizon=10",  # "NLS|horizon=100",
-               "algebraic|horizon=10", "algebraic|horizon=100",
-               "QCQP|horizon=10", "QCQP|horizon=100"]
+    methods = [#"losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
+               "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0"
+               # "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
+               # "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
+               # "NLS|horizon=10",  # "NLS|horizon=100",
+               # "algebraic|horizon=10", "algebraic|horizon=100",
+               # "QCQP|horizon=10", "QCQP|horizon=100"
+                ]
     dvs = [0.1, 0.01, 0.001]
     sigma_dw_factor = 0.1
     d_uwbs = [1.0, 0.1, 0.01]
-    uwb_rates = [1.0,10.]
+    uwb_rates = [1.0]
 
     file_content_start = "import os \n"
     file_content_start += "os.environ[\"OPENBLAS_NUM_THREADS\"]= \"2\"\n"
@@ -49,7 +50,7 @@ if __name__ == "__main__":
     file_content_end += "\tTAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)\n"
     file_content_end += "\tTAS.set_ukf_properties(alpha = alpha, beta =  beta, kappa = kappa,\n"
     file_content_end += "                           n_azimuth = n_azimuth, n_altitude=n_altitude, n_heading=n_heading)\n"
-    file_content_end += "\tTAS.run_simulations(methods=methods, redo_bool=False)\n"
+    file_content_end += "\tTAS.run_simulations(methods=methods, redo_bool=True)\n"
 
     for dv in dvs:
         for duwb in d_uwbs:
