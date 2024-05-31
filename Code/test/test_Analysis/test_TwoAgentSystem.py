@@ -62,14 +62,14 @@ class MyTestCase(unittest.TestCase):
         plt.show()
 
     def test_analysis_LOS_simulation(self):
-        result_folder = "Results"
+        result_folder = "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/1hz"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp(save_fig=False)
         plt.show()
 
     def test_time_analysis(self):
-        result_folder = "Results"
+        result_folder =  "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/10hz"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp_time(save_fig=False)

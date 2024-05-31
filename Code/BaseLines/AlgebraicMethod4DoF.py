@@ -105,7 +105,7 @@ class AlgebraicMethod4DoF:
 
         self.x_ca_r_alg = np.zeros(4)
 
-        self.horizon  = 10
+        self.horizon = 10
         self.wls_bool = False
         # Logging variables:
         self.logging = False

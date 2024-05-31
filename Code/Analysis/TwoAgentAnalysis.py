@@ -246,9 +246,9 @@ class TwoAgentAnalysis:
             # # print(df.mean(), df.std())
 
 
-            order = ["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"]
+            # order = ["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"]
             g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
-                            dodge=False, height=3, aspect=0.65, order=order)
+                            dodge=False, height=3, aspect=0.65) #, order=order)
 
 
             g.tick_params(bottom=False)
@@ -284,7 +284,7 @@ class TwoAgentAnalysis:
                 new_legend_data = {}
 
                 print(legend_data)
-                for name in order:
+                for name in self.names:
 
                     new_legend_data[self.names[name]] = legend_data[name]
 
@@ -302,6 +302,21 @@ class TwoAgentAnalysis:
             if save_fig:
                 g.fig.savefig(self.result_folder+"/"+variable + ".png")
             gs.append(g)
+
+    def box_plot(self, methods = None, save_fig = False):
+        if self.df is None:
+            self.create_panda_dataframe()
+
+        if methods is None:
+            methods = self.df["Method"].unique()
+        gs = []
+        for variable in self.y_label:
+            df = self.df.loc[(self.df["Sigma_uwb"].isin([0.1])) &
+                             (self.df["Sigma_dv"].isin([0.01])) &
+                             (self.df["Method"].isin(methods)) &
+                             (self.df["Variable"] == variable)]
+            methods = df["Method"].unique()
+            print(methods)
 
     def boxplot_freq_comp(self, save_fig = False):
 
@@ -470,8 +485,8 @@ class TwoAgentAnalysis:
     def calculation_time(self, save_fig = False):
         if self.df is None:
             self.create_panda_dataframe()
-        method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple"}
-        order = ["losupf", "nodriftupf", "algebraic", "NLS"]
+        # method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple"}
+        # order = ["losupf", "nodriftupf", "algebraic", "NLS"]
         # order = ["NLS", "NLS_p"]
         # plt.figure(figsize=(8, 4))
         fig, axes = plt.subplots(1, 1, figsize=(8, 4))
@@ -504,8 +519,8 @@ class TwoAgentAnalysis:
 
             # Plotting
             # plt.sca(axes[i])
-            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
-                             palette=method_colors, hue_order=order, linewidth=2.5, legend=False)
+            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True, linewidth=2.5, legend=False)
+                             # palette=method_colors, hue_order=order, linewidth=2.5, legend=False)
             # axes[i].set_title(self.y_label[variable])
             axes.set_xlabel("time [s]", fontsize=12)
             axes.set_ylabel(self.y_label[variable], fontsize=12)
@@ -528,23 +543,24 @@ class TwoAgentAnalysis:
                    bbox_to_anchor=(0.5, 0.92))
         plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
-    def boxplot_LOS_comp_time(self, number_of_bins=5, save_fig=False):
+    def boxplot_LOS_comp_time(self, sigma_v=[0.01], sigma_d =[0.1], save_fig=False):
         if self.df is None:
             self.create_panda_dataframe()
-        method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple", "QCQP":"tab:purple"}
-        order = ["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"]
+        # method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple", "QCQP":"tab:purple"}
+        # order = ["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"]
         # order = [ "NLS", "NLS_p"]
 
         # plt.figure(figsize=(8, 4))
         fig, axes = plt.subplots(1, 2, figsize=(8, 4))
         # axes_i = 0
         for i, variable in enumerate(["error_x_relative", "error_h_relative"]): #self.y_label:
-            df = self.df.loc[~self.df["Method"].isin(["slam", "WLS", "upf"]) & (self.df["Variable"] == variable)]
+            df = self.df.loc[~self.df["Method"].isin(["slam", "WLS", "upf"]) & (self.df["Variable"] == variable) &
+                            (self.df["Sigma_uwb"].isin(sigma_d)) & (self.df["Sigma_dv"].isin(sigma_v)) ]
             methods = df["Method"].unique()
 
             method_means = []  # to store mean values for each method
             time_points = df["Time"].unique()
-            time_points = time_points[:210]
+            # time_points = time_points[:210]
 
             for method in methods:
                 method_time_values = []  # to store values at each time point for a specific method
@@ -567,8 +583,8 @@ class TwoAgentAnalysis:
             # Plotting
             plt.sca(axes[i])
 
-            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
-                             palette=method_colors, hue_order=order, linewidth=2.5, legend=False)
+            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True, linewidth=2.5, legend=True)
+                             # palette=method_colors, hue_order=order,
             axes[i].set_xlabel("time [s]", fontsize=12)
             axes[i].set_ylabel(self.y_label[variable], fontsize=12)
             if variable == "error_x_relative":
@@ -585,9 +601,10 @@ class TwoAgentAnalysis:
                         ]
         legend_labels = ['Ours, proposed', "Ours, without pseudo-state", 'Algebraic', "NLS", "QCQP"]
         # legend_labels = ["NLS with good initial guess", "NLS with perfect initial guess"]
-        fig.suptitle("Average error evolution of the experiments")
-        fig.legend( handles=legend_handles, labels=legend_labels, ncol=4, fontsize=12, loc="upper center", bbox_to_anchor=(0.5, 0.92))
-        plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
+        # fig.suptitle("Average error evolution of the experiments")
+        # fig.legend( handles=legend_handles, labels=legend_labels, ncol=4, fontsize=12, loc="upper center", bbox_to_anchor=(0.5, 0.92))
+        # fig.legend( ncol=4, fontsize=12, loc="upper center", bbox_to_anchor=(0.5, 0.92))
+        # plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
     #-----------------------
     # NLOS functions:
