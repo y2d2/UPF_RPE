@@ -12,6 +12,7 @@ if __name__ == "__main__":
 
 
     methods = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
+               "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0",
                "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
                "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
                "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0",

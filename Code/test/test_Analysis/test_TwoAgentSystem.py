@@ -63,13 +63,38 @@ class MyTestCase(unittest.TestCase):
 
     def test_analysis_LOS_simulation(self):
         result_folder = "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/1hz"
+        # result_folder = "./Results/test/1hz"
+
+        methods_order = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
+                         # "NLS|horizon=10",
+                         # "algebraic|horizon=10",
+                         "algebraic|horizon=100",
+                        # "QCQP|horizon=10",
+                      "QCQP|horizon=100"]
+
+        methods_color = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "tab:blue",
+                         # "NLS|horizon=10": "tab:red",
+                         # "algebraic|horizon=10": "tab:green",
+                         "algebraic|horizon=100": "tab:green",
+                         # "QCQP|horizon=10": "tab:purple",
+                         "QCQP|horizon=100": "tab:red"}
+
+        methods_legend = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "Proposed, ours",
+                        # "NLS|horizon=10": "NLS_10",
+                         # "algebraic|horizon=10": "Algebraic_10",
+                         "algebraic|horizon=100": "Algebraic",
+                         # "QCQP|horizon=10": "QCQP_10",
+                         "QCQP|horizon=100": "QCQP"}
+
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         taa.create_panda_dataframe()
-        taa.boxplot_LOS_comp(save_fig=False)
+        taa.boxplot_LOS_comp(methods_order = methods_order, methods_color= methods_color,
+                             methods_legend=methods_legend, save_fig=False)
         plt.show()
 
     def test_time_analysis(self):
-        result_folder =  "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/10hz"
+        result_folder =  "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/1hz"
+        # result_folder =  "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/10hz"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp_time(save_fig=False)

@@ -23,15 +23,15 @@ class TwoAgentAnalysis:
         # self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "upf", "losupf": "Ours, proposed", "nodriftupf": "Ours, without pseudo-state", "QCQP": "QCQP",
         #                "losupf | resampling_factor = 0.1 | sigma_uwb_factor = 2.0" : "losupf|resampling_factor=0.1|sigma_uwb_factor=2.0"}
 
-        self.names = { "losupf|resample_factor=0.1|sigma_uwb_factor=2.0" : "UPF, RF=0.1, $\sigma_uwb_f$=2.0",
-                        "losupf|resample_factor=0.1|sigma_uwb_factor=1.0" : "UPF, RF=0.1, $\sigma_uwb_f$=1.0",
-                        "losupf|resample_factor=0.5|sigma_uwb_factor=2.0" : "UPF, RF=0.5, $\sigma_uwb_f$=2.0",
-                        "NLS|horizon=10" : "NLS, horizon=10",
-                        #"NLS|horizon=100",
-                        "algebraic|horizon=10" : "Algebraic, horizon=10",
-                        "algebraic|horizon=100": "Algebraic, horizon=10",
-                        "QCQP|horizon=10": "QCQP, horizon=10",
-                        "QCQP|horizon=100": "QCQP, horizon=10"}
+        self.names = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "UPF, RF=0.1, $\sigma_uwb_f$=2.0",
+                      "losupf|resample_factor=0.1|sigma_uwb_factor=1.0": "UPF, RF=0.1, $\sigma_uwb_f$=1.0",
+                      "losupf|resample_factor=0.5|sigma_uwb_factor=2.0": "UPF, RF=0.5, $\sigma_uwb_f$=2.0",
+                      "NLS|horizon=10": "NLS, horizon=10",
+                      #"NLS|horizon=100",
+                      "algebraic|horizon=10": "Algebraic, horizon=10",
+                      "algebraic|horizon=100": "Algebraic, horizon=10",
+                      "QCQP|horizon=10": "QCQP, horizon=10",
+                      "QCQP|horizon=100": "QCQP, horizon=10"}
 
         # NLOS paper names
         # self.names = { "algebraic": "Algebraic", "WLS": "WLS", "NLS": "NLS", "upf": "NLOS UPF (ours)", "losupf":  "UPF (ours)" , "nodriftupf": r"UPF $\tilde{w}$ $\theta_d$ (ours)"}
@@ -46,7 +46,7 @@ class TwoAgentAnalysis:
     # -----------------------
     def load_results(self):
         self.results = {}
-        self.data={}
+        self.data = {}
         for file in os.listdir(self.result_folder):
             if file.endswith(".pkl"):
                 with open(self.result_folder + "/" + file, "rb") as f:
@@ -80,16 +80,16 @@ class TwoAgentAnalysis:
                     for drone_name in data[sim][method]:
                         if method not in data["numerical_data"]:
                             data["numerical_data"][method] = {}
-                            result[method]={}
+                            result[method] = {}
                         for variable in data[sim][method][drone_name]:
                             if variable not in data["numerical_data"][method]:
                                 data["numerical_data"][method][variable] = {}
-                                result[method][variable]=[]
+                                result[method][variable] = []
                             result[method][variable].append(data[sim][method][drone_name][variable])
         for method in data["numerical_data"]:
             for variable in data["numerical_data"][method]:
                 res = np.array(result[method][variable]).astype(float)
-                data["numerical_data"][method][variable]= res
+                data["numerical_data"][method][variable] = res
         return data
 
     def calculate_statistics(self, data):
@@ -104,7 +104,7 @@ class TwoAgentAnalysis:
                 data["analysis"][method][variable]["median"] = np.median(res, axis=0)
                 upper_q = np.percentile(res, 75, axis=0)
                 lower_q = np.percentile(res, 25, axis=0)
-                data["analysis"][method][variable]["upper_quartile"] =upper_q
+                data["analysis"][method][variable]["upper_quartile"] = upper_q
                 data["analysis"][method][variable]["lower_quartile"] = lower_q
                 data["analysis"][method][variable]["iqr"] = upper_q - lower_q
                 upper_w = res.copy()
@@ -138,10 +138,10 @@ class TwoAgentAnalysis:
             for variable in data["numerical_data"][method]:
                 res = np.array(data["numerical_data"][method][variable]).astype(float)
                 df = pd.DataFrame(res).assign(Variable=variable,
-                                             Method =method,
-                                             Sigma_dv=data["parameters"]["sigma_dv"],
-                                             Sigma_uwb=data["parameters"]["sigma_uwb"],
-                                             Uwb_rate = data["parameters"]["uwb_rate"])
+                                              Method=method,
+                                              Sigma_dv=data["parameters"]["sigma_dv"],
+                                              Sigma_uwb=data["parameters"]["sigma_uwb"],
+                                              Uwb_rate=data["parameters"]["uwb_rate"])
                 self.dfs.append(df)
 
             # df_var = pd.concat([dfs[method][variable] for variable in dfs[method]])
@@ -152,9 +152,9 @@ class TwoAgentAnalysis:
         if self.data is None:
             self.load_results()
         dfs = pd.concat(self.dfs)
-        self.df = pd.melt(dfs, id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_uwb', "Uwb_rate"], var_name=["Time"])  # MELT
+        self.df = pd.melt(dfs, id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_uwb', "Uwb_rate"],
+                          var_name=["Time"])  # MELT
         return
-
 
     # -----------------------
     # delete functions:
@@ -186,16 +186,84 @@ class TwoAgentAnalysis:
                 f.close()
 
     # -----------------------
+    # Support plotting functions:
+    # -----------------------
+    def remove_x_ticks(self, g, methods):
+        g.tick_params(bottom=False)
+        g.set_axis_labels()
+        ticks_nr = len(methods)
+        g.set_xticklabels(labels=["" for i in range(ticks_nr)])
+        g.set_axis_labels("", "")
+        g.set_titles("")
+        # g.tick_params(bottom=False)
+
+    def set_labels(self, g):
+        smallest_x = 0
+        smallest_y = 100
+        x_values = []
+        y_values = []
+        for ax in g.axes_dict:
+            if ax[0] not in x_values:
+                x_values.append(ax[0])
+            if ax[1] not in y_values:
+                y_values.append(ax[1])
+            if ax[0] > smallest_x:
+                smallest_x = ax[0]
+            if ax[1] < smallest_y:
+                smallest_y = ax[1]
+
+        for sigma_x in x_values:
+            if g.axes_dict[(sigma_x, smallest_y)] != None:
+                g.axes_dict[(sigma_x, smallest_y)].set_ylabel("VIO std: $\\sigma_v $= " + str(sigma_x),
+                                                              fontdict={'fontsize': rcParams['axes.labelsize']})
+        for sigma_y in y_values:
+            if g.axes_dict[(smallest_x, sigma_y)] != None:
+                g.axes_dict[(smallest_x, sigma_y)].set_xlabel("UWB std: $\\sigma_d $= " + str(sigma_y),
+                                                              fontdict={'fontsize': rcParams['axes.labelsize']})
+
+
+    def set_legend(self, g, methods_legend = {}):
+        if methods_legend == {}:
+            g.add_legend()
+            return
+
+        legend_data = g._legend_data
+        new_legend_data = {}
+
+        print(legend_data)
+        for name in methods_legend:
+            new_legend_data[methods_legend[name]] = legend_data[name]
+
+        g.add_legend(legend_data=new_legend_data)
+
+
+    def print_statistics(self, methods, variable, df):
+        for method in methods:
+            print(method, variable, df[df["Method"] == method]["value"].mean(), " pm ",
+                  df[df["Method"] == method]["value"].std(), "; median: ",
+                  df[df["Method"] == method]["value"].median())
+
+    def filter_methods(self, methods):
+        if self.df is None:
+            self.create_panda_dataframe()
+
+        if len(methods) == 0:
+            methods = self.df["Method"].unique()
+
+        df = self.df.loc[(self.df["Method"].isin(methods))]
+        return df, methods
+
+    # -----------------------
     # Plotting functions:
     # -----------------------
-    def boxplot_var(self, number_of_bins=5, sigma_uwb = 0.1, sigma_dv = 0.1):
+    def boxplot_var(self, number_of_bins=5, sigma_uwb=0.1, sigma_dv=0.1):
         if self.df is None:
             self.create_panda_dataframe()
 
         time_len = len(self.df["Time"].unique())
-        time_bins = np.linspace(0, time_len-1, number_of_bins).astype(int)
+        time_bins = np.linspace(0, time_len - 1, number_of_bins).astype(int)
 
-        gs =[]
+        gs = []
         for variable in self.y_label:
             df = self.df.loc[(self.df["Time"].isin(time_bins)) &
                              (self.df["Method"] != "slam") &
@@ -217,93 +285,45 @@ class TwoAgentAnalysis:
         for i in range(1, len(gs)):
             gs[i].set_titles("")
 
-    def boxplot_LOS_comp(self, save_fig = False):
-        if self.df is None:
-            self.create_panda_dataframe()
 
-        gs =[]
+
+    def boxplot_LOS_comp(self, sigma_uwb=[1., 0.1], sigma_v=[0.1, 0.01], methods_order=[], methods_color=None, methods_legend = {},  save_fig=False):
+        method_df, methods_order = self.filter_methods(methods_order)
+        gs = []
         for variable in self.y_label:
-            df = self.df.loc[(self.df["Sigma_uwb"].isin([1, 0.1])) &
-                             (self.df["Sigma_dv"].isin([0.1, 0.01])) &
-                             (~self.df["Method"].isin(["slam", "WLS", "upf" ])) &
-                             (self.df["Variable"] == variable)]
-            methods = df["Method"].unique()
-            # if variable=="calculation_time":
-            #     df_losupf = df.loc[df["Method"] == "losupf"]
-            #     df_losupf['Method'] =  df_losupf['Method'].replace(['losupf'], 'nodriftupf')
-            #
-            #     df = df.loc[(~self.df["Method"].isin(["nodriftupf"]))]
-            #     print(df["Method"].unique())
-            #     df= pd.concat([df, df_losupf])
-            #     print(df["Method"].unique())
-
-                # df.append(df_nodriftupf)
-                # df.loc[df["Method"] == "nodriftupf"] = df.loc[df["Method"] == "losupf"]
-                # df[df["Method"] == "nodriftupf"] = df[df["Method"] == "losupf"]
-            for method in methods:
-                print(method, variable, df[df["Method"] == method]["value"].mean(), " pm ", df[df["Method"] == method]["value"].std(), "; median: " , df[df["Method"] == method]["value"].median())
-            # df.loc[df["Method"] ==
-            # # print(df.mean(), df.std())
-
-
-            # order = ["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"]
+            df = method_df.loc[(self.df["Sigma_uwb"].isin(sigma_uwb)) &
+                             (self.df["Sigma_dv"].isin(sigma_v)) &
+                             (self.df["Variable"] == variable) &
+                               (self.df["Time"] > 100)]
+            # if methods_color == {}:
+            #     g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
+            #                 dodge=False, height=3, aspect=0.65, order=methods_order)
+            # else:
             g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
-                            dodge=False, height=3, aspect=0.65) #, order=order)
+                        dodge=False, height=3, aspect=0.65, order=methods_order, palette=methods_color, hue_order=methods_order)
+
+            self.remove_x_ticks(g, methods_order)
+            self.set_labels(g)
+            self.print_statistics(methods_order, variable, df)
 
 
-            g.tick_params(bottom=False)
-            g.set_axis_labels()
-            ticks_nr = len(set(df["Method"].unique()) - {"slam", "WLS",  "upf"})
-            g.set_xticklabels(labels=["" for i in range(ticks_nr)])
-            g.set_axis_labels("", "" )
-            g.set_titles("")
-
-            smallest_x = 0
-            smallest_y = 100
-            x_values = []
-            y_values = []
-            for ax in g.axes_dict:
-                if ax[0] not in x_values:
-                    x_values.append(ax[0])
-                if ax[1] not in y_values:
-                    y_values.append(ax[1])
-                if ax[0] > smallest_x:
-                    smallest_x = ax[0]
-                if ax[1] < smallest_y:
-                    smallest_y = ax[1]
-
-            for sigma_x in x_values:
-                if g.axes_dict[(sigma_x, smallest_y)] != None:
-                    g.axes_dict[(sigma_x, smallest_y)].set_ylabel("VIO std: $\\sigma_v $= " + str(sigma_x), fontdict={'fontsize': rcParams['axes.labelsize']})
-            for sigma_y in y_values:
-                if g.axes_dict[(smallest_x, sigma_y)] != None:
-                    g.axes_dict[(smallest_x, sigma_y)].set_xlabel("UWB std: $\\sigma_d $= " + str(sigma_y), fontdict={'fontsize': rcParams['axes.labelsize']})
 
             if variable == "calculation_time":
-                legend_data = g._legend_data
-                new_legend_data = {}
+                self.set_legend(g, methods_legend)
+                # for ax in g.axes_dict:
+                #     g.axes_dict[ax].set_yscale("log")
 
-                print(legend_data)
-                for name in self.names:
-
-                    new_legend_data[self.names[name]] = legend_data[name]
-
-                g.add_legend(legend_data=new_legend_data)
-
-                for ax in g.axes_dict:
-                    g.axes_dict[ax].set_yscale("log")
-
-            if variable =="error_x_relative":
+            if variable == "error_x_relative":
                 for ax in g.axes_dict:
                     g.axes_dict[ax].set_yscale("log")
 
             g.fig.subplots_adjust(top=0.9)
             g.fig.suptitle(self.y_label[variable])
             if save_fig:
-                g.fig.savefig(self.result_folder+"/"+variable + ".png")
+                g.fig.savefig(self.result_folder + "/" + variable + ".png")
             gs.append(g)
 
-    def box_plot(self, methods = None, save_fig = False):
+    def box_plot(self, methods=None, save_fig=False):
         if self.df is None:
             self.create_panda_dataframe()
 
@@ -318,16 +338,16 @@ class TwoAgentAnalysis:
             methods = df["Method"].unique()
             print(methods)
 
-    def boxplot_freq_comp(self, save_fig = False):
+    def boxplot_freq_comp(self, save_fig=False):
 
         if self.df is None:
             self.create_panda_dataframe()
 
-        gs =[]
+        gs = []
         for variable in self.y_label:
-            df = self.df.loc[(self.df["Sigma_uwb"].isin( [0.1])) &
+            df = self.df.loc[(self.df["Sigma_uwb"].isin([0.1])) &
                              (self.df["Sigma_dv"].isin([0.01])) &
-                             (~self.df["Method"].isin(["slam", "WLS", "upf" ])) &
+                             (~self.df["Method"].isin(["slam", "WLS", "upf"])) &
                              (self.df["Variable"] == variable)]
             methods = df["Method"].unique()
             print(methods)
@@ -340,25 +360,25 @@ class TwoAgentAnalysis:
             #     df= pd.concat([df, df_losupf])
             #     print(df["Method"].unique())
 
-                # df.append(df_nodriftupf)
-                # df.loc[df["Method"] == "nodriftupf"] = df.loc[df["Method"] == "losupf"]
-                # df[df["Method"] == "nodriftupf"] = df[df["Method"] == "losupf"]
+            # df.append(df_nodriftupf)
+            # df.loc[df["Method"] == "nodriftupf"] = df.loc[df["Method"] == "losupf"]
+            # df[df["Method"] == "nodriftupf"] = df[df["Method"] == "losupf"]
             for method in methods:
-                print(method, variable, df[df["Method"] == method]["value"].mean(), " pm ", df[df["Method"] == method]["value"].std(), "; median: " , df[df["Method"] == method]["value"].median())
+                print(method, variable, df[df["Method"] == method]["value"].mean(), " pm ",
+                      df[df["Method"] == method]["value"].std(), "; median: ",
+                      df[df["Method"] == method]["value"].median())
             # df.loc[df["Method"] ==
             # # print(df.mean(), df.std())
-
 
             # order = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0"]
             g = sns.catplot(data=df, kind='box', col='Uwb_rate', row="Sigma_uwb", y='value', x='Method', hue='Method',
                             dodge=False, height=3, aspect=0.65)
 
-
             g.tick_params(bottom=False)
             g.set_axis_labels()
-            ticks_nr = len(set(df["Method"].unique()) - {"slam", "WLS",  "upf"})
+            ticks_nr = len(set(df["Method"].unique()) - {"slam", "WLS", "upf"})
             g.set_xticklabels(labels=["" for i in range(ticks_nr)])
-            g.set_axis_labels("", "" )
+            g.set_axis_labels("", "")
             g.set_titles("")
 
             smallest_x = 0
@@ -396,19 +416,17 @@ class TwoAgentAnalysis:
             #     for ax in g.axes_dict:
             #         g.axes_dict[ax].set_yscale("log")
 
-            if variable =="error_x_relative":
+            if variable == "error_x_relative":
                 for ax in g.axes_dict:
                     g.axes_dict[ax].set_yscale("log")
 
             g.fig.subplots_adjust(top=0.9)
             g.fig.suptitle(self.y_label[variable])
             if save_fig:
-                g.fig.savefig(self.result_folder+"/"+variable + ".png")
+                g.fig.savefig(self.result_folder + "/" + variable + ".png")
             gs.append(g)
 
-
-
-    def single_settings_boxplot(self, save_fig = False):
+    def single_settings_boxplot(self, save_fig=False):
         if self.df is None:
             self.create_panda_dataframe()
 
@@ -422,18 +440,22 @@ class TwoAgentAnalysis:
 
         # Create custom subplots with different y-axis scales
         fig, axes = plt.subplots(1, 2, figsize=(7, 4))
-        fig.suptitle(r"Experiments: $\sigma_v= 0.15 \frac{m}{s}$, $\sigma_w=0.05 \frac{(rad)}{s}$ and $\sigma_d = 0.25 m$", fontsize=12)
+        fig.suptitle(
+            r"Experiments: $\sigma_v= 0.15 \frac{m}{s}$, $\sigma_w=0.05 \frac{(rad)}{s}$ and $\sigma_d = 0.25 m$",
+            fontsize=12)
         for i, variable in enumerate(["error_x_relative", "error_h_relative"]):
             df_c = df[df["Variable"] == variable]
             methods = df_c["Method"].unique()
             for method in methods:
-                print(method, variable, df_c[df_c["Method"] == method]["value"].mean(), " pm ", df_c[df_c["Method"] == method]["value"].std(), "; median: " , df_c[df_c["Method"] == method]["value"].median())
+                print(method, variable, df_c[df_c["Method"] == method]["value"].mean(), " pm ",
+                      df_c[df_c["Method"] == method]["value"].std(), "; median: ",
+                      df_c[df_c["Method"] == method]["value"].median())
 
             order = ["losupf", "nodriftupf", "algebraic", "NLS"]
-            custom_colors = {"losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS": "tab:blue"}
+            custom_colors = {"losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange",
+                             "NLS": "tab:blue"}
             g = sns.boxplot(data=df[df["Variable"] == variable], x='Method', y='value', hue='Method', dodge=False,
-                        ax=axes[i], order = order, palette=custom_colors)
-
+                            ax=axes[i], order=order, palette=custom_colors)
 
             axes[i].set_title("")
             axes[i].set_ylabel("")
@@ -455,7 +477,6 @@ class TwoAgentAnalysis:
 
         new_legend_data = {}
 
-
         for line, text in zip(legend_data, df["Method"].unique()):
             new_legend_data[self.names[text]] = line
         legend_data = new_legend_data
@@ -469,20 +490,19 @@ class TwoAgentAnalysis:
         plt.subplots_adjust(wspace=0.5, right=0.7)  # Adjust the 'wspace' value as needed
         # You can save the figure to a file if needed
 
-
         # fig.suptitle("Average error over all simulated conditions")
-        fig.legend( handles=new_legend_data.values(), labels=new_legend_data.keys(), ncol=4, fontsize=10, loc="upper center", bbox_to_anchor=(0.5, 0.92))
+        fig.legend(handles=new_legend_data.values(), labels=new_legend_data.keys(), ncol=4, fontsize=10,
+                   loc="upper center", bbox_to_anchor=(0.5, 0.92))
         axes[1].get_legend().remove()
         plt.subplots_adjust(top=0.80, bottom=0.12, left=0.07, right=0.93)
 
         if save_fig:
-            plt.savefig(self.result_folder+"/"+"single_settings_boxplot.pdf", bbox_inches='tight')
-
+            plt.savefig(self.result_folder + "/" + "single_settings_boxplot.pdf", bbox_inches='tight')
 
     #------------------------
     # Time analysis
     #------------------------
-    def calculation_time(self, save_fig = False):
+    def calculation_time(self, save_fig=False):
         if self.df is None:
             self.create_panda_dataframe()
         # method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple"}
@@ -491,7 +511,7 @@ class TwoAgentAnalysis:
         # plt.figure(figsize=(8, 4))
         fig, axes = plt.subplots(1, 1, figsize=(8, 4))
         # axes_i = 0
-        for i, variable in enumerate(["calculation_time"]): #self.y_label:
+        for i, variable in enumerate(["calculation_time"]):  #self.y_label:
             df = self.df.loc[~self.df["Method"].isin(["slam", "WLS", "upf"]) & (self.df["Variable"] == variable)]
             methods = df["Method"].unique()
             method_means = []  # to store mean values for each method
@@ -519,8 +539,9 @@ class TwoAgentAnalysis:
 
             # Plotting
             # plt.sca(axes[i])
-            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True, linewidth=2.5, legend=False)
-                             # palette=method_colors, hue_order=order, linewidth=2.5, legend=False)
+            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
+                             linewidth=2.5, legend=False)
+            # palette=method_colors, hue_order=order, linewidth=2.5, legend=False)
             # axes[i].set_title(self.y_label[variable])
             axes.set_xlabel("time [s]", fontsize=12)
             axes.set_ylabel(self.y_label[variable], fontsize=12)
@@ -528,13 +549,12 @@ class TwoAgentAnalysis:
                 axes.set_yscale("log")
 
         legend_handles = [
-                          # Line2D([0], [0], color='tab:green', linewidth=2.5),
-                          # Line2D([0], [0], color='tab:red', linewidth=2.5),
-                          # Line2D([0], [0], color='tab:orange', linewidth=2.5),
-                          Line2D([0], [0], color='tab:blue', linewidth=2.5),
-                          Line2D([0], [0], color='tab:purple', linewidth=2.5)
-                        ]
-
+            # Line2D([0], [0], color='tab:green', linewidth=2.5),
+            # Line2D([0], [0], color='tab:red', linewidth=2.5),
+            # Line2D([0], [0], color='tab:orange', linewidth=2.5),
+            Line2D([0], [0], color='tab:blue', linewidth=2.5),
+            Line2D([0], [0], color='tab:purple', linewidth=2.5)
+        ]
 
         legend_labels = ['Ours, proposed', "Ours, without pseudo-state", 'Algebraic', "NLS"]
         # legend_labels = ["NLS with good initial guess", "NLS with perfect initial guess"]
@@ -543,7 +563,7 @@ class TwoAgentAnalysis:
                    bbox_to_anchor=(0.5, 0.92))
         plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
-    def boxplot_LOS_comp_time(self, sigma_v=[0.01], sigma_d =[0.1], save_fig=False):
+    def boxplot_LOS_comp_time(self, sigma_v=[0.01], sigma_d=[0.1], save_fig=False):
         if self.df is None:
             self.create_panda_dataframe()
         # method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple", "QCQP":"tab:purple"}
@@ -553,9 +573,9 @@ class TwoAgentAnalysis:
         # plt.figure(figsize=(8, 4))
         fig, axes = plt.subplots(1, 2, figsize=(8, 4))
         # axes_i = 0
-        for i, variable in enumerate(["error_x_relative", "error_h_relative"]): #self.y_label:
+        for i, variable in enumerate(["error_x_relative", "error_h_relative"]):  #self.y_label:
             df = self.df.loc[~self.df["Method"].isin(["slam", "WLS", "upf"]) & (self.df["Variable"] == variable) &
-                            (self.df["Sigma_uwb"].isin(sigma_d)) & (self.df["Sigma_dv"].isin(sigma_v)) ]
+                             (self.df["Sigma_uwb"].isin(sigma_d)) & (self.df["Sigma_dv"].isin(sigma_v))]
             methods = df["Method"].unique()
 
             method_means = []  # to store mean values for each method
@@ -569,7 +589,8 @@ class TwoAgentAnalysis:
                     method_time_values.append(mean_value)
 
                 method_means.append({"Method": method, "TimeValues": method_time_values})
-                print("For Method:", method, variable, "Average over all conditions at each time point:", method_time_values)
+                print("For Method:", method, variable, "Average over all conditions at each time point:",
+                      method_time_values)
 
             # Create a new DataFrame with average values and time points
             avg_time_df = pd.DataFrame({"Time": time_points})
@@ -583,22 +604,23 @@ class TwoAgentAnalysis:
             # Plotting
             plt.sca(axes[i])
 
-            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True, linewidth=2.5, legend=True)
-                             # palette=method_colors, hue_order=order,
+            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
+                             linewidth=2.5, legend=True)
+            # palette=method_colors, hue_order=order,
             axes[i].set_xlabel("time [s]", fontsize=12)
             axes[i].set_ylabel(self.y_label[variable], fontsize=12)
             if variable == "error_x_relative":
                 axes[i].set_yscale("log")
 
         legend_handles = [
-                          Line2D([0], [0], color='tab:green', linewidth=2.5),
-                          Line2D([0], [0], color='tab:red', linewidth=2.5),
-                          Line2D([0], [0], color='tab:orange', linewidth=2.5),
-                          Line2D([0], [0], color='tab:blue', linewidth=2.5),
-                          Line2D([0], [0], color='tab:purple', linewidth=2.5),
+            Line2D([0], [0], color='tab:green', linewidth=2.5),
+            Line2D([0], [0], color='tab:red', linewidth=2.5),
+            Line2D([0], [0], color='tab:orange', linewidth=2.5),
+            Line2D([0], [0], color='tab:blue', linewidth=2.5),
+            Line2D([0], [0], color='tab:purple', linewidth=2.5),
 
-                          # Line2D([0], [0], color='tab:purple', linewidth=2.5)
-                        ]
+            # Line2D([0], [0], color='tab:purple', linewidth=2.5)
+        ]
         legend_labels = ['Ours, proposed', "Ours, without pseudo-state", 'Algebraic', "NLS", "QCQP"]
         # legend_labels = ["NLS with good initial guess", "NLS with perfect initial guess"]
         # fig.suptitle("Average error evolution of the experiments")
@@ -610,29 +632,28 @@ class TwoAgentAnalysis:
     # NLOS functions:
     #-----------------------
 
-    def boxplot_NLOS_comp(self, save_fig = False):
+    def boxplot_NLOS_comp(self, save_fig=False):
         if self.df is None:
             self.create_panda_dataframe()
 
         time_len = len(self.df["Time"].unique())
 
-
-        y_label = { "error_x_relative": "Relative position error [m]",
-                    "error_h_relative": "Relative heading error [rad]",
-                    "los_error": "LOS error"}
-        gs =[]
+        y_label = {"error_x_relative": "Relative position error [m]",
+                   "error_h_relative": "Relative heading error [rad]",
+                   "los_error": "LOS error"}
+        gs = []
         for variable in y_label:
             df = self.df.loc[
-                            #(self.df["Time"] == time_len-1) &
-                             (~self.df["Method"].isin(["slam", "WLS"])) &
-                             (self.df["Variable"] == variable) &
-                             (self.df["Sigma_uwb"].isin([1, 0.1])) &
-                             (self.df["Sigma_dv"].isin([0.1, 0.01]))]
+                #(self.df["Time"] == time_len-1) &
+                (~self.df["Method"].isin(["slam", "WLS"])) &
+                (self.df["Variable"] == variable) &
+                (self.df["Sigma_uwb"].isin([1, 0.1])) &
+                (self.df["Sigma_dv"].isin([0.1, 0.01]))]
             g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
                             dodge=False, height=3, aspect=0.65)
             g.tick_params(bottom=False)
             g.set_xticklabels(labels=["", ""])
-            g.set_axis_labels("", "" )
+            g.set_axis_labels("", "")
             g.set_titles("")
             g.fig.suptitle(y_label[variable])
             smallest_x = 0
@@ -651,12 +672,14 @@ class TwoAgentAnalysis:
 
             for sigma_x in x_values:
                 if g.axes_dict[(sigma_x, smallest_y)] != None:
-                    g.axes_dict[(sigma_x, smallest_y)].set_ylabel("$\\sigma_v $= " + str(sigma_x), fontdict={'fontsize': rcParams['axes.labelsize']})
+                    g.axes_dict[(sigma_x, smallest_y)].set_ylabel("$\\sigma_v $= " + str(sigma_x),
+                                                                  fontdict={'fontsize': rcParams['axes.labelsize']})
             for sigma_y in y_values:
                 # print(sigma_y, smallest_x)
                 if g.axes_dict[(smallest_x, sigma_y)] != None:
                     # g.axes_dict[(smallest_x, sigma_y)].xaxis.set_label_position('top')
-                    g.axes_dict[(smallest_x, sigma_y)].set_xlabel("$\\sigma_d $= " + str(sigma_y), fontdict={'fontsize': rcParams['axes.labelsize']})
+                    g.axes_dict[(smallest_x, sigma_y)].set_xlabel("$\\sigma_d $= " + str(sigma_y),
+                                                                  fontdict={'fontsize': rcParams['axes.labelsize']})
             # for sigma_d in [0.01, 0.1, 1]:
             #     if g.axes_dict[(sigma_d, 0.01)] != None:
             #         g.axes_dict[(sigma_d, 0.01)].set_ylabel("$\sigma_v $= 0.01")
@@ -678,7 +701,7 @@ class TwoAgentAnalysis:
                     g.axes_dict[ax].set_yscale("log")
                 #     g.axes_dict[ax].set_ylim(0, 0.4)
 
-            if variable =="error_x_relative":
+            if variable == "error_x_relative":
                 for ax in g.axes_dict:
                     g.axes_dict[ax].set_yscale("log")
 
@@ -687,8 +710,6 @@ class TwoAgentAnalysis:
             if save_fig:
                 g.fig.savefig(variable + ".png")
             gs.append(g)
-
-
 
 
 if __name__ == "__main__":
