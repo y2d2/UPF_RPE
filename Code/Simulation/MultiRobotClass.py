@@ -599,10 +599,14 @@ class TwoAgentSystem():
     def get_data(self):
         if self.result_file is None:
             self.get_results_file()
+        print("Getting data from file: ", self.result_file)
         if self.data is None:
             if os.path.isfile(self.result_file):
                 with open(self.result_file, "rb") as f:
-                    self.data = pkl.load(f)
+                    try:
+                        self.data = pkl.load(f)
+                    except EOFError:
+                        print(self.result_file)
                 f.close()
             else:
                 self.data = {}
