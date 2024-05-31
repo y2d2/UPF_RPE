@@ -4,7 +4,7 @@ name: RPE_simulation
 pre_window:
    - cd ../
    - source .venv/bin/activate
-   - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Generate_Tests
+#   - python3 -m test_cases.RPE_2_agents_LOS.simulations.Simulation_runs.Generate_Tests
 startup_window: Monitor
 
 windows:
