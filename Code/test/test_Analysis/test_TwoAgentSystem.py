@@ -90,6 +90,7 @@ class MyTestCase(unittest.TestCase):
                          "QCQP|horizon=100": "QCQP"}
 
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa.delete_data()
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp(methods_order = methods_order, methods_color= methods_color,
                              methods_legend=methods_legend, save_fig=False)
