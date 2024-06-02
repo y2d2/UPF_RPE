@@ -310,8 +310,8 @@ class TwoAgentAnalysis:
 
             if variable == "calculation_time":
                 self.set_legend(g, methods_legend)
-                # for ax in g.axes_dict:
-                #     g.axes_dict[ax].set_yscale("log")
+                for ax in g.axes_dict:
+                    g.axes_dict[ax].set_yscale("log")
 
             if variable == "error_x_relative":
                 for ax in g.axes_dict:

@@ -62,7 +62,7 @@ class MyTestCase(unittest.TestCase):
         plt.show()
 
     def test_analysis_LOS_simulation(self):
-        result_folder = "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/New/1hz"
+        result_folder = "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434_server_02_06_24/1hz"
         # result_folder = "./Results/test/1hz"
 
         methods_order = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",

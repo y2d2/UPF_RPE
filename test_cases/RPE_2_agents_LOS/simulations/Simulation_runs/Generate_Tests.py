@@ -5,25 +5,29 @@ if __name__ == "__main__":
     result_folder = "Data/Results/Standard_LOS_05_2024/alfa_1_434"
     trajectory_folder = "Data/Simulations"
     generated_tests_folder = "generated_tests"
-    if generated_tests_folder in os.listdir("./"):
-        shutil.rmtree("./" + generated_tests_folder)
-    os.mkdir("./"+generated_tests_folder)
+    # if generated_tests_folder in os.listdir("./"):
+    #     shutil.rmtree("./" + generated_tests_folder)
+    # os.mkdir("./"+generated_tests_folder)
 
 
-    methods = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
-               "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0",
+    methods = [
+    #           "losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
+    #            "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0",
+               "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
+               "nodriftupf|resample_factor=0.1|sigma_uwb_factor=1.0"
                # "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
                # "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
                # "NLS|horizon=10",  # "NLS|horizon=100",
                # "algebraic|horizon=10",
-               "algebraic|horizon=100",
-               # "QCQP|horizon=10",
-               "QCQP|horizon=100"
+               # "algebraic|horizon=100",
+               # # "QCQP|horizon=10",
+               # "QCQP|horizon=100"
                 ]
     dvs = [0.1, 0.01, 0.001]
     sigma_dw_factor = 0.1
     d_uwbs = [1.0, 0.1, 0.01]
-    uwb_rates = [1.0, 10.0]
+    # uwb_rates = [1.0, 10.0]
+    uwb_rates = [1.0]
 
     file_content_start = "import os \n"
     file_content_start += "os.environ[\"OPENBLAS_NUM_THREADS\"]= \"2\"\n"
