@@ -287,14 +287,14 @@ class TwoAgentAnalysis:
 
 
 
-    def boxplot_LOS_comp(self, sigma_uwb=[1., 0.1], sigma_v=[0.1, 0.01], methods_order=[], methods_color=None, methods_legend = {},  save_fig=False):
+    def boxplot_LOS_comp(self, sigma_uwb=[1., 0.1], sigma_v=[0.1, 0.01], methods_order=[], start_time_index=0, methods_color=None, methods_legend = {},  save_fig=False):
         method_df, methods_order = self.filter_methods(methods_order)
         gs = []
         for variable in self.y_label:
             df = method_df.loc[(self.df["Sigma_uwb"].isin(sigma_uwb)) &
                              (self.df["Sigma_dv"].isin(sigma_v)) &
                              (self.df["Variable"] == variable) &
-                               (self.df["Time"] > 100)]
+                               (self.df["Time"] > start_time_index)]
             # if methods_color == {}:
             #     g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
             #                 dodge=False, height=3, aspect=0.65, order=methods_order)

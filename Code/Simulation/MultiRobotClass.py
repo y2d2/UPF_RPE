@@ -674,11 +674,11 @@ class TwoAgentSystem():
             self.agents[drone_name] = {"drone": drone}
 
     def run_exp(self, test_name):
-        self.test_name = test_name
+        # self.test_name = test_name
         self.reset_agents_w_exp_data()
-
         self.d0 = self.experiment_data["uwb"][0]
-        eval("self.init_" + self.test_name + "_test()")
+        self.parse_test_name(test_name)
+
 
         self.los_state = []
         drone0: NewRobot = self.agents["drone_0"]["drone"]

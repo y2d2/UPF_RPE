@@ -62,7 +62,7 @@ class MyTestCase(unittest.TestCase):
         plt.show()
 
     def test_analysis_LOS_simulation(self):
-        result_folder = "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434_server_02_06_24/1hz"
+        result_folder = "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434_server_02_06_24/10hz"
         # result_folder = "./Results/test/1hz"
 
         methods_order = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
@@ -93,11 +93,11 @@ class MyTestCase(unittest.TestCase):
         taa.delete_data()
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp(methods_order = methods_order, methods_color= methods_color,
-                             methods_legend=methods_legend, save_fig=False)
+                             methods_legend=methods_legend,start_time_index=100, save_fig=False)
         plt.show()
 
     def test_time_analysis(self):
-        result_folder =  "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/1hz"
+        result_folder =  "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434_server_02_06_24/1hz"
         # result_folder =  "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/10hz"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         taa.create_panda_dataframe()
