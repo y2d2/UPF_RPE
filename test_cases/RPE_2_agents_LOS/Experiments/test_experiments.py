@@ -485,7 +485,10 @@ class MyTestCase(unittest.TestCase):
         methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    "algebraic|frequency=10.0|horizon=100",
-                   "QCQP|frequency=10.0|horizon=100"]
+                   "algebraic|frequency=10.0|horizon=1000",
+                   "QCQP|frequency=10.0|horizon=100",
+                   "QCQP|frequency=10.0|horizon=1000"
+                   ]
 
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
         tas.debug_bool = True
@@ -548,16 +551,20 @@ class MyTestCase(unittest.TestCase):
                          # "NLS|horizon=10",
                          # "algebraic|horizon=10",
                          "algebraic|frequency=10.0|horizon=100",
+                         "algebraic|frequency=10.0|horizon=1000",
                          # "QCQP|horizon=10",
-                         "QCQP|frequency=10.0|horizon=100"]
+                         "QCQP|frequency=10.0|horizon=100",
+                         "QCQP|frequency=10.0|horizon=1000"]
 
         methods_color = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
                          # "NLS|horizon=10": "tab:red",
                          # "algebraic|horizon=10": "tab:green",
                          "algebraic|frequency=10.0|horizon=100": "tab:orange",
+                         "algebraic|frequency=10.0|horizon=1000": "tab:brown",
                          # "QCQP|horizon=10": "tab:purple",
-                         "QCQP|frequency=10.0|horizon=100": "tab:blue"}
+                         "QCQP|frequency=10.0|horizon=100": "tab:blue",
+                         "QCQP|frequency=10.0|horizon=1000": "tab:cyan"}
 
         methods_legend = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
                           "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
@@ -565,7 +572,8 @@ class MyTestCase(unittest.TestCase):
                           # "algebraic|horizon=10": "Algebraic_10",
                           "algebraic|frequency=10.0|horizon=100": "Algebraic",
                           # "QCQP|horizon=10": "QCQP_10",
-                          "QCQP|frequency=10.0|horizon=100": "QCQP"}
+                          "QCQP|frequency=10.0|horizon=100": "QCQP 10s",
+                          "QCQP|frequency=10.0|horizon=1000": "QCQP 100s"}
 
 
         taa.delete_data()

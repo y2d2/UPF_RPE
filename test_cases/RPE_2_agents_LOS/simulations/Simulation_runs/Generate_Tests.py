@@ -26,10 +26,14 @@ if __name__ == "__main__":
                # "algebraic|horizon=10",
                "algebraic|frequency=10.0|horizon=100",
                "algebraic|frequency=1.0|horizon=10",
+                "algebraic|frequency=10.0|horizon=1000",
+               "algebraic|frequency=1.0|horizon=100",
                # # "QCQP|horizon=10",
                # "QCQP|horizon=100"
                "QCQP|frequency=10.0|horizon=100",
-               "QCQP|frequency=1.0|horizon=10"
+               "QCQP|frequency=1.0|horizon=10",
+                "QCQP|frequency=10.0|horizon=1000",
+                "QCQP|frequency=1.0|horizon=100"
                 ]
     dvs = [0.1, 0.01]
     sigma_dw_factor = 1.0

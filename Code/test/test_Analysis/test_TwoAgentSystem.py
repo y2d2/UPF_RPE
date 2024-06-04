@@ -61,32 +61,44 @@ class MyTestCase(unittest.TestCase):
         plt.show()
 
     def test_analysis_LOS_simulation(self):
-        result_folder = "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434_server_02_06_24/10hz"
+        result_folder = "../../../Data/Results/Standard_LOS_06_2024"
         # result_folder = "./Results/test/1hz"
 
-        methods_order = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
-                         "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0",
+        methods_order = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                         "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                            "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                            "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          # "NLS|horizon=10",
                          # "algebraic|horizon=10",
-                         "algebraic|horizon=100",
+                         "algebraic|frequency=1.0|horizon=10",
+                            "algebraic|frequency=10.0|horizon=100",
                         # "QCQP|horizon=10",
-                      "QCQP|horizon=100"]
+                      "QCQP|frequency=1.0|horizon=10",
+                         "QCQP|frequency=10.0|horizon=100"]
 
-        methods_color = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "tab:green",
-                         "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0": "tab:red",
+        methods_color = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
+                         "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:olive",
+                         "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
+                        "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:pink",
                          # "NLS|horizon=10": "tab:red",
                          # "algebraic|horizon=10": "tab:green",
-                         "algebraic|horizon=100": "tab:orange",
+                         "algebraic|frequency=1.0|horizon=10": "tab:orange",
+                            "algebraic|frequency=10.0|horizon=100": "tab:brown",
                          # "QCQP|horizon=10": "tab:purple",
-                         "QCQP|horizon=100": "tab:blue"}
+                         "QCQP|frequency=1.0|horizon=10": "tab:blue",
+                         "QCQP|frequency=10.0|horizon=100": "tab:cyan"}
 
-        methods_legend = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "Proposed, ours",
-                          "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0" : "Ours, without drift correction",
+        methods_legend = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours (1hz)",
+                          "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours (10hz)",
+                          "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction (1hz)",
+                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction (10hz)",
                         # "NLS|horizon=10": "NLS_10",
                          # "algebraic|horizon=10": "Algebraic_10",
-                         "algebraic|horizon=100": "Algebraic",
+                          "algebraic|frequency=1.0|horizon=10": "Algebraic (1hz)",
+                          "algebraic|frequency=10.0|horizon=100": "Algebraic (10hz)",
                          # "QCQP|horizon=10": "QCQP_10",
-                         "QCQP|horizon=100": "QCQP"}
+                          "QCQP|frequency=1.0|horizon=10": "QCQP (1hz)",
+                          "QCQP|frequency=10.0|horizon=100": "QCQP (10hz)"}
 
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         taa.delete_data()

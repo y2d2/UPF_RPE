@@ -620,6 +620,17 @@ class TwoAgentSystem():
                 self.data[self.current_sim_name] = {}
                 self.data["parameters"] = self.parameters
                 return True
+        else:
+            try :
+                with open(self.result_file, "rb") as f:
+                    self.data = pkl.load(f)
+                f.close()
+                self.data={}
+            except EOFError:
+                self.data = {}
+                self.data[self.current_sim_name] = {}
+                self.data["parameters"] = self.parameters
+                return True
         return False
         # while exists:
         #     file_name = name + str(i) + ".pkl"
@@ -799,33 +810,32 @@ class TwoAgentSystem():
             self.agents[drone_name] = {"drone": self.sim.drones[drone_name]}
 
     def generate_general_parameters(self, parameters):
-        # for par in ["sigma_dv", "sigma_dw", "sigma_uwb", "frequency", "horizon"]:
-        #     if par in parameters:
-        #
-        #         eval("self."+par + "=" + str(parameters[par]))
-        #     else:
-        #         eval("parameters['"+par+"'] = self."+par)
-        #
-        if "sigma_uwb" in parameters:
-            self.sigma_uwb = parameters["sigma_uwb"]
-        else:
-            parameters["sigma_uwb"] = self.sigma_uwb
-        if "frequency" in parameters:
-            self.frequency = parameters["frequency"]
-        else:
-            parameters["frequency"] = self.frequency
-        if "horizon" in parameters:
-            self.horizon = parameters["horizon"]
-        else:
-            parameters["horizon"] = self.horizon
-        if "sigma_dv" in parameters:
-            self.sigma_dv = parameters["sigma_dv"]
-        else:
-            parameters["sigma_dv"] = self.sigma_dv
-        if "sigma_dw" in parameters:
-            self.sigma_dw = parameters["sigma_dw"]
-        else:
-            parameters["sigma_dw"] = self.sigma_dw
+        for par in ["sigma_dv", "sigma_dw", "sigma_uwb", "frequency", "horizon"]:
+            if par in parameters:
+                setattr(self, par, parameters[par])
+            else:
+                parameters[par] = getattr(self, par)
+        # #
+        # if "sigma_uwb" in parameters:
+        #     self.sigma_uwb = parameters["sigma_uwb"]
+        # else:
+        #     parameters["sigma_uwb"] = self.sigma_uwb
+        # if "frequency" in parameters:
+        #     self.frequency = parameters["frequency"]
+        # else:
+        #     parameters["frequency"] = self.frequency
+        # if "horizon" in parameters:
+        #     self.horizon = parameters["horizon"]
+        # else:
+        #     parameters["horizon"] = self.horizon
+        # if "sigma_dv" in parameters:
+        #     self.sigma_dv = parameters["sigma_dv"]
+        # else:
+        #     parameters["sigma_dv"] = self.sigma_dv
+        # if "sigma_dw" in parameters:
+        #     self.sigma_dw = parameters["sigma_dw"]
+        # else:
+        #     parameters["sigma_dw"] = self.sigma_dw
         return parameters
 
     def parse_test_name(self, test_name):
