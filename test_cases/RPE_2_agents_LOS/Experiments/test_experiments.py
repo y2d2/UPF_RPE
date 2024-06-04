@@ -282,13 +282,14 @@ class MyTestCase(unittest.TestCase):
 
     def test_uwb_Transforms(self):
         # self.set_test_case()
-        sampled_pkl = "Measurements/exp5_los_sampled.pkl"
-        measurement = Measurement()
-        measurement.load_sampled_data(sampled_pkl)
-        measurement.get_uwb_distances()
-        # measurement.correct_orb_transformation()
-        # measurement.get_rpe_transformation()
-        measurement.uwb.plot_real()
+        for i in range(1, 6):
+            sampled_pkl = "Measurements/exp"+str(i)+"_los_sampled.pkl"
+            measurement = Measurement()
+            measurement.load_sampled_data(sampled_pkl)
+            measurement.get_uwb_distances()
+            # measurement.correct_orb_transformation()
+            # measurement.get_rpe_transformation()
+            measurement.uwb.plot_real()
         plt.show()
 
     def test_vio_rejection(self):
@@ -315,17 +316,27 @@ class MyTestCase(unittest.TestCase):
 
     def test_vio_error(self):
         self.set_test_case()
-        sampled_pkl = "Measurements/exp5_los_sampled.pkl"
-        # sampled_pkl = "Meas_new/exp1_sec1_los_sampled.pkl"
-        measurement = Measurement()
-        measurement.load_sampled_data(sampled_pkl)
-        measurement.tb2.vio_frame.outlier_rejection(max_a = 0.5)
-        measurement.tb3.vio_frame.outlier_rejection(max_a = 0.5)
-
-        measurement.get_VIO_error(plot=True)
-        measurement.tb2.plot_vio_error()
-        measurement.tb3.plot_vio_error()
+        for i in range(1, 6):
+            sampled_pkl = "Measurements/exp"+str(i)+"_los_sampled.pkl"
+            measurement = Measurement()
+            measurement.load_sampled_data(sampled_pkl)
+            measurement.tb2.vio_frame.outlier_rejection(max_a=0.5)
+            measurement.tb3.vio_frame.outlier_rejection(max_a = 0.5)
+            measurement.get_VIO_error(plot=True)
+            measurement.tb2.plot_vio_error()
+            measurement.tb3.plot_vio_error()
         plt.show()
+        # sampled_pkl = "Measurements/exp1_los_sampled.pkl"
+        # # sampled_pkl = "Meas_new/exp1_sec1_los_sampled.pkl"
+        # measurement = Measurement()
+        # measurement.load_sampled_data(sampled_pkl)
+        # measurement.tb2.vio_frame.outlier_rejection(max_a = 0.5)
+        # measurement.tb3.vio_frame.outlier_rejection(max_a = 0.5)
+        #
+        # measurement.get_VIO_error(plot=True)
+        # measurement.tb2.plot_vio_error()
+        # measurement.tb3.plot_vio_error()
+        # plt.show()
 
     def test_set_vio_correction(self):
         self.set_test_case()
@@ -353,8 +364,8 @@ class MyTestCase(unittest.TestCase):
 
         # measurement.correct_orb_transformation()
 
-        sig_v = 0.15
-        sig_w = 0.05
+        sig_v = 0.1
+        sig_w = 0.1
         sig_uwb = 0.2
         sig_d = sig_v / sample_freq
         sig_phi = sig_w / sample_freq
@@ -460,26 +471,28 @@ class MyTestCase(unittest.TestCase):
         # plt.show()
 
     def test_run_LOS_exp(self):
-        sig_v = 0.15
-        sig_w = 0.05
-        sig_uwb = 0.1
+        # From the data sig_v =0.1, sig_w=0.1 and sig_uwb = 0.35 (dependable on the set... ) are the best values.
+        sig_v = 0.08
+        sig_w = 0.12
+        sig_uwb = 0.25
 
         main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/experiment_outlier_rejection_2/"
+        results_folder = main_folder + "Results/experiment_outlier_rejection_3/"
         data_folder = "Measurements_correction/"
 
         experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
+
+        methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "algebraic|frequency=10.0|horizon=100",
+                   "QCQP|frequency=10.0|horizon=100"]
+
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
-        tas.debug_bool= True
+        tas.debug_bool = True
         tas.plot_bool = False
-        tas.uwb_rate = 1.
-        methods = ["losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "nodriftupf|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "algebraic|horizon=100",
-                   "QCQP|horizon=100"]
         tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
         plt.show()
-        return tas, measurements
+        # return tas, measurements
 
     def test_plot_LOS_error_time(self):
         main_folder = "./Experiments/LOS_exp/"
@@ -530,34 +543,35 @@ class MyTestCase(unittest.TestCase):
     def test_exp_analysis(self):
         result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_2"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
-        methods_order = ["losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
-                         "nodriftupf|resample_factor=0.1|sigma_uwb_factor=1.0",
+        methods_order = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                         "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          # "NLS|horizon=10",
                          # "algebraic|horizon=10",
-                         "algebraic|horizon=100",
+                         "algebraic|frequency=10.0|horizon=100",
                          # "QCQP|horizon=10",
-                         "QCQP|horizon=100"]
+                         "QCQP|frequency=10.0|horizon=100"]
 
-        methods_color = {"losupf|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:blue",
-                         "nodriftupf|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:orange",
+        methods_color = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
+                         "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
                          # "NLS|horizon=10": "tab:red",
                          # "algebraic|horizon=10": "tab:green",
-                         "algebraic|horizon=100": "tab:green",
+                         "algebraic|frequency=10.0|horizon=100": "tab:orange",
                          # "QCQP|horizon=10": "tab:purple",
-                         "QCQP|horizon=100": "tab:red"}
+                         "QCQP|frequency=10.0|horizon=100": "tab:blue"}
 
-        methods_legend = {"losupf|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
-                          "nodriftupf|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
+        methods_legend = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
+                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
                           # "NLS|horizon=10": "NLS_10",
                           # "algebraic|horizon=10": "Algebraic_10",
-                          "algebraic|horizon=100": "Algebraic",
+                          "algebraic|frequency=10.0|horizon=100": "Algebraic",
                           # "QCQP|horizon=10": "QCQP_10",
-                          "QCQP|horizon=100": "QCQP"}
+                          "QCQP|frequency=10.0|horizon=100": "QCQP"}
 
 
-        # taa.delete_data()
+        taa.delete_data()
         taa.create_panda_dataframe()
-        taa.boxplot_LOS_comp(sigma_uwb=[0.15], sigma_v=[0.15], methods_order = methods_order, methods_color= methods_color,
+        taa.boxplot_LOS_comp(sigma_uwb=[0.1,0.25,0.35], sigma_v=[0.1,0.08], rates=[1.0, 0.1],
+                             methods_order=methods_order, methods_color=methods_color,
                              methods_legend=methods_legend,start_time_index=100, save_fig=False)
         plt.show()
 

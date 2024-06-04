@@ -8,7 +8,7 @@ import pickle as pkl
 class MyTestCase(unittest.TestCase):
 
     def test_TAS_RPE(self):
-        test = "test"
+        test = "test_new_system"
         result_folder = "Results/" + test
         # shutil.rmtree(result_folder)
         # os.mkdir(result_folder)
@@ -22,29 +22,28 @@ class MyTestCase(unittest.TestCase):
         sigma_dv = 0.01
         sigma_dw = 0.1 * sigma_dv
         sigma_uwb = 0.1
-        uwb_rates = [0.1, 1.0]
 
         # for i in range(4):
         #     mrss  = MRC.MultiRobotSingleSimulation(folder = "robot_trajectories/"+test_na_5_na_8_nh_8+"/sim_"+str(i))
         #     mrss.delete_sim(sigma_dv, sigma_dw, sigma_uwb)
-        for uwb_rate in uwb_rates:
-            TAS = MRC.TwoAgentSystem(trajectory_folder="small_robot_trajectories/",
-                                     result_folder=result_folder)
-            TAS.uwb_rate = uwb_rate
-            TAS.debug_bool = True
-            TAS.plot_bool = False
-            TAS.save_folder = ("./save_data_test")
-            TAS.save_bool = True
-            TAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)
-            TAS.set_ukf_properties(alpha, beta, kappa, n_azimuth, n_altitude, n_heading)
-            # TAS.run_simulations(methods=["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"], redo_bool=True)
-            methods = ["losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
-                       "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
-                       "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
-                       "NLS|horizon=10", #"NLS|horizon=100",
-                       "algebraic|horizon=10","algebraic|horizon=100",
-                       "QCQP|horizon=10", "QCQP|horizon=100"]
-            TAS.run_simulations(methods=methods, redo_bool=False )
+
+        TAS = MRC.TwoAgentSystem(trajectory_folder="small_robot_trajectories/",
+                                 result_folder=result_folder)
+
+        TAS.debug_bool = True
+        TAS.plot_bool = False
+        TAS.save_folder = ("./save_data_test")
+        TAS.save_bool = True
+        TAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)
+        TAS.set_ukf_properties(alpha, beta, kappa, n_azimuth, n_altitude, n_heading)
+        # TAS.run_simulations(methods=["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"], redo_bool=True)
+        methods = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "algebraic|frequency=1.0|horizon=10",
+                   "algebraic|frequency=10.0|horizon=100",
+                   "QCQP|frequency=1.0|horizon=10",
+                   "QCQP|frequency=10.0|horizon=100"]
+        TAS.run_simulations(methods=methods, redo_bool=False )
 
     def test_UPF_detail(self):
         upfs = []
@@ -73,13 +72,13 @@ class MyTestCase(unittest.TestCase):
                         # "QCQP|horizon=10",
                       "QCQP|horizon=100"]
 
-        methods_color = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "tab:blue",
-                         "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0": "tab:orange",
+        methods_color = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "tab:green",
+                         "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0": "tab:red",
                          # "NLS|horizon=10": "tab:red",
                          # "algebraic|horizon=10": "tab:green",
-                         "algebraic|horizon=100": "tab:green",
+                         "algebraic|horizon=100": "tab:orange",
                          # "QCQP|horizon=10": "tab:purple",
-                         "QCQP|horizon=100": "tab:red"}
+                         "QCQP|horizon=100": "tab:blue"}
 
         methods_legend = {"losupf|resample_factor=0.1|sigma_uwb_factor=2.0": "Proposed, ours",
                           "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0" : "Ours, without drift correction",

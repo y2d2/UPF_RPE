@@ -1,3 +1,4 @@
+import math
 import os
 import shutil
 
@@ -5,6 +6,8 @@ if __name__ == "__main__":
     result_folder = "Data/Results/Standard_LOS_05_2024/alfa_1_434"
     trajectory_folder = "Data/Simulations"
     generated_tests_folder = "generated_tests"
+    if generated_tests_folder not in os.listdir("./"):
+        os.mkdir("./"+generated_tests_folder)
     # if generated_tests_folder in os.listdir("./"):
     #     shutil.rmtree("./" + generated_tests_folder)
     # os.mkdir("./"+generated_tests_folder)
@@ -13,22 +16,25 @@ if __name__ == "__main__":
     methods = [
     #           "losupf|resample_factor=0.1|sigma_uwb_factor=2.0",
     #            "nodriftupf|resample_factor=0.1|sigma_uwb_factor=2.0",
-               "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
-               "nodriftupf|resample_factor=0.1|sigma_uwb_factor=1.0",
+               "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+               "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+               "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+               "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                # "losupf|resample_factor=0.1|sigma_uwb_factor=1.0",
                # "losupf|resample_factor=0.5|sigma_uwb_factor=2.0",
                # "NLS|horizon=10",  # "NLS|horizon=100",
                # "algebraic|horizon=10",
-               # "algebraic|horizon=100",
+               "algebraic|frequency=10.0|horizon=100",
+               "algebraic|frequency=1.0|horizon=10",
                # # "QCQP|horizon=10",
                # "QCQP|horizon=100"
-               "QCQP|horizon=1000"
+               "QCQP|frequency=10.0|horizon=100"
+               "QCQP|frequency=1.0|horizon=10"
                 ]
-    dvs = [0.1, 0.01, 0.001]
-    sigma_dw_factor = 0.1
-    d_uwbs = [1.0, 0.1, 0.01]
+    dvs = [0.1, 0.01]
+    sigma_dw_factor = 1.0
+    d_uwbs = [1.0, 0.1]
     # uwb_rates = [1.0, 10.0]
-    uwb_rates = [10.0]
 
     file_content_start = "import os \n"
     file_content_start += "os.environ[\"OPENBLAS_NUM_THREADS\"]= \"2\"\n"
@@ -50,26 +56,37 @@ if __name__ == "__main__":
         file_content_start += "\tmethods.append(\"" + method + "\")\n"
 
 
-    file_content_end =  "\tTAS = MRC.TwoAgentSystem(trajectory_folder=trajectory_folder, result_folder=result_folder)\n"
-    file_content_end += "\tTAS.uwb_rate = uwb_rate\n"
-    file_content_end += "\tTAS.debug_bool = False\n"
-    file_content_end += "\tTAS.plot_bool = False\n"
-    file_content_end += "\tTAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)\n"
-    file_content_end += "\tTAS.set_ukf_properties(alpha = alpha, beta =  beta, kappa = kappa,\n"
-    file_content_end += "                           n_azimuth = n_azimuth, n_altitude=n_altitude, n_heading=n_heading)\n"
-    file_content_end += "\tTAS.run_simulations(methods=methods, redo_bool=True)\n"
 
-    for dv in dvs:
-        for duwb in d_uwbs:
-            for uwb_rate in uwb_rates:
-                file_content_middle = "\tsigma_dv = " + str(dv) + "\n"
-                file_content_middle += "\tsigma_dw = " + str(sigma_dw_factor * dv) + "\n"
-                file_content_middle += "\tsigma_uwb = " + str(duwb) + "\n"
-                file_content_middle += "\tuwb_rate = " + str(1./uwb_rate) + "\n"
 
-                file_name = "Test_RPE_2_agents_Sigma_dv_"+str(dv).replace(".", "c")+"_Sigma_uwb_"+str(duwb).replace(".", "c")+"_"+str(int(uwb_rate))+"hz.py"
-                if file_name in os.listdir("./generated_tests"):
-                    os.remove("./generated_tests/"+file_name)
-                with open("./generated_tests/"+file_name, "w") as f:
-                    f.write(file_content_start + file_content_middle + file_content_end)
-                    f.close()
+    file_content_start += "\tdvs = "+str(dvs) + "\n"
+    file_content_start += "\tsigma_dw_factor =  "+str(sigma_dw_factor) + "\n"
+    file_content_start += "\td_uwbs = "+str(d_uwbs) + "\n"
+
+    file_content_start += "\tfor dv in dvs:\n"
+    file_content_start += "\t\tsigma_dv = dv \n"
+    file_content_start += "\t\tsigma_dw = sigma_dw_factor * dv \n"
+    file_content_start += "\t\tfor duwb in d_uwbs:\n"
+    file_content_start += "\t\t\tsigma_uwb = duwb \n"
+    file_content_start += "\t\t\tTAS = MRC.TwoAgentSystem(trajectory_folder=trajectory_folder, result_folder=result_folder)\n"
+    file_content_start += "\t\t\tTAS.debug_bool = False\n"
+    file_content_start += "\t\t\tTAS.plot_bool = False\n"
+    file_content_start += "\t\t\tTAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)\n"
+    file_content_start += "\t\t\tTAS.set_ukf_properties(alpha = alpha, beta =  beta, kappa = kappa,\n"
+    file_content_start += "\t\t\t                       n_azimuth = n_azimuth, n_altitude=n_altitude, n_heading=n_heading)\n"
+
+    parallel_processes = 20
+    total_simulations = len(os.listdir(trajectory_folder))
+    number_of_sim_per_process = int(math.ceil(total_simulations / parallel_processes))
+
+    for i in range(parallel_processes):
+        try:
+            sim_list = os.listdir(trajectory_folder)[i*number_of_sim_per_process:(i+1)*number_of_sim_per_process]
+        except IndexError:
+            sim_list = os.listdir(trajectory_folder)[i*number_of_sim_per_process:]
+        file_content_middle = "\t\t\tTAS.run_simulations(methods=methods, redo_bool=False, sim_list="+str(sim_list)+")\n"
+        file_name = "Test_RPE_2_agents_"+str(i)+".py"
+        if file_name in os.listdir("./generated_tests"):
+            os.remove("./generated_tests/"+file_name)
+        with open("./generated_tests/"+file_name, "w") as f:
+            f.write(file_content_start + file_content_middle)
+            f.close()

@@ -50,7 +50,8 @@ class TwoAgentAnalysis:
         for file in os.listdir(self.result_folder):
             if file.endswith(".pkl"):
                 with open(self.result_folder + "/" + file, "rb") as f:
-                    data = pkl.load(f)
+                    try: data = pkl.load(f)
+                    except EOFError: print("Could not open: ", self.result_folder + "/" + file)
                 f.close()
                 if "numerical_data" not in data:
                     print("Reformating the data for analysis " + file + " ...")
@@ -140,6 +141,7 @@ class TwoAgentAnalysis:
                 df = pd.DataFrame(res).assign(Variable=variable,
                                               Method=method,
                                               Sigma_dv=data["parameters"]["sigma_dv"],
+                                              Sigma_dw=data["parameters"]["sigma_dw"],
                                               Sigma_uwb=data["parameters"]["sigma_uwb"],
                                               Uwb_rate=data["parameters"]["uwb_rate"])
                 self.dfs.append(df)
@@ -152,7 +154,7 @@ class TwoAgentAnalysis:
         if self.data is None:
             self.load_results()
         dfs = pd.concat(self.dfs)
-        self.df = pd.melt(dfs, id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_uwb', "Uwb_rate"],
+        self.df = pd.melt(dfs, id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_dw','Sigma_uwb', "Uwb_rate"],
                           var_name=["Time"])  # MELT
         return
 
@@ -188,11 +190,15 @@ class TwoAgentAnalysis:
     # -----------------------
     # Support plotting functions:
     # -----------------------
-    def remove_x_ticks(self, g, methods):
-        g.tick_params(bottom=False)
+    def remove_x_ticks(self, g, rates):
+        # g.tick_params(bottom=False)
         g.set_axis_labels()
-        ticks_nr = len(methods)
-        g.set_xticklabels(labels=["" for i in range(ticks_nr)])
+
+        if len(rates) > 1:
+            g.set_xticklabels(labels=[str(int(1./rate)) + "Hz" for rate in rates])
+        else:
+            g.set_xticklabels(labels=[""])
+
         g.set_axis_labels("", "")
         g.set_titles("")
         # g.tick_params(bottom=False)
@@ -287,22 +293,29 @@ class TwoAgentAnalysis:
 
 
 
-    def boxplot_LOS_comp(self, sigma_uwb=[1., 0.1], sigma_v=[0.1, 0.01], methods_order=[], start_time_index=0, methods_color=None, methods_legend = {},  save_fig=False):
+    def boxplot_LOS_comp(self, sigma_uwb=[1., 0.1], sigma_v=[0.1, 0.01],  rates = [1.0, 0.1],
+                         methods_order=[], start_time_index=0, methods_color=None, methods_legend = {},  save_fig=False):
         method_df, methods_order = self.filter_methods(methods_order)
         gs = []
+
         for variable in self.y_label:
             df = method_df.loc[(self.df["Sigma_uwb"].isin(sigma_uwb)) &
                              (self.df["Sigma_dv"].isin(sigma_v)) &
                              (self.df["Variable"] == variable) &
-                               (self.df["Time"] > start_time_index)]
+                               (self.df["Time"] > start_time_index) &
+                             (self.df["Uwb_rate"].isin(rates))]
+
             # if methods_color == {}:
             #     g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
             #                 dodge=False, height=3, aspect=0.65, order=methods_order)
             # else:
-            g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
-                        dodge=False, height=3, aspect=0.65, order=methods_order, palette=methods_color, hue_order=methods_order)
+            # g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Uwb_rate', hue='Method',
+            #             dodge=False, height=3, aspect=0.65, order=methods_order, palette=methods_color, hue_order=methods_order)
+            g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Uwb_rate', hue='Method',
+                                    dodge=True, aspect=0.65, order= rates, palette=methods_color, hue_order=methods_order,
+                            legend=False)
 
-            self.remove_x_ticks(g, methods_order)
+            self.remove_x_ticks(g, rates)
             self.set_labels(g)
             self.print_statistics(methods_order, variable, df)
 
