@@ -28,7 +28,7 @@ if __name__ == "__main__":
                "algebraic|frequency=1.0|horizon=10",
                # # "QCQP|horizon=10",
                # "QCQP|horizon=100"
-               "QCQP|frequency=10.0|horizon=100"
+               "QCQP|frequency=10.0|horizon=100",
                "QCQP|frequency=1.0|horizon=10"
                 ]
     dvs = [0.1, 0.01]
