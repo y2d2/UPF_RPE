@@ -143,7 +143,7 @@ class TwoAgentAnalysis:
                                               Sigma_dv=data["parameters"]["sigma_dv"],
                                               Sigma_dw=data["parameters"]["sigma_dw"],
                                               Sigma_uwb=data["parameters"]["sigma_uwb"],
-                                              Uwb_rate=data["parameters"]["uwb_rate"])
+                                              Frequency=data["parameters"]["frequency"])
                 self.dfs.append(df)
 
             # df_var = pd.concat([dfs[method][variable] for variable in dfs[method]])
@@ -154,7 +154,7 @@ class TwoAgentAnalysis:
         if self.data is None:
             self.load_results()
         dfs = pd.concat(self.dfs)
-        self.df = pd.melt(dfs, id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_dw','Sigma_uwb', "Uwb_rate"],
+        self.df = pd.melt(dfs, id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_dw','Sigma_uwb', "Frequency"],
                           var_name=["Time"])  # MELT
         return
 
@@ -190,12 +190,12 @@ class TwoAgentAnalysis:
     # -----------------------
     # Support plotting functions:
     # -----------------------
-    def remove_x_ticks(self, g, rates):
+    def remove_x_ticks(self, g, frequencies):
         # g.tick_params(bottom=False)
         g.set_axis_labels()
 
-        if len(rates) > 1:
-            g.set_xticklabels(labels=[str(int(1./rate)) + "Hz" for rate in rates])
+        if len(frequencies) > 1:
+            g.set_xticklabels(labels=[str(int(frequency)) + "Hz" for frequency in frequencies])
         else:
             g.set_xticklabels(labels=[""])
 
@@ -293,7 +293,7 @@ class TwoAgentAnalysis:
 
 
 
-    def boxplot_LOS_comp(self, sigma_uwb=[1., 0.1], sigma_v=[0.1, 0.01],  rates = [1.0, 0.1],
+    def boxplot_LOS_comp(self, sigma_uwb=[1., 0.1], sigma_v=[0.1, 0.01],  frequencies = [1.0, 10.0],
                          methods_order=[], start_time_index=0, methods_color=None, methods_legend = {},  save_fig=False):
         method_df, methods_order = self.filter_methods(methods_order)
         gs = []
@@ -303,7 +303,7 @@ class TwoAgentAnalysis:
                              (self.df["Sigma_dv"].isin(sigma_v)) &
                              (self.df["Variable"] == variable) &
                                (self.df["Time"] > start_time_index) &
-                             (self.df["Uwb_rate"].isin(rates))]
+                             (self.df["Frequency"].isin(frequencies))]
 
             # if methods_color == {}:
             #     g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
@@ -311,11 +311,11 @@ class TwoAgentAnalysis:
             # else:
             # g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Uwb_rate', hue='Method',
             #             dodge=False, height=3, aspect=0.65, order=methods_order, palette=methods_color, hue_order=methods_order)
-            g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Uwb_rate', hue='Method',
-                                    dodge=True, aspect=0.65, order= rates, palette=methods_color, hue_order=methods_order,
+            g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Frequency', hue='Method',
+                                    dodge=True, aspect=0.65, order= frequencies, palette=methods_color, hue_order=methods_order,
                             legend=False)
 
-            self.remove_x_ticks(g, rates)
+            self.remove_x_ticks(g, frequencies)
             self.set_labels(g)
             self.print_statistics(methods_order, variable, df)
 

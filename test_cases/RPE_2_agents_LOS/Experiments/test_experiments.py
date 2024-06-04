@@ -541,7 +541,7 @@ class MyTestCase(unittest.TestCase):
 
 
     def test_exp_analysis(self):
-        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_2"
+        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         methods_order = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
@@ -570,7 +570,7 @@ class MyTestCase(unittest.TestCase):
 
         taa.delete_data()
         taa.create_panda_dataframe()
-        taa.boxplot_LOS_comp(sigma_uwb=[0.1,0.25,0.35], sigma_v=[0.1,0.08], rates=[1.0, 0.1],
+        taa.boxplot_LOS_comp(sigma_uwb=[0.1,0.25,0.35], sigma_v=[0.1,0.08], frequencies=[10.0],
                              methods_order=methods_order, methods_color=methods_color,
                              methods_legend=methods_legend,start_time_index=100, save_fig=False)
         plt.show()
