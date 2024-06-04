@@ -3,7 +3,7 @@ import os
 import shutil
 
 if __name__ == "__main__":
-    result_folder = "Data/Results/Standard_LOS_05_2024/alfa_1_434"
+    result_folder = "Data/Results/Standard_LOS_06_2024"
     trajectory_folder = "Data/Simulations"
     generated_tests_folder = "generated_tests"
     if generated_tests_folder not in os.listdir("./"):
