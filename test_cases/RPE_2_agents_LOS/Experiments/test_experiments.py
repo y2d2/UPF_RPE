@@ -570,17 +570,18 @@ class MyTestCase(unittest.TestCase):
                           "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
                           # "NLS|horizon=10": "NLS_10",
                           # "algebraic|horizon=10": "Algebraic_10",
-                          "algebraic|frequency=10.0|horizon=100": "Algebraic",
+                          "algebraic|frequency=10.0|horizon=100": "Algebraic 10s",
+                          "algebraic|frequency=10.0|horizon=1000": "Algebraic 100s",
                           # "QCQP|horizon=10": "QCQP_10",
                           "QCQP|frequency=10.0|horizon=100": "QCQP 10s",
                           "QCQP|frequency=10.0|horizon=1000": "QCQP 100s"}
 
 
-        taa.delete_data()
-        taa.create_panda_dataframe()
+        # taa.delete_data()
+        # taa.create_panda_dataframe()
         taa.boxplot_LOS_comp(sigma_uwb=[0.1,0.25,0.35], sigma_v=[0.1,0.08], frequencies=[10.0],
                              methods_order=methods_order, methods_color=methods_color,
-                             methods_legend=methods_legend,start_time_index=100, save_fig=False)
+                             methods_legend=methods_legend,start_time_index=1000, save_fig=False)
         plt.show()
 
     def test_exp_time_analysis(self):

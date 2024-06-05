@@ -47,11 +47,16 @@ class TwoAgentAnalysis:
     def load_results(self):
         self.results = {}
         self.data = {}
+        n_files = len(os.listdir(self.result_folder))
+        file_nr = 0.
         for file in os.listdir(self.result_folder):
+            file_nr +=1
             if file.endswith(".pkl"):
                 with open(self.result_folder + "/" + file, "rb") as f:
-                    try: data = pkl.load(f)
-                    except EOFError: print("Could not open: ", self.result_folder + "/" + file)
+                    try:
+                        data = pkl.load(f)
+                        print("Loading "+ str(int(file_nr/n_files*100.)), "%: "+  self.result_folder + "/" + file)
+                    except EOFError: print("!!!!!!!!! Could not open: ", self.result_folder + "/" + file + " !!!!!!!!!")
                 f.close()
                 if "numerical_data" not in data:
                     print("Reformating the data for analysis " + file + " ...")
@@ -249,14 +254,19 @@ class TwoAgentAnalysis:
                   df[df["Method"] == method]["value"].std(), "; median: ",
                   df[df["Method"] == method]["value"].median())
 
-    def filter_methods(self, methods):
+    def filter_methods(self, methods, sigma_uwb, sigma_v, frequencies, start_time_index):
         if self.df is None:
             self.create_panda_dataframe()
 
         if len(methods) == 0:
             methods = self.df["Method"].unique()
 
-        df = self.df.loc[(self.df["Method"].isin(methods))]
+        df = self.df.loc[(self.df["Method"].isin(methods)) &
+                         (self.df["Sigma_uwb"].isin(sigma_uwb)) &
+                         (self.df["Sigma_dv"].isin(sigma_v)) &
+                         (self.df["Time"] > start_time_index) &
+                         (self.df["Frequency"].isin(frequencies))
+                         ]
         return df, methods
 
     # -----------------------
@@ -295,15 +305,11 @@ class TwoAgentAnalysis:
 
     def boxplot_LOS_comp(self, sigma_uwb=[1., 0.1], sigma_v=[0.1, 0.01],  frequencies = [1.0, 10.0],
                          methods_order=[], start_time_index=0, methods_color=None, methods_legend = {},  save_fig=False):
-        method_df, methods_order = self.filter_methods(methods_order)
+        method_df, methods_order = self.filter_methods(methods_order, sigma_uwb, sigma_v, frequencies, start_time_index)
         gs = []
 
         for variable in self.y_label:
-            df = method_df.loc[(self.df["Sigma_uwb"].isin(sigma_uwb)) &
-                             (self.df["Sigma_dv"].isin(sigma_v)) &
-                             (self.df["Variable"] == variable) &
-                               (self.df["Time"] > start_time_index) &
-                             (self.df["Frequency"].isin(frequencies))]
+            df = method_df.loc[(self.df["Variable"] == variable)]
 
             # if methods_color == {}:
             #     g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
