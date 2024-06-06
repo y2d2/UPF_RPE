@@ -105,14 +105,14 @@ class MyTestCase(unittest.TestCase):
 
     def test_analysis_LOS_simulation(self):
         result_folder = "Results/Standard_LOS/alfa_1_434"
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp(save_fig=False)
         plt.show()
 
     def test_time_analysis(self):
         result_folder = "Results/Standard_LOS/alfa_1_434"
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp_time(save_fig=False)
         plt.show()
@@ -121,7 +121,7 @@ class MyTestCase(unittest.TestCase):
         result_folder = "Results/test/NLOS_test"
 
         # result_folder = "Results/Standard_LOS/alfa_1"
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         # taa.delete_data()
         taa.create_panda_dataframe()
         # taa.boxplot_var()
@@ -132,7 +132,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_exp_analysis(self):
         result_folder = "ros_tests/Real_Exp_Results"
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         taa.delete_data()
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp(save_fig=False)

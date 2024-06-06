@@ -78,7 +78,7 @@ class MyTestCase(unittest.TestCase):
 
 
     def test_analysis_LOS_simulation(self):
-        result_folder = "../../../Data/Results/Standard_LOS_06_2024"
+        result_folder = "../../../Data/Results/Sim_LOS_06_2024"
         # result_folder = "../../../Data/Results/Broken"
         # result_folder = "./Results/test/1hz"
 
@@ -128,7 +128,7 @@ class MyTestCase(unittest.TestCase):
                          #  "QCQP|frequency=10.0|horizon=100": "QCQP (10s)",
                           "QCQP|frequency=10.0|horizon=1000": "QCQP"}
 
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         # taa.delete_data()
         # taa.create_panda_dataframe()
         # taa.percent_to_load = 5
@@ -140,7 +140,7 @@ class MyTestCase(unittest.TestCase):
     def test_time_analysis(self):
         result_folder =  "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434_server_02_06_24/1hz"
         # result_folder =  "../../../Data/Results/Standard_LOS_05_2024/alfa_1_434/10hz"
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp_time(save_fig=False)
         plt.show()

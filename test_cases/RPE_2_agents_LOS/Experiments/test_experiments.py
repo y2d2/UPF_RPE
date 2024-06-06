@@ -567,7 +567,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_exp_analysis(self):
         result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3"
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         methods_order = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          # "NLS|horizon=10",
@@ -609,7 +609,7 @@ class MyTestCase(unittest.TestCase):
     def test_exp_time_analysis(self):
         # result_folder = "./Experiments/LOS_exp/Results/new_nls_correct_init_test/"
         result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/"
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         # taa.delete_data()
         taa.create_panda_dataframe()
         taa.boxplot_LOS_comp_time(save_fig=False)

@@ -12,8 +12,10 @@ from matplotlib import rcParams
 
 
 class TwoAgentAnalysis:
-    def __init__(self, result_folder):
-        self.result_folder = result_folder
+    def __init__(self, result_folders):
+        if type(result_folders) is not list:
+            result_folders = [result_folders]
+        self.result_folders = result_folders
         self.results = None
         self.data = None
         self.dfs = []
@@ -48,38 +50,39 @@ class TwoAgentAnalysis:
     def load_results(self):
         self.results = {}
         self.data = {}
-        n_files = len(os.listdir(self.result_folder))
-        file_nr = 0.
-        for file in os.listdir(self.result_folder):
-            if int(file_nr/n_files*100.) > self.percent_to_load:
-                return
-            file_nr +=1
-            if file.endswith(".pkl"):
-                with open(self.result_folder + "/" + file, "rb") as f:
-                    try:
-                        data = pkl.load(f)
-                        print("Loading "+ str(int(file_nr/n_files*100.)), "%: "+  self.result_folder + "/" + file)
-                    except EOFError: print("!!!!!!!!! Could not open: ", self.result_folder + "/" + file + " !!!!!!!!!")
-                f.close()
-                if "numerical_data" not in data:
-                    print("Reformating the data for analysis " + file + " ...")
-                    data = self.reformat_data(data)
-                    with open(self.result_folder + "/" + file, "wb") as f:
-                        pkl.dump(data, f)
+        for result_folder in self.result_folders:
+            n_files = len(os.listdir(result_folder))
+            file_nr = 0.
+            for file in os.listdir(result_folder):
+                if int(file_nr/n_files*100.) > self.percent_to_load:
+                    return
+                file_nr +=1
+                if file.endswith(".pkl"):
+                    with open(result_folder + "/" + file, "rb") as f:
+                        try:
+                            data = pkl.load(f)
+                            print("Loading " + str(int(file_nr/n_files*100.)), "%: " + result_folder + "/" + file)
+                        except EOFError: print("!!!!!!!!! Could not open: ", result_folder + "/" + file + " !!!!!!!!!")
                     f.close()
-                # self.data[file] = data
-                self.data[file] = "Loaded"
+                    if "numerical_data" not in data:
+                        print("Reformating the data for analysis " + file + " ...")
+                        data = self.reformat_data(data)
+                        with open(result_folder + "/" + file, "wb") as f:
+                            pkl.dump(data, f)
+                        f.close()
+                    # self.data[file] = data
+                    self.data[file] = "Loaded"
 
-                # if "analysis" not in data:
-                #     print("Starting statistical analysis of " + file + " ...")
-                #     data = self.calculate_statistics(data)
-                #     with open(self.result_folder + "/" + file, "wb") as f:
-                #         pkl.dump(data, f)
-                #     f.close()
-                # self.results[file] = data["analysis"]
+                    # if "analysis" not in data:
+                    #     print("Starting statistical analysis of " + file + " ...")
+                    #     data = self.calculate_statistics(data)
+                    #     with open(self.result_folder + "/" + file, "wb") as f:
+                    #         pkl.dump(data, f)
+                    #     f.close()
+                    # self.results[file] = data["analysis"]
 
-                # if "panda_date" not in data:
-                self.reformat_data_to_pandas(data)
+                    # if "panda_date" not in data:
+                    self.reformat_data_to_pandas(data)
 
     def reformat_data(self, data):
         data["numerical_data"] = {}
@@ -180,34 +183,35 @@ class TwoAgentAnalysis:
         if name not in ["analysis", "numerical_data"]:
             print("Name not recognized")
             return
-        n_files = len(os.listdir(self.result_folder))
-        file_nr = 0.
-        for file in os.listdir(self.result_folder):
-            file_nr += 1
-            if file.endswith(".pkl"):
-                with open(self.result_folder + "/" + file, "rb") as f:
-                    try:
-                        print("Deleting "+ name + " | " + str(int(file_nr / n_files * 100.)),
-                              "%: " + self.result_folder + "/" + file)
-                        data = pkl.load(f)
-                        if name in data:
-                            del data[name]
-                            with open(self.result_folder + "/" + file, "wb") as f:
-                                pkl.dump(data, f)
-                            f.close()
-                    except EOFError:
-                        print("!!!!!!!!! Could not open: ", self.result_folder + "/" + file + " !!!!!!!!!")
-                f.close()
+        for result_folder in self.result_folders:
+            n_files = len(os.listdir(result_folder))
+            file_nr = 0.
+            for file in os.listdir(result_folder):
+                file_nr += 1
+                if file.endswith(".pkl"):
+                    with open(result_folder + "/" + file, "rb") as f:
+                        try:
+                            print("Deleting " + name + " | " + str(int(file_nr / n_files * 100.)),
+                                  "%: " + result_folder + "/" + file)
+                            data = pkl.load(f)
+                            if name in data:
+                                del data[name]
+                                with open(result_folder + "/" + file, "wb") as f:
+                                    pkl.dump(data, f)
+                                f.close()
+                        except EOFError:
+                            print("!!!!!!!!! Could not open: ", result_folder + "/" + file + " !!!!!!!!!")
+                    f.close()
 
     # -----------------------
     # Support plotting functions:
     # -----------------------
-    def remove_x_ticks(self, g, frequencies):
+    def remove_x_ticks(self, g, x_order, unit=""):
         # g.tick_params(bottom=False)
         g.set_axis_labels()
 
-        if len(frequencies) > 1:
-            g.set_xticklabels(labels=[str(int(frequency)) + "Hz" for frequency in frequencies])
+        if len(x_order) > 1:
+            g.set_xticklabels(labels=[str(x) + unit for x in x_order])
         else:
             g.set_xticklabels(labels=[""])
 
@@ -288,8 +292,14 @@ class TwoAgentAnalysis:
     # Plotting functions:
     # -----------------------
     def boxplots(self, sigma_uwb=[1.0, 0.1], sigma_v=[0.1,0.01],  frequencies = [1.0,10.0], start_time=0,
-                 methods_order=None, methods_color=None, methods_legend = {},
-                        save_fig=False, save_name="boxplot"):
+                 methods_order=None, methods_color=None, methods_legend = {}, x_variable = "Frequency",
+                 x_order = None, save_fig=False, save_name="boxplot"):
+        if x_order is None:
+            x_order = frequencies
+
+        unit = ""
+        if x_variable == "Frequency":
+            unit = "Hz"
 
         if methods_order is None:
             methods_order = []
@@ -297,10 +307,10 @@ class TwoAgentAnalysis:
         gs = []
         for variable in self.y_label:
             df = method_df.loc[(method_df["Variable"] == variable)]
-            g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Frequency', hue='Method',
-                                    dodge=True, aspect=0.65, order= frequencies, palette=methods_color, hue_order=methods_order,
+            g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x=x_variable, hue='Method',
+                                    dodge=True, aspect=0.65, order= x_order, palette=methods_color, hue_order=methods_order,
                             legend=False)
-            self.remove_x_ticks(g, frequencies)
+            self.remove_x_ticks(g, x_order, unit)
             self.set_labels(g)
             self.print_statistics(methods_order, variable, df)
 
@@ -316,7 +326,7 @@ class TwoAgentAnalysis:
             g.fig.subplots_adjust(top=0.9)
             g.fig.suptitle(self.y_label[variable])
             if save_fig:
-                g.fig.savefig(self.result_folder + "/" + save_name + "_" + variable + ".png")
+                g.fig.savefig(self.result_folders[0] + "/" + save_name + "_" + variable + ".png")
             gs.append(g)
 
     #------------------------
@@ -542,7 +552,7 @@ class TwoAgentAnalysis:
 if __name__ == "__main__":
     result_folder = "../tests/test_cases/RPE_2_agents/Results/test/single_test"
 
-    taa = TwoAgentAnalysis(result_folder=result_folder)
+    taa = TwoAgentAnalysis(result_folders=result_folder)
     # taa.delete_data()
     taa.create_panda_dataframe()
     taa.boxplots()

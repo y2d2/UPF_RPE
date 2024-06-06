@@ -7,6 +7,7 @@ matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from Code.Analysis import TwoAgentAnalysis as TAA
 import seaborn as sns
+import os
 
 
 class MyTestCase(unittest.TestCase):
@@ -36,6 +37,73 @@ class MyTestCase(unittest.TestCase):
 
         return tas, measurements
 
+    def test_rename_sim2real(self):
+        main_folder = "./Experiments/LOS_exp/"
+        load_dir = main_folder + "Results/sim2real_3"
+        save_dir = main_folder + "Results/sim2real_2"
+        prefix = "sim_"
+        retype = "simulation"
+
+        n_files = len(os.listdir(load_dir))
+        n_file = 0
+        for file in os.listdir(load_dir):
+            n_file += 1
+            print(str(int(n_file / n_files * 100)) + "%: " + file)
+            if os.path.isfile(load_dir + "/" + file) and not os.path.exists(save_dir + "/" + prefix + file):
+                os.rename(load_dir + "/" + file, save_dir + "/" + prefix + file)
+                with open(save_dir + "/" + prefix + file, "rb") as f:
+                    data = pkl.load(f)
+                f.close()
+                with open(save_dir + "/" + prefix + file, "wb") as f:
+                    data["parameters"]["type"] = retype
+                    pkl.dump(data, f)
+                f.close()
+
+    def test_boxplot(self):
+        sim_folder = "./Experiments/LOS_exp/Results/sim2real_2"
+        exp_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3"
+
+        taa = TAA.TwoAgentAnalysis(result_folders=[sim_folder, exp_folder])
+        methods_order = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                         "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                         # "NLS|horizon=10",
+                         # "algebraic|horizon=10",
+                         # "algebraic|frequency=10.0|horizon=100",
+                         "algebraic|frequency=10.0|horizon=1000",
+                         # "QCQP|horizon=10",
+                         # "QCQP|frequency=10.0|horizon=100",
+                         "QCQP|frequency=10.0|horizon=1000"]
+
+        methods_color = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
+                         "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
+                         # "NLS|horizon=10": "tab:red",
+                         # "algebraic|horizon=10": "tab:green",
+                         "algebraic|frequency=10.0|horizon=100": "tab:orange",
+                         "algebraic|frequency=10.0|horizon=1000": "tab:orange",
+                         # "QCQP|horizon=10": "tab:purple",
+                         "QCQP|frequency=10.0|horizon=100": "tab:blue",
+                         "QCQP|frequency=10.0|horizon=1000": "tab:blue"}
+
+        methods_legend = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
+                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
+                          # "NLS|horizon=10": "NLS_10",
+                          # "algebraic|horizon=10": "Algebraic_10",
+                          "algebraic|frequency=10.0|horizon=100": "Algebraic 10s",
+                          "algebraic|frequency=10.0|horizon=1000": "Algebraic",
+                          # "QCQP|horizon=10": "QCQP_10",
+                          "QCQP|frequency=10.0|horizon=100": "QCQP",
+                          "QCQP|frequency=10.0|horizon=1000": "QCQP"}
+
+        # taa.delete_data()
+        # taa.create_panda_dataframe()
+        taa.boxplots(sigma_uwb=[0.25], sigma_v=[0.08], frequencies=[10.0],
+                     methods_order=methods_order, methods_color=methods_color,
+                     methods_legend=methods_legend, start_time=100,
+                     x_variable="Type", x_order= ["experiment", "simulation"],
+                     save_fig=False)
+        plt.show()
+
+
     def test_fuse_sim_real_pkl(self):
         folder = "./Experiments/LOS_exp/Results/sim2real/"
         sim_data_file = "s_number_of_agents_2_sigma_dv_0c15_sigma_dw_0c05_sigma_uwb_0c25_alpha_1c0_kappa_neg1c0_beta_2c0.pkl"
@@ -57,7 +125,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_sim2real_analysis(self):
         result_folder = "./Experiments/LOS_exp/Results/sim2real/merged"
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         taa.delete_data()
         taa.create_panda_dataframe()
 

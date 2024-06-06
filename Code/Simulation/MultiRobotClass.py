@@ -1168,7 +1168,7 @@ class TwoAgentSystem():
     def init_NLS_test(self, parameters={}):
         self.method = "NLS"
         agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
-        self.agents["drone_0"][self.test_name]  = NLS(agents, horizon = self.horizon, sigma_uwb=self.sigma_uwb)
+        self.agents["drone_0"][self.test_name] = NLS(agents, horizon = int(self.horizon), sigma_uwb=self.sigma_uwb)
         best_guess = self.find_best_initial_guess()
         #initial_t = self.find_initial_t()
         self.agents["drone_0"][self.test_name].set_best_guess({"drone_1": best_guess})
@@ -1260,13 +1260,13 @@ class TwoAgentSystem():
 
         # agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
         # ---- Drone 0
-        self.agents["drone_0"][self.test_name] = QCQP(horizon=10, sigma_uwb=self.sigma_uwb)
+        self.agents["drone_0"][self.test_name] = QCQP(horizon=int(self.horizon), sigma_uwb=self.sigma_uwb)
         self.agents["drone_0"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_0"][self.test_name], self.agents["drone_0"]["drone"], self.agents["drone_1"]["drone"])
-        self.agents["drone_0"][self.test_name].horizon = int(self.horizon)
+        # self.agents["drone_0"][self.test_name].horizon = int(self.horizon)
         # ---- Drone 1
-        self.agents["drone_1"][self.test_name] = QCQP(horizon=10, sigma_uwb=self.sigma_uwb)
+        self.agents["drone_1"][self.test_name] = QCQP(horizon=int(self.horizon), sigma_uwb=self.sigma_uwb)
         self.agents["drone_1"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_1"][self.test_name], self.agents["drone_1"]["drone"], self.agents["drone_0"]["drone"])
-        self.agents["drone_1"][self.test_name].horizon = int(self.horizon)
+        # self.agents["drone_1"][self.test_name].horizon = int(self.horizon)
 
     def run_QCQP_simulation(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
 
