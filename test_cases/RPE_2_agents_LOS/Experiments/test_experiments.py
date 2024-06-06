@@ -15,6 +15,7 @@ from Code.Simulation.RobotClass import NewRobot
 import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
+import pickle as pkl
 
 
 class MyTestCase(unittest.TestCase):
@@ -484,6 +485,7 @@ class MyTestCase(unittest.TestCase):
 
         methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "algebraic|frequency=1.0|horizon=10",
                    "algebraic|frequency=10.0|horizon=100",
                    "algebraic|frequency=10.0|horizon=1000",
                    "QCQP|frequency=10.0|horizon=100",
@@ -496,6 +498,26 @@ class MyTestCase(unittest.TestCase):
         tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
         plt.show()
         # return tas, measurements
+    def test_rename_experiments(self):
+        main_folder = "./Experiments/LOS_exp/"
+        load_dir = main_folder + "Results/experiment_outlier_rejection_3"
+        save_dir =  main_folder + "Results/experiment_outlier_rejection_4"
+
+        n_files = len(os.listdir(load_dir))
+        n_file = 0
+        for file in os.listdir(load_dir):
+            n_file += 1
+            print(str(int(n_file/n_files*100)) + "%: " +  file)
+            if os.path.isfile(load_dir + "/"+file) and not os.path.exists(save_dir + "/exp_" + file):
+                os.rename(load_dir + "/" + file, save_dir + "/exp_"+ file)
+                with open(save_dir + "/exp_" + file, "rb") as f:
+                    data = pkl.load(f)
+                f.close()
+                with open(save_dir + "/exp_" + file, "wb") as f:
+                    data["parameters"]["type"] = "experiment"
+                    pkl.dump(data, f)
+                f.close()
+
 
     def test_plot_LOS_error_time(self):
         main_folder = "./Experiments/LOS_exp/"
@@ -550,10 +572,10 @@ class MyTestCase(unittest.TestCase):
                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          # "NLS|horizon=10",
                          # "algebraic|horizon=10",
-                         "algebraic|frequency=10.0|horizon=100",
+                         # "algebraic|frequency=10.0|horizon=100",
                          "algebraic|frequency=10.0|horizon=1000",
                          # "QCQP|horizon=10",
-                         "QCQP|frequency=10.0|horizon=100",
+                         # "QCQP|frequency=10.0|horizon=100",
                          "QCQP|frequency=10.0|horizon=1000"]
 
         methods_color = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
@@ -561,32 +583,32 @@ class MyTestCase(unittest.TestCase):
                          # "NLS|horizon=10": "tab:red",
                          # "algebraic|horizon=10": "tab:green",
                          "algebraic|frequency=10.0|horizon=100": "tab:orange",
-                         "algebraic|frequency=10.0|horizon=1000": "tab:brown",
+                         "algebraic|frequency=10.0|horizon=1000": "tab:orange",
                          # "QCQP|horizon=10": "tab:purple",
                          "QCQP|frequency=10.0|horizon=100": "tab:blue",
-                         "QCQP|frequency=10.0|horizon=1000": "tab:cyan"}
+                         "QCQP|frequency=10.0|horizon=1000": "tab:blue"}
 
         methods_legend = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
                           "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
                           # "NLS|horizon=10": "NLS_10",
                           # "algebraic|horizon=10": "Algebraic_10",
                           "algebraic|frequency=10.0|horizon=100": "Algebraic 10s",
-                          "algebraic|frequency=10.0|horizon=1000": "Algebraic 100s",
+                          "algebraic|frequency=10.0|horizon=1000": "Algebraic",
                           # "QCQP|horizon=10": "QCQP_10",
-                          "QCQP|frequency=10.0|horizon=100": "QCQP 10s",
-                          "QCQP|frequency=10.0|horizon=1000": "QCQP 100s"}
+                          "QCQP|frequency=10.0|horizon=100": "QCQP",
+                          "QCQP|frequency=10.0|horizon=1000": "QCQP"}
 
 
         # taa.delete_data()
         # taa.create_panda_dataframe()
-        taa.boxplot_LOS_comp(sigma_uwb=[0.1,0.25,0.35], sigma_v=[0.1,0.08], frequencies=[10.0],
+        taa.boxplots(sigma_uwb=[0.1,0.25,0.35], sigma_v=[0.1,0.08], frequencies=[10.0],
                              methods_order=methods_order, methods_color=methods_color,
-                             methods_legend=methods_legend,start_time_index=1000, save_fig=False)
+                             methods_legend=methods_legend,start_time=100, save_fig=False)
         plt.show()
 
     def test_exp_time_analysis(self):
         # result_folder = "./Experiments/LOS_exp/Results/new_nls_correct_init_test/"
-        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_2/"
+        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/"
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         # taa.delete_data()
         taa.create_panda_dataframe()

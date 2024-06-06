@@ -550,6 +550,8 @@ class TwoAgentSystem():
 
         #Parameters
         self.parameters={}
+        self.type = ""
+        self.prefix =""
 
         # QCQP and Algebraic parameters:
         self.horizon = 100
@@ -611,7 +613,7 @@ class TwoAgentSystem():
 
         i = 0
         exists = True
-        name = self.test_name+"|"+self.current_sim_name+"|s_uwb="+str(self.sigma_uwb)+"|s_dv="+str(self.sigma_dv)+"|s_dw="+str(self.sigma_dw)
+        name = self.prefix+self.test_name+"|"+self.current_sim_name+"|s_uwb="+str(self.sigma_uwb)+"|s_dv="+str(self.sigma_dv)+"|s_dw="+str(self.sigma_dw)
         name = "c".join(name.split("."))
         name = "n".join(name.split("-"))
         self.result_file= os.path.join(self.result_folder, name+".pkl")
@@ -619,6 +621,7 @@ class TwoAgentSystem():
                 self.data = {}
                 self.data[self.current_sim_name] = {}
                 self.data["parameters"] = self.parameters
+                self.data["parameters"]["type"] = self.type
                 return True
         else:
             try :
@@ -698,7 +701,9 @@ class TwoAgentSystem():
     # ---- Experiments Functions
     #-----------------------------
 
-    def run_experiment(self, methods=[], redo_bool=False, experiment_data=None):
+    def run_experiment(self, methods=[], redo_bool=False, experiment_data=None, prefix = "exp_", res_type="experiment" ):
+        self.type=res_type
+        self.prefix = prefix
         if experiment_data is None:
             return
         # check if experiment_data is a list
@@ -774,7 +779,9 @@ class TwoAgentSystem():
         eval("self.end_" + self.method + "_test()")
 
     # ---- Test functions.
-    def run_simulations(self, methods=[], nlos_function=None, redo_bool=False, sim_list=None):
+    def run_simulations(self, methods=[], nlos_function=None, redo_bool=False, sim_list=None, prefix = "sim_", res_type="simulation"):
+        self.prefix = prefix
+        self.type = res_type
         if nlos_function == None:
             nlos_function = self.nlos_man.los
 

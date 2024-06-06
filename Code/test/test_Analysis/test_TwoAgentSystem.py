@@ -8,6 +8,7 @@ import Code.Analysis.TwoAgentAnalysis as TAA
 from Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger as UPFDL
 from Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger as UKFDL
 import pickle as pkl
+import os
 class MyTestCase(unittest.TestCase):
 
     def test_TAS_RPE(self):
@@ -56,33 +57,47 @@ class MyTestCase(unittest.TestCase):
         return upfs
         # plt.show()
 
-    def test_analysis_freq_simulation(self):
-        result_folder = "Results/test"
-        taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
-        taa.create_panda_dataframe()
-        taa.boxplot_freq_comp(save_fig=False)
-        plt.show()
+    def test_rename_simulations(self):
+        save_dir = "../../../Data/Results/Sim_LOS_06_2024"
+        load_dir = "../../../Data/Results/Standard_LOS_06_2024"
+        n_files = len(os.listdir(load_dir))
+        n_file = 0
+        for file in os.listdir(load_dir):
+            n_file += 1
+            print(str(int(n_file/n_files*100)) + "%: " +  file)
+            if os.path.isfile(load_dir + "/"+file) and not os.path.exists(save_dir + "/sim_" + file):
+                os.rename(load_dir + "/" + file, save_dir + "/sim_"+ file)
+                with open(save_dir + "/sim_" + file, "rb") as f:
+                    data = pkl.load(f)
+                f.close()
+                with open(save_dir + "/sim_" + file, "wb") as f:
+                    data["parameters"]["type"] = "simulation"
+                    pkl.dump(data, f)
+                f.close()
+
+
 
     def test_analysis_LOS_simulation(self):
         result_folder = "../../../Data/Results/Standard_LOS_06_2024"
         # result_folder = "../../../Data/Results/Broken"
         # result_folder = "./Results/test/1hz"
 
-        methods_order = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                         "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                            "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                            "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                         # "NLS|horizon=10",
-                         # "algebraic|horizon=10",
-                         "algebraic|frequency=1.0|horizon=10",
-                            "algebraic|frequency=10.0|horizon=100",
-                         "algebraic|frequency=1.0|horizon=100",
-                            "algebraic|frequency=10.0|horizon=1000",
+        methods_order = [
+                        # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        # "NLS|horizon=10",
+                        # "algebraic|horizon=10",
+                        # "algebraic|frequency=1.0|horizon=10",
+                        # "algebraic|frequency=10.0|horizon=100",
+                        #  "algebraic|frequency=1.0|horizon=100",
+                        "algebraic|frequency=10.0|horizon=1000",
                         # "QCQP|horizon=10",
-                      "QCQP|frequency=1.0|horizon=10",
-                         "QCQP|frequency=10.0|horizon=100",
-                         "QCQP|frequency=1.0|horizon=100",
-                         "QCQP|frequency=10.0|horizon=1000"]
+                        # "QCQP|frequency=1.0|horizon=10",
+                        # "QCQP|frequency=10.0|horizon=100",
+                        # "QCQP|frequency=1.0|horizon=100",
+                        "QCQP|frequency=10.0|horizon=1000"]
 
         methods_color = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
                          "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
@@ -92,32 +107,34 @@ class MyTestCase(unittest.TestCase):
                          # "algebraic|horizon=10": "tab:green",
                          "algebraic|frequency=1.0|horizon=10": "tab:orange",
                             "algebraic|frequency=10.0|horizon=100": "tab:orange",
-                         "algebraic|frequency=1.0|horizon=100": "tab:brown",
-                         "algebraic|frequency=10.0|horizon=1000": "tab:brown",
+                         "algebraic|frequency=1.0|horizon=100": "tab:orange",
+                         "algebraic|frequency=10.0|horizon=1000": "tab:orange",
                          # "QCQP|horizon=10": "tab:purple",
                          "QCQP|frequency=1.0|horizon=10": "tab:blue",
                          "QCQP|frequency=10.0|horizon=100":  "tab:blue",
-                         "QCQP|frequency=1.0|horizon=100": "tab:cyan",
-                         "QCQP|frequency=10.0|horizon=1000": "tab:cyan"}
+                         "QCQP|frequency=1.0|horizon=100": "tab:blue",
+                         "QCQP|frequency=10.0|horizon=1000": "tab:blue"}
 
-        methods_legend = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, proposed",
-                          # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours (10hz)",
-                          "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
-                          # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction (10hz)",
+        methods_legend = {
+                        # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, proposed",
+                          "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
+                          # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
+                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
                         # "NLS|horizon=10": "NLS_10",
                          # "algebraic|horizon=10": "Algebraic_10",
-                          "algebraic|frequency=1.0|horizon=10": "Algebraic (10s)",
-                          "algebraic|frequency=10.0|horizon=1000": "Algebraic (100s)",
+                         #  "algebraic|frequency=1.0|horizon=10": "Algebraic (10s)",
+                          "algebraic|frequency=10.0|horizon=1000": "Algebraic",
                          # "QCQP|horizon=10": "QCQP_10",
-                          "QCQP|frequency=1.0|horizon=10": "QCQP (10s)",
-                          "QCQP|frequency=1.0|horizon=100": "QCQP (100s)"}
+                         #  "QCQP|frequency=10.0|horizon=100": "QCQP (10s)",
+                          "QCQP|frequency=10.0|horizon=1000": "QCQP"}
 
         taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
         # taa.delete_data()
         # taa.create_panda_dataframe()
-        taa.boxplot_LOS_comp(sigma_uwb=[0.1, 1.0], sigma_v=[0.1, 0.01], frequencies=[1.0],
+        # taa.percent_to_load = 5
+        taa.boxplots(sigma_uwb=[0.1, 1.0], sigma_v=[0.1, 0.01], frequencies=[10.0],
                              methods_order = methods_order, methods_color= methods_color,
-                             methods_legend=methods_legend, start_time_index=1000, save_fig=False)
+                             methods_legend=methods_legend, start_time=100, save_fig=False)
         plt.show()
 
     def test_time_analysis(self):

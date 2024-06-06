@@ -11,21 +11,29 @@ import seaborn as sns
 
 class MyTestCase(unittest.TestCase):
     def test_create_sim_data_from_real(self):
-        sig_v = 0.15
-        sig_w = 0.05
+        sig_v = 0.8
+        sig_w = 0.12
         sig_uwb = 0.25
 
         main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/sim2real/"
-        data_folder = main_folder + "Measurements/"
+        results_folder = main_folder + "Results/sim2real_2/"
+        data_folder = "Measurements_correction/"
 
         experiment_data, measurements = create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb)
+        methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   # "algebraic|frequency=1.0|horizon=10",
+                   # "algebraic|frequency=10.0|horizon=100",
+                   "algebraic|frequency=10.0|horizon=1000",
+                   # "QCQP|frequency=10.0|horizon=100",
+                   "QCQP|frequency=10.0|horizon=1000"
+                   ]
+
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
-        tas.debug_bool = False
-        tas.uwb_rate = 1.
-        # tas.run_experiment(methods=["losupf", "nodriftupf", "algebraic", "NLS"], redo_bool=False, experiment_data=experiment_data)
-        tas.run_experiment(methods=[ "nodriftupf"], redo_bool=True, experiment_data=experiment_data)
-        # plt.show()
+        tas.debug_bool = True
+        tas.plot_bool = False
+        tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data, res_type="sim", prefix="")
+
         return tas, measurements
 
     def test_fuse_sim_real_pkl(self):
