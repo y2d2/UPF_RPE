@@ -47,7 +47,7 @@ class MyTestCase(unittest.TestCase):
                    "algebraic|frequency=10.0|horizon=100",
                    "QCQP|frequency=1.0|horizon=10",
                    "QCQP|frequency=10.0|horizon=100"]
-        TAS.run_simulations(methods=methods, redo_bool=False )
+        TAS.run_simulations(methods=methods, redo_bool=False)
 
     def test_UPF_detail(self):
         upfs = []

@@ -12,7 +12,7 @@ import os
 
 class MyTestCase(unittest.TestCase):
     def test_create_sim_data_from_real(self):
-        sig_v = 0.8
+        sig_v = 0.08
         sig_w = 0.12
         sig_uwb = 0.25
 
@@ -33,7 +33,7 @@ class MyTestCase(unittest.TestCase):
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
         tas.debug_bool = True
         tas.plot_bool = False
-        tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data, res_type="sim", prefix="")
+        tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data, res_type="simulation", prefix="sim_")
 
         return tas, measurements
 

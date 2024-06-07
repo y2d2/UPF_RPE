@@ -83,6 +83,7 @@ class TwoAgentAnalysis:
 
                     # if "panda_date" not in data:
                     self.reformat_data_to_pandas(data)
+        return
 
     def reformat_data(self, data):
         data["numerical_data"] = {}
@@ -336,7 +337,9 @@ class TwoAgentAnalysis:
     def time_analysis(self,sigma_uwb =0.1, sigma_v=0.1, frequency=10.0, start_time=0,
                       methods_order=[], methods_color=None, methods_legend = {},
                         save_fig=False, save_name="time_plot"):
-        method_df, methods_order = self.filter_methods(methods_order, [sigma_uwb], [sigma_v], [frequency], start_time_index)
+        method_df, methods_order = self.filter_methods(methods_order, [sigma_uwb], [sigma_v], [frequency], start_time)
+
+
 
 
     def calculation_time(self, save_fig=False):
