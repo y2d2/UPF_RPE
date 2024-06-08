@@ -2,7 +2,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 import numpy as np
-from Code.BaseLines import AlgebraicMethod4DoF, Algebraic4DoF_Logger
+from Code.BaseLines.AlgebraicMethod4DoF import AlgebraicMethod4DoF, Algebraic4DoF_Logger
 from Code.Simulation.BiRobotMovement import run_simulation, drone_flight, random_movements_host_random_movements_connected
 from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
 
@@ -63,12 +63,13 @@ class MyTestCase(unittest.TestCase):
 
     # ---- TEST CASES ----
     def test_move_randomly_los(self):
-        self.init_test(sigma_dv=1e-2, sigma_dw=1e-2, sigma_uwb=1e-1)
+        self.init_test(sigma_dv=1e-1, sigma_dw=1e-1, sigma_uwb=1e-1)
         self.init_drones(np.array([5, 5, 0]), np.pi/4, max_range=20)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
                        random_movements_host_random_movements_connected)
         self.alg_solver = AlgebraicMethod4DoF(d0=self.startMeasurement[0], sigma_uwb=self.sigma_uwb,
                                               x_ha=np.concatenate((self.host.x_start, [self.host.h_start])))
+        self.alg_solver.horizon = 100
         alg_log = Algebraic4DoF_Logger(alg_solver=self.alg_solver, host=self.host, connect=self.drone)
         # alg_log.
         self.alg_solver.init_logging(alg_log)

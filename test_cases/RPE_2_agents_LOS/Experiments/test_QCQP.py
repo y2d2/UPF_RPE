@@ -31,7 +31,9 @@ class MyTestCase(unittest.TestCase):
 
 
         methods = [ "QCQP|frequency=1.0|horizon=10",
-                   "QCQP|frequency=1.0|horizon=100"
+                   "QCQP|frequency=1.0|horizon=100",
+                    "QCQP|frequency=10.0|horizon=100",
+                    "QCQP|frequency=10.0|horizon=1000"
                    ]
         for sig_uwb in sig_uwbs:
             experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
@@ -40,6 +42,28 @@ class MyTestCase(unittest.TestCase):
             tas.plot_bool = False
             tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
 
+    def test_QCQP_boxplots(self):
+        result_folder = "./Experiments/LOS_exp/Results/QCQP"
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
+        methods_order = ["QCQP|frequency=1.0|horizon=10",
+                         "QCQP|frequency=1.0|horizon=100"
+                         ]
+
+        methods_color = { "QCQP|frequency=1.0|horizon=10": "tab:green",
+                         "QCQP|frequency=1.0|horizon=100": "tab:red"
+                          }
+
+        methods_legend = {
+                          "QCQP|frequency=1.0|horizon=10": "QCQP 10s",
+                          "QCQP|frequency=1.0|horizon=100": "QCQP 100s"
+        }
+
+        # taa.delete_data()
+        # taa.create_panda_dataframe()
+        taa.boxplots(sigma_uwb=[0.1, 0.25, 0.35, 0.5], sigma_v=[0.08], frequencies=[1.0],
+                     methods_order=methods_order, methods_color=methods_color,
+                     methods_legend=methods_legend, start_time=100, save_fig=False)
+        plt.show()
 
 if __name__ == '__main__':
     unittest.main()

@@ -138,8 +138,9 @@ class AlgebraicMethod4DoF:
         eps = 0.5 * (self.d[0] ** 2 + (x_ha_odom[:3].T @ x_ha_odom[:3]) + (x_ca_odom[:3].T @ x_ca_odom[:3]) - d ** 2)
         self.eps.append(eps)
         self.d.append(d)
-        if len(self.eps) > 10:
+        if len(self.eps) >= 10:
             self.find_relative_pose()
+            self.trim_to_latest_measurements()
             #Removes the first measurment from the list.
 
 

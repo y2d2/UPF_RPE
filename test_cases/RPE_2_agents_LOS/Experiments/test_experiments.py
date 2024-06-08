@@ -610,7 +610,7 @@ class MyTestCase(unittest.TestCase):
         # taa.create_panda_dataframe()
         taa.boxplots(sigma_uwb=[0.1,0.25,0.35], sigma_v=[0.1,0.08], frequencies=[1.0],
                              methods_order=methods_order, methods_color=methods_color,
-                             methods_legend=methods_legend,start_time=100, save_fig=False)
+                             methods_legend=methods_legend, start_time=100, save_fig=False)
         plt.show()
 
     def test_exp_time_analysis(self):

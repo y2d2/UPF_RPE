@@ -54,15 +54,16 @@ class TwoAgentAnalysis:
             n_files = len(os.listdir(result_folder))
             file_nr = 0.
             for file in os.listdir(result_folder):
-                if int(file_nr/n_files*100.) > self.percent_to_load:
+                if int(file_nr / n_files * 100.) > self.percent_to_load:
                     return
-                file_nr +=1
+                file_nr += 1
                 if file.endswith(".pkl"):
                     with open(result_folder + "/" + file, "rb") as f:
                         try:
                             data = pkl.load(f)
-                            print("Loading " + str(int(file_nr/n_files*100.)), "%: " + result_folder + "/" + file)
-                        except EOFError: print("!!!!!!!!! Could not open: ", result_folder + "/" + file + " !!!!!!!!!")
+                            print("Loading " + str(int(file_nr / n_files * 100.)), "%: " + result_folder + "/" + file)
+                        except EOFError:
+                            print("!!!!!!!!! Could not open: ", result_folder + "/" + file + " !!!!!!!!!")
                     f.close()
                     if "numerical_data" not in data:
                         print("Reformating the data for analysis " + file + " ...")
@@ -158,8 +159,9 @@ class TwoAgentAnalysis:
                                               Sigma_uwb=data["parameters"]["sigma_uwb"],
                                               Type=data["parameters"]["type"],
                                               Frequency=data["parameters"]["frequency"])
-                df = pd.melt(df, id_vars = ['Variable', 'Method', 'Sigma_dv', 'Sigma_dw', 'Sigma_uwb', "Type", "Frequency"],
-                var_name = ["Time"])
+                df = pd.melt(df,
+                             id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_dw', 'Sigma_uwb', "Type", "Frequency"],
+                             var_name=["Time"])
                 self.dfs.append(df)
 
             # df_var = pd.concat([dfs[method][variable] for variable in dfs[method]])
@@ -244,8 +246,7 @@ class TwoAgentAnalysis:
                 g.axes_dict[(smallest_x, sigma_y)].set_xlabel("UWB std: $\\sigma_d $= " + str(sigma_y),
                                                               fontdict={'fontsize': rcParams['axes.labelsize']})
 
-
-    def set_legend(self, g, methods_order, methods_legend = {}):
+    def set_legend(self, g, methods_order, methods_legend={}):
         if methods_legend == {}:
             g.add_legend()
             return
@@ -261,7 +262,6 @@ class TwoAgentAnalysis:
                 new_legend_data[name] = legend_data[name]
         g.add_legend(legend_data=new_legend_data)
 
-
     def print_statistics(self, methods, variable, df):
         for method in methods:
             print(method, variable, df[df["Method"] == method]["value"].mean(), " pm ",
@@ -272,10 +272,10 @@ class TwoAgentAnalysis:
         self.create_panda_dataframe()
 
         dfs = [df_i.loc[(df_i["Sigma_uwb"].isin(sigma_uwb)) &
-                         (df_i["Sigma_dv"].isin(sigma_v)) &
-                         (df_i["Time"] >  df_i["Frequency"] * start_time) &
-                         (df_i["Frequency"].isin(frequencies))
-                         ] for df_i in self.dfs]
+                        (df_i["Sigma_dv"].isin(sigma_v)) &
+                        (df_i["Time"] > df_i["Frequency"] * start_time) &
+                        (df_i["Frequency"].isin(frequencies))
+                        ] for df_i in self.dfs]
 
         df = pd.concat(dfs)
         if not methods:
@@ -292,9 +292,10 @@ class TwoAgentAnalysis:
     # -----------------------
     # Plotting functions:
     # -----------------------
-    def boxplots(self, sigma_uwb=[1.0, 0.1], sigma_v=[0.1,0.01],  frequencies = [1.0,10.0], start_time=0,
-                 methods_order=None, methods_color=None, methods_legend = {}, x_variable = "Frequency",
-                 x_order = None, save_fig=False, save_name="boxplot"):
+    def boxplots(self, sigma_uwb=[1.0, 0.1], sigma_v=[0.1, 0.01], frequencies=[1.0, 10.0], start_time=0,
+                 variables=["error_x_relative", "error_h_relative"],
+                 methods_order=None, methods_color=None, methods_legend={}, x_variable="Frequency",
+                 x_order=None, save_fig=False, save_name="boxplot"):
         if x_order is None:
             x_order = frequencies
 
@@ -306,45 +307,53 @@ class TwoAgentAnalysis:
             methods_order = []
         method_df, methods_order = self.filter_methods(methods_order, sigma_uwb, sigma_v, frequencies, start_time)
         gs = []
-        for variable in self.y_label:
-            df = method_df.loc[(method_df["Variable"] == variable)]
-            g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x=x_variable, hue='Method',
-                                    dodge=True, aspect=0.65, order= x_order, palette=methods_color, hue_order=methods_order,
-                            legend=False)
-            self.remove_x_ticks(g, x_order, unit)
-            self.set_labels(g)
-            self.print_statistics(methods_order, variable, df)
+        for variable in variables:
+            gs.append(self.boxplot(method_df=method_df, variable=variable, methods_order=methods_order,
+                                   methods_color=methods_color, methods_legend=methods_legend, x_variable=x_variable,
+                                   x_order=x_order, unit=unit, save_fig=save_fig, save_name=save_name))
 
-            if variable == "calculation_time":
-                self.set_legend(g,methods_order, methods_legend)
-                for ax in g.axes_dict:
-                    g.axes_dict[ax].set_yscale("log")
+    def boxplot(self, method_df, variable, methods_order, methods_color, methods_legend, x_variable, x_order, unit,
+                save_fig, save_name):
+        df = method_df.loc[(method_df["Variable"] == variable)]
+        g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x=x_variable, hue='Method',
+                        dodge=True, aspect=0.65, order=x_order, palette=methods_color, hue_order=methods_order,
+                        legend=False)
+        self.remove_x_ticks(g, x_order, unit)
+        self.set_labels(g)
+        self.print_statistics(methods_order, variable, df)
 
-            if variable == "error_x_relative":
-                for ax in g.axes_dict:
-                    g.axes_dict[ax].set_yscale("log")
+        if variable == "calculation_time":
+            self.set_legend(g, methods_order, methods_legend)
+            for ax in g.axes_dict:
+                g.axes_dict[ax].set_yscale("log")
 
-            g.fig.subplots_adjust(top=0.9)
-            g.fig.suptitle(self.y_label[variable])
-            if save_fig:
-                g.fig.savefig(self.result_folders[0] + "/" + save_name + "_" + variable + ".png")
-            gs.append(g)
+        if variable == "error_x_relative":
+            for ax in g.axes_dict:
+                pass
+                # g.axes_dict[ax].set_yscale("log")
+
+        g.fig.subplots_adjust(top=0.9)
+        g.fig.suptitle(self.y_label[variable])
+        if save_fig:
+            g.fig.savefig(self.result_folders[0] + "/" + save_name + "_" + variable + ".png")
+        return g
 
     #------------------------
     # Time analysis
     #------------------------
 
-    def time_analysis(self, sigma_uwb =0.25, sigma_v=0.08, frequency=10.0, start_time=0,
-                      methods_order=[], methods_color=None, methods_legend = {}, variables = ["error_x_relative", "error_h_relative"],
-                        save_fig=False, save_name="time_plot"):
+    def time_analysis(self, sigma_uwb=0.25, sigma_v=0.08, frequency=10.0, start_time=0,
+                      methods_order=[], methods_color=None, methods_legend={},
+                      variables=["error_x_relative", "error_h_relative"],
+                      save_fig=False, save_name="time_plot"):
         method_df, methods_order = self.filter_methods(methods_order, [sigma_uwb], [sigma_v], [frequency], start_time)
 
-        fig, axes = plt.subplots(1, len(variables), figsize=(4*len(variables), 4))
+        fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 4))
         for i, variable in enumerate(variables):
             df = method_df.loc[(method_df["Variable"] == variable)]
             method_means = []
             time_points = df["Time"].unique()
-            time_points = time_points[:int((216-100)*frequency)]
+            time_points = time_points[:int((216 - 100) * frequency)]
 
             for method in methods_order:
                 method_time_values = []  # to store values at each time point for a specific method
@@ -368,7 +377,6 @@ class TwoAgentAnalysis:
             # Plotting
             plt.sca(axes[i])
 
-
             g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
                              palette=methods_color, hue_order=methods_order, linewidth=2.5, legend=False)
 
@@ -378,222 +386,15 @@ class TwoAgentAnalysis:
                 axes[i].set_yscale("log")
                 # df_unc = method_df.loc[(method_df["Variable"] == "sigma_x_relative") & (df["Method"] == methods_order[0])]
 
-            legend_handles = [ Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]
+            legend_handles = [Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]
             legend_labels = [methods_legend[method] for method in methods_order]
             fig.suptitle("Average error evolution of the experiments")
             fig.legend(handles=legend_handles, labels=legend_labels, ncol=4, fontsize=12, loc="upper center",
                        bbox_to_anchor=(0.5, 0.92))
             plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
-
-    def calculation_time(self, save_fig=False):
-        if self.df is None:
-            self.create_panda_dataframe()
-        # method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple"}
-        # order = ["losupf", "nodriftupf", "algebraic", "NLS"]
-        # order = ["NLS", "NLS_p"]
-        # plt.figure(figsize=(8, 4))
-        fig, axes = plt.subplots(1, 1, figsize=(8, 4))
-        # axes_i = 0
-        for i, variable in enumerate(["calculation_time"]):  #self.y_label:
-            df = self.df.loc[~self.df["Method"].isin(["slam", "WLS", "upf"]) & (self.df["Variable"] == variable)]
-            methods = df["Method"].unique()
-            method_means = []  # to store mean values for each method
-            time_points = df["Time"].unique()
-            time_points = time_points[:210]
-
-            for method in methods:
-                method_time_values = []  # to store values at each time point for a specific method
-                for time_point in time_points:
-                    mean_value = df[(df["Method"] == method) & (df["Time"] == time_point)]["value"].mean()
-                    method_time_values.append(mean_value)
-
-                method_means.append({"Method": method, "TimeValues": method_time_values})
-                print("For Method:", method, variable, "Average over all conditions at each time point:",
-                      method_time_values)
-
-            # Create a new DataFrame with average values and time points
-            avg_time_df = pd.DataFrame({"Time": time_points})
-
-            for method_mean in method_means:
-                avg_time_df[method_mean["Method"]] = method_mean["TimeValues"]
-
-            # Melt the DataFrame for Seaborn's lineplot
-            avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Method", value_name="MeanValue")
-
-            # Plotting
-            # plt.sca(axes[i])
-            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
-                             linewidth=2.5, legend=False)
-            # palette=method_colors, hue_order=order, linewidth=2.5, legend=False)
-            # axes[i].set_title(self.y_label[variable])
-            axes.set_xlabel("time [s]", fontsize=12)
-            axes.set_ylabel(self.y_label[variable], fontsize=12)
-            if variable == "error_x_relative":
-                axes.set_yscale("log")
-
-        legend_handles = [
-            # Line2D([0], [0], color='tab:green', linewidth=2.5),
-            # Line2D([0], [0], color='tab:red', linewidth=2.5),
-            # Line2D([0], [0], color='tab:orange', linewidth=2.5),
-            Line2D([0], [0], color='tab:blue', linewidth=2.5),
-            Line2D([0], [0], color='tab:purple', linewidth=2.5)
-        ]
-
-        legend_labels = ['Ours, proposed', "Ours, without pseudo-state", 'Algebraic', "NLS"]
-        # legend_labels = ["NLS with good initial guess", "NLS with perfect initial guess"]
-        fig.suptitle("Average error evolution of the experiments")
-        fig.legend(handles=legend_handles, labels=legend_labels, ncol=2, fontsize=12, loc="upper center",
-                   bbox_to_anchor=(0.5, 0.92))
-        plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
-
-    def boxplot_LOS_comp_time(self, sigma_v=[0.01], sigma_d=[0.1], save_fig=False):
-        if self.df is None:
-            self.create_panda_dataframe()
-        # method_colors = {"NLS": "tab:blue", "losupf": "tab:green", "nodriftupf": "tab:red", "algebraic": "tab:orange", "NLS_p":"tab:purple", "QCQP":"tab:purple"}
-        # order = ["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"]
-        # order = [ "NLS", "NLS_p"]
-
-        # plt.figure(figsize=(8, 4))
-        fig, axes = plt.subplots(1, 2, figsize=(8, 4))
-        # axes_i = 0
-        for i, variable in enumerate(["error_x_relative", "error_h_relative"]):  #self.y_label:
-            df = self.df.loc[~self.df["Method"].isin(["slam", "WLS", "upf"]) & (self.df["Variable"] == variable) &
-                             (self.df["Sigma_uwb"].isin(sigma_d)) & (self.df["Sigma_dv"].isin(sigma_v))]
-            methods = df["Method"].unique()
-
-            method_means = []  # to store mean values for each method
-            time_points = df["Time"].unique()
-            # time_points = time_points[:210]
-
-            for method in methods:
-                method_time_values = []  # to store values at each time point for a specific method
-                for time_point in time_points:
-                    mean_value = df[(df["Method"] == method) & (df["Time"] == time_point)]["value"].mean()
-                    method_time_values.append(mean_value)
-
-                method_means.append({"Method": method, "TimeValues": method_time_values})
-                print("For Method:", method, variable, "Average over all conditions at each time point:",
-                      method_time_values)
-
-            # Create a new DataFrame with average values and time points
-            avg_time_df = pd.DataFrame({"Time": time_points})
-
-            for method_mean in method_means:
-                avg_time_df[method_mean["Method"]] = method_mean["TimeValues"]
-
-            # Melt the DataFrame for Seaborn's lineplot
-            avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Method", value_name="MeanValue")
-
-            # Plotting
-            plt.sca(axes[i])
-
-            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
-                             linewidth=2.5, legend=True)
-            # palette=method_colors, hue_order=order,
-            axes[i].set_xlabel("time [s]", fontsize=12)
-            axes[i].set_ylabel(self.y_label[variable], fontsize=12)
-            if variable == "error_x_relative":
-                axes[i].set_yscale("log")
-
-        legend_handles = [
-            Line2D([0], [0], color='tab:green', linewidth=2.5),
-            Line2D([0], [0], color='tab:red', linewidth=2.5),
-            Line2D([0], [0], color='tab:orange', linewidth=2.5),
-            Line2D([0], [0], color='tab:blue', linewidth=2.5),
-            Line2D([0], [0], color='tab:purple', linewidth=2.5),
-
-            # Line2D([0], [0], color='tab:purple', linewidth=2.5)
-        ]
-        legend_labels = ['Ours, proposed', "Ours, without pseudo-state", 'Algebraic', "NLS", "QCQP"]
-        # legend_labels = ["NLS with good initial guess", "NLS with perfect initial guess"]
-        # fig.suptitle("Average error evolution of the experiments")
-        # fig.legend( handles=legend_handles, labels=legend_labels, ncol=4, fontsize=12, loc="upper center", bbox_to_anchor=(0.5, 0.92))
-        # fig.legend( ncol=4, fontsize=12, loc="upper center", bbox_to_anchor=(0.5, 0.92))
-        # plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
-
-    #-----------------------
-    # NLOS functions:
-    #-----------------------
-
-    def boxplot_NLOS_comp(self, save_fig=False):
-        if self.df is None:
-            self.create_panda_dataframe()
-
-        time_len = len(self.df["Time"].unique())
-
-        y_label = {"error_x_relative": "Relative position error [m]",
-                   "error_h_relative": "Relative heading error [rad]",
-                   "los_error": "LOS error"}
-        gs = []
-        for variable in y_label:
-            df = self.df.loc[
-                #(self.df["Time"] == time_len-1) &
-                (~self.df["Method"].isin(["slam", "WLS"])) &
-                (self.df["Variable"] == variable) &
-                (self.df["Sigma_uwb"].isin([1, 0.1])) &
-                (self.df["Sigma_dv"].isin([0.1, 0.01]))]
-            g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x='Method', hue='Method',
-                            dodge=False, height=3, aspect=0.65)
-            g.tick_params(bottom=False)
-            g.set_xticklabels(labels=["", ""])
-            g.set_axis_labels("", "")
-            g.set_titles("")
-            g.fig.suptitle(y_label[variable])
-            smallest_x = 0
-            smallest_y = 100
-            x_values = []
-            y_values = []
-            for ax in g.axes_dict:
-                if ax[0] not in x_values:
-                    x_values.append(ax[0])
-                if ax[1] not in y_values:
-                    y_values.append(ax[1])
-                if ax[0] > smallest_x:
-                    smallest_x = ax[0]
-                if ax[1] < smallest_y:
-                    smallest_y = ax[1]
-
-            for sigma_x in x_values:
-                if g.axes_dict[(sigma_x, smallest_y)] != None:
-                    g.axes_dict[(sigma_x, smallest_y)].set_ylabel("$\\sigma_v $= " + str(sigma_x),
-                                                                  fontdict={'fontsize': rcParams['axes.labelsize']})
-            for sigma_y in y_values:
-                # print(sigma_y, smallest_x)
-                if g.axes_dict[(smallest_x, sigma_y)] != None:
-                    # g.axes_dict[(smallest_x, sigma_y)].xaxis.set_label_position('top')
-                    g.axes_dict[(smallest_x, sigma_y)].set_xlabel("$\\sigma_d $= " + str(sigma_y),
-                                                                  fontdict={'fontsize': rcParams['axes.labelsize']})
-            # for sigma_d in [0.01, 0.1, 1]:
-            #     if g.axes_dict[(sigma_d, 0.01)] != None:
-            #         g.axes_dict[(sigma_d, 0.01)].set_ylabel("$\sigma_v $= 0.01")
-            # g.axes_dict[(0.01, 0.01)].set_ylabel("$\sigma_v $= 0.01")
-            # g.axes_dict[(0.1, 0.01)].set_ylabel("$\sigma_v$ = 0.1")
-            # g.axes_dict[(0.01, 0.01)].set_title("$\sigma_d $= 0.1",
-            #                                        fontdict={'fontsize': rcParams['axes.labelsize']})
-            # g.axes_dict[(0.01, 1)].set_title("$\sigma_d $= 1", fontdict={'fontsize': rcParams['axes.labelsize']})
-            if variable == "calculation_time":
-                legend_data = g._legend_data
-                new_legend_data = {}
-
-                for name in legend_data:
-                    new_legend_data[self.names[name]] = legend_data[name]
-
-                g.add_legend(legend_data=new_legend_data)
-
-                for ax in g.axes_dict:
-                    g.axes_dict[ax].set_yscale("log")
-                #     g.axes_dict[ax].set_ylim(0, 0.4)
-
-            if variable == "error_x_relative":
-                for ax in g.axes_dict:
-                    g.axes_dict[ax].set_yscale("log")
-
-            g.fig.subplots_adjust(top=0.9)
-            g.fig.suptitle(y_label[variable])
-            if save_fig:
-                g.fig.savefig(variable + ".png")
-            gs.append(g)
+    def lineplot(self):
+        pass
 
 
 if __name__ == "__main__":

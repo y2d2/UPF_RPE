@@ -14,22 +14,22 @@ if __name__ == "__main__":
 
 
     methods = [
-                "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                "NLS|frequency=1.0|horizon=10",
-                "NLS|frequency=1.0|horizon=100",
-                "NLS|frequency=10.0|horizon=100",
-                "NLS|frequency=10.0|horizon=1000",
+                # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                # "NLS|frequency=1.0|horizon=10",
+                # "NLS|frequency=1.0|horizon=100",
+                # "NLS|frequency=10.0|horizon=100",
+                # "NLS|frequency=10.0|horizon=1000",
                 "algebraic|frequency=10.0|horizon=100",
                 "algebraic|frequency=1.0|horizon=10",
                 "algebraic|frequency=10.0|horizon=1000",
-                "algebraic|frequency=1.0|horizon=100",
-                "QCQP|frequency=10.0|horizon=100",
-                "QCQP|frequency=1.0|horizon=10",
-                "QCQP|frequency=10.0|horizon=1000",
-                "QCQP|frequency=1.0|horizon=100"
+                "algebraic|frequency=1.0|horizon=100"
+                # "QCQP|frequency=10.0|horizon=100",
+                # "QCQP|frequency=1.0|horizon=10",
+                # "QCQP|frequency=10.0|horizon=1000",
+                # "QCQP|frequency=1.0|horizon=100"
                 ]
     dvs = [0.1, 0.01]
     sigma_dw_factor = 1.0
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     file_content_start += "\t\tsigma_dw = sigma_dw_factor * dv \n"
     file_content_start += "\t\tfor duwb in d_uwbs:\n"
     file_content_start += "\t\t\tsigma_uwb = duwb \n"
-    file_content_start += "\t\t\tTAS = MRC.TwoAgentSystem(trajectory_folder=trajectory_folder, result_folder=result_folder)\n"
+    file_content_start += "\t\t\tTAS = MRC.TwoAgentSystem(trajectory_folder=trajectory_folder, result_folder=result_folder, redo_bool=True)\n"
     file_content_start += "\t\t\tTAS.debug_bool = False\n"
     file_content_start += "\t\t\tTAS.plot_bool = False\n"
     file_content_start += "\t\t\tTAS.set_uncertainties(sigma_dv, sigma_dw, sigma_uwb)\n"

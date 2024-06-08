@@ -154,7 +154,7 @@ class QCQP:
         self.dt_j_s = np.append(self.dt_j_s,  np.array([dt_j]), axis=0)
         self.dij_s = np.append(self.dij_s,  np.array([dij]), axis=0)
 
-        if self.dij_s.size >= self.horizon:
+        if self.dij_s.size >= 10:
             self.prune_matrices()
             self.r5 = self.dij_s[0] ** 2
             self.calculate_trajectories()
