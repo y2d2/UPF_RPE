@@ -334,12 +334,56 @@ class TwoAgentAnalysis:
     # Time analysis
     #------------------------
 
-    def time_analysis(self,sigma_uwb =0.1, sigma_v=0.1, frequency=10.0, start_time=0,
-                      methods_order=[], methods_color=None, methods_legend = {},
+    def time_analysis(self, sigma_uwb =0.25, sigma_v=0.08, frequency=10.0, start_time=0,
+                      methods_order=[], methods_color=None, methods_legend = {}, variables = ["error_x_relative", "error_h_relative"],
                         save_fig=False, save_name="time_plot"):
         method_df, methods_order = self.filter_methods(methods_order, [sigma_uwb], [sigma_v], [frequency], start_time)
 
+        fig, axes = plt.subplots(1, len(variables), figsize=(4*len(variables), 4))
+        for i, variable in enumerate(variables):
+            df = method_df.loc[(method_df["Variable"] == variable)]
+            method_means = []
+            time_points = df["Time"].unique()
+            time_points = time_points[:int((216-100)*frequency)]
 
+            for method in methods_order:
+                method_time_values = []  # to store values at each time point for a specific method
+                for time_point in time_points:
+                    mean_value = df[(df["Method"] == method) & (df["Time"] == time_point)]["value"].mean()
+                    method_time_values.append(mean_value)
+
+                method_means.append({"Method": method, "TimeValues": method_time_values})
+                print("For Method:", method, variable, "Average over all conditions at each time point:",
+                      method_time_values)
+
+            # Create a new DataFrame with average values and time points
+            avg_time_df = pd.DataFrame({"Time": time_points})
+
+            for method_mean in method_means:
+                avg_time_df[method_mean["Method"]] = method_mean["TimeValues"]
+
+            # Melt the DataFrame for Seaborn's lineplot
+            avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Method", value_name="MeanValue")
+            avg_time_df_melted.Time = avg_time_df_melted.Time / frequency
+            # Plotting
+            plt.sca(axes[i])
+
+
+            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
+                             palette=methods_color, hue_order=methods_order, linewidth=2.5, legend=False)
+
+            axes[i].set_xlabel("time [s]", fontsize=12)
+            axes[i].set_ylabel(self.y_label[variable], fontsize=12)
+            if variable == "error_x_relative":
+                axes[i].set_yscale("log")
+                # df_unc = method_df.loc[(method_df["Variable"] == "sigma_x_relative") & (df["Method"] == methods_order[0])]
+
+            legend_handles = [ Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]
+            legend_labels = [methods_legend[method] for method in methods_order]
+            fig.suptitle("Average error evolution of the experiments")
+            fig.legend(handles=legend_handles, labels=legend_labels, ncol=4, fontsize=12, loc="upper center",
+                       bbox_to_anchor=(0.5, 0.92))
+            plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
 
     def calculation_time(self, save_fig=False):

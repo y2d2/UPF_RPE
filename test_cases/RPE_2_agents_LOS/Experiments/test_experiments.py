@@ -478,7 +478,7 @@ class MyTestCase(unittest.TestCase):
         sig_uwb = 0.25
 
         main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/experiment_outlier_rejection_3/"
+        results_folder = main_folder + "Results/experiment_outlier_rejection_3/1hz"
         data_folder = "Measurements_correction/"
 
         experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
@@ -491,6 +491,13 @@ class MyTestCase(unittest.TestCase):
                    "QCQP|frequency=10.0|horizon=100",
                    "QCQP|frequency=10.0|horizon=1000"
                    ]
+        methods = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                           "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                           "algebraic|frequency=1.0|horizon=10",
+                           "algebraic|frequency=1.0|horizon=100",
+                           "QCQP|frequency=1.0|horizon=10",
+                           "QCQP|frequency=1.0|horizon=100"
+                           ]
 
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
         tas.debug_bool = True
@@ -566,54 +573,85 @@ class MyTestCase(unittest.TestCase):
 
 
     def test_exp_analysis(self):
-        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3"
+        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/1hz"
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
-        methods_order = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                         "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        methods_order = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                         "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          # "NLS|horizon=10",
                          # "algebraic|horizon=10",
                          # "algebraic|frequency=10.0|horizon=100",
-                         "algebraic|frequency=10.0|horizon=1000",
+                         "algebraic|frequency=1.0|horizon=100",
                          # "QCQP|horizon=10",
                          # "QCQP|frequency=10.0|horizon=100",
-                         "QCQP|frequency=10.0|horizon=1000"]
+                         "QCQP|frequency=1.0|horizon=100"]
 
-        methods_color = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
-                         "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
+        methods_color = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
+                         "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
                          # "NLS|horizon=10": "tab:red",
                          # "algebraic|horizon=10": "tab:green",
-                         "algebraic|frequency=10.0|horizon=100": "tab:orange",
-                         "algebraic|frequency=10.0|horizon=1000": "tab:orange",
+                         "algebraic|frequency=1.0|horizon=10": "tab:orange",
+                         "algebraic|frequency=1.0|horizon=100": "tab:orange",
                          # "QCQP|horizon=10": "tab:purple",
-                         "QCQP|frequency=10.0|horizon=100": "tab:blue",
-                         "QCQP|frequency=10.0|horizon=1000": "tab:blue"}
+                         "QCQP|frequency=1.0|horizon=10": "tab:blue",
+                         "QCQP|frequency=1.0|horizon=100": "tab:blue"}
 
-        methods_legend = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
-                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
+        methods_legend = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
+                          "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
                           # "NLS|horizon=10": "NLS_10",
                           # "algebraic|horizon=10": "Algebraic_10",
-                          "algebraic|frequency=10.0|horizon=100": "Algebraic 10s",
-                          "algebraic|frequency=10.0|horizon=1000": "Algebraic",
+                          "algebraic|frequency=1.0|horizon=10": "Algebraic 10s",
+                          "algebraic|frequency=1.0|horizon=100": "Algebraic",
                           # "QCQP|horizon=10": "QCQP_10",
-                          "QCQP|frequency=10.0|horizon=100": "QCQP",
-                          "QCQP|frequency=10.0|horizon=1000": "QCQP"}
+                          "QCQP|frequency=1.0|horizon=10": "QCQP",
+                          "QCQP|frequency=1.0|horizon=100": "QCQP"}
 
 
         # taa.delete_data()
         # taa.create_panda_dataframe()
-        taa.boxplots(sigma_uwb=[0.1,0.25,0.35], sigma_v=[0.1,0.08], frequencies=[10.0],
+        taa.boxplots(sigma_uwb=[0.1,0.25,0.35], sigma_v=[0.1,0.08], frequencies=[1.0],
                              methods_order=methods_order, methods_color=methods_color,
                              methods_legend=methods_legend,start_time=100, save_fig=False)
         plt.show()
 
     def test_exp_time_analysis(self):
         # result_folder = "./Experiments/LOS_exp/Results/new_nls_correct_init_test/"
-        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/"
+        result_folder = "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/1hz"
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
+        methods_order = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                         "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                         # "NLS|horizon=10",
+                         # "algebraic|horizon=10",
+                         # "algebraic|frequency=10.0|horizon=100",
+                         "algebraic|frequency=1.0|horizon=100",
+                         # "QCQP|horizon=10",
+                         # "QCQP|frequency=10.0|horizon=100",
+                         "QCQP|frequency=1.0|horizon=100"]
+
+        methods_color = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
+                         "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
+                         # "NLS|horizon=10": "tab:red",
+                         # "algebraic|horizon=10": "tab:green",
+                         "algebraic|frequency=1.0|horizon=10": "tab:orange",
+                         "algebraic|frequency=1.0|horizon=100": "tab:orange",
+                         # "QCQP|horizon=10": "tab:purple",
+                         "QCQP|frequency=1.0|horizon=10": "tab:blue",
+                         "QCQP|frequency=1.0|horizon=100": "tab:blue"}
+
+        methods_legend = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
+                          "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
+                          # "NLS|horizon=10": "NLS_10",
+                          # "algebraic|horizon=10": "Algebraic_10",
+                          "algebraic|frequency=1.0|horizon=10": "Algebraic 10s",
+                          "algebraic|frequency=1.0|horizon=100": "Algebraic",
+                          # "QCQP|horizon=10": "QCQP_10",
+                          "QCQP|frequency=1.0|horizon=10": "QCQP",
+                          "QCQP|frequency=1.0|horizon=100": "QCQP"}
         # taa.delete_data()
         taa.create_panda_dataframe()
-        taa.boxplot_LOS_comp_time(save_fig=False)
-        taa.calculation_time(save_fig=False)
+        taa.time_analysis(sigma_uwb=0.25, sigma_v=0.08, frequency=1.0, start_time=100,
+                          methods_order=methods_order, methods_color=methods_color, methods_legend=methods_legend, save_fig=False)
+        # taa.boxplot_LOS_comp_time(save_fig=False)
+        # taa.calculation_time(save_fig=False)
         plt.show()
 
 

@@ -17,17 +17,19 @@ class MyTestCase(unittest.TestCase):
         sig_uwb = 0.25
 
         main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/sim2real_2/"
+        results_folder = main_folder + "Results/sim2real_2/1hz"
         data_folder = "Measurements_correction/"
 
         experiment_data, measurements = create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb)
-        methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        methods = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    # "algebraic|frequency=1.0|horizon=10",
                    # "algebraic|frequency=10.0|horizon=100",
-                   "algebraic|frequency=10.0|horizon=1000",
+                   "algebraic|frequency=1.0|horizon=10",
+                   "algebraic|frequency=1.0|horizon=100",
                    # "QCQP|frequency=10.0|horizon=100",
-                   "QCQP|frequency=10.0|horizon=1000"
+                   "QCQP|frequency=1.0|horizon=10"
+                   "QCQP|frequency=1.0|horizon=100"
                    ]
 
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
