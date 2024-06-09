@@ -499,10 +499,17 @@ class MyTestCase(unittest.TestCase):
                            "QCQP|frequency=1.0|horizon=100"
                            ]
 
+        methods = [
+                   "algebraic|frequency=1.0|horizon=10",
+                   "algebraic|frequency=1.0|horizon=100",
+                   "algebraic|frequency=10.0|horizon=100",
+                   "algebraic|frequency=10.0|horizon=1000"
+        ]
+
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
         tas.debug_bool = True
         tas.plot_bool = False
-        tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
+        tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data)
         plt.show()
         # return tas, measurements
     def test_rename_experiments(self):

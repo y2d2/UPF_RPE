@@ -134,7 +134,7 @@ class MyTestCase(unittest.TestCase):
         # taa.percent_to_load = 5
         taa.boxplots(sigma_uwb=[0.1, 1.0], sigma_v=[0.1, 0.01], frequencies=[10.0],
                              methods_order = methods_order, methods_color= methods_color,
-                             methods_legend=methods_legend, start_time=100, save_fig=False)
+                             methods_legend=methods_legend, start_time=10, save_fig=False)
         plt.show()
 
     def test_time_analysis(self):
