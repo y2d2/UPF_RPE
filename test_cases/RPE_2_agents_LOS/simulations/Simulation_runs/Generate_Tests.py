@@ -83,7 +83,7 @@ if __name__ == "__main__":
             sim_list = os.listdir(trajectory_folder)[i*number_of_sim_per_process:(i+1)*number_of_sim_per_process]
         except IndexError:
             sim_list = os.listdir(trajectory_folder)[i*number_of_sim_per_process:]
-        file_content_middle = "\t\t\tTAS.run_simulations(methods=methods, redo_bool=True, sim_list="+str(sim_list)+")\n"
+        file_content_middle = "\t\t\tTAS.run_simulations(methods=methods, redo_bool=False, sim_list="+str(sim_list)+")\n"
         file_name = "Test_RPE_2_agents_"+str(i)+".py"
         if file_name in os.listdir("./generated_tests"):
             os.remove("./generated_tests/"+file_name)
