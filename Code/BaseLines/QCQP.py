@@ -126,7 +126,7 @@ class QCQP:
     def calculate_S_matrix(self):
         # See equation 35 in paper.
         # It seems the Si,j is zero by construction makes sense if we assume i.i.d measurements.
-        self.S= np.zeros((self.horizon, self.horizon))
+        self.S = np.zeros((len(self.dt_i_s), len(self.dt_i_s)))
         for i, d_i in enumerate(self.dij_s):
             self.S[i][i] = self.sigma_uwb ** 2 * (4 * d_i ** 2 + self.sigma_uwb ** 2)
             # self.S[i][i] = self.sigma_uwb ** 2
@@ -176,7 +176,7 @@ class QCQP:
             print("no solution found")
 
     def optimize(self):
-        if self.dij_s.size == self.horizon:
+        if self.dij_s.size >= 10:
             self.m = Model("qcqp")
             self.m.setParam('OutputFlag', 0)
             self.m.update()
