@@ -243,6 +243,5 @@ class MyTestCase(unittest.TestCase):
 
 if __name__=="__main__":
     t = MyTestCase()
-    sim_data = t.test_fuse_sim_real_pkl()
-
+    t.test_create_sim_data_from_real()
 
