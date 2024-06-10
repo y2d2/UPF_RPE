@@ -3,7 +3,7 @@ import unittest
 import pickle as pkl
 from Code.UtilityCode.Measurement import create_experiment, create_experimental_sim_data
 import matplotlib
-# matplotlib.use('Qt5Agg')
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from Code.Analysis import TwoAgentAnalysis as TAA
 import seaborn as sns
@@ -17,9 +17,9 @@ class MyTestCase(unittest.TestCase):
         sig_w = 0.12
         sig_uwb = 0.25
 
-        main_folder = "./test_cases/RPE_2_agents_LOS/Experiments/LOS_exp/"
+        main_folder = "./Experiments/LOS_exp/"
         results_folder = main_folder + "Results/sim2real_2/10hz"
-        data_folder = "./test_cases/RPE_2_agents_LOS/Measurements_correction/"
+        data_folder = "./Measurements_correction/"
 
         experiment_data, measurements = create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb)
         methods = [
