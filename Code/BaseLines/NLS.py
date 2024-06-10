@@ -3,6 +3,8 @@ from scipy.optimize import root, least_squares
 from scipy.spatial.distance import mahalanobis
 import numpy as np
 
+from cyipopt import minimize_ipopt
+
 import matplotlib.pyplot as plt
 
 from Code.UtilityCode.utility_fuctions import limit_angle, \
