@@ -40,7 +40,7 @@ class MyTestCase(unittest.TestCase):
             tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
             tas.debug_bool = True
             tas.plot_bool = False
-            tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
+            tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data)
 
     def test_QCQP_boxplots(self):
         result_folder = "./Experiments/LOS_exp/Results/QCQP"

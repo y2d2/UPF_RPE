@@ -330,7 +330,7 @@ class TwoAgentAnalysis:
         if variable == "error_x_relative":
             for ax in g.axes_dict:
                 pass
-                # g.axes_dict[ax].set_yscale("log")
+                g.axes_dict[ax].set_yscale("log")
 
         g.fig.subplots_adjust(top=0.9)
         g.fig.suptitle(self.y_label[variable])
@@ -342,7 +342,7 @@ class TwoAgentAnalysis:
     # Time analysis
     #------------------------
 
-    def time_analysis(self, sigma_uwb=0.25, sigma_v=0.08, frequency=10.0, start_time=0,
+    def time_analysis(self, sigma_uwb=0.25, sigma_v=0.08, frequency = 10.0, start_time=0,
                       methods_order=[], methods_color=None, methods_legend={},
                       variables=["error_x_relative", "error_h_relative"],
                       save_fig=False, save_name="time_plot"):
@@ -353,15 +353,17 @@ class TwoAgentAnalysis:
             df = method_df.loc[(method_df["Variable"] == variable)]
             method_means = []
             time_points = df["Time"].unique()
-            time_points = time_points[:int((216 - 100) * frequency)]
+            # time_points = time_points[:int((216 - 100) * frequency)]
 
             for method in methods_order:
-                method_time_values = []  # to store values at each time point for a specific method
+                # for frequency in frequencies:
+                method_time_values = []                  # to store values at each time point for a specific method
+                # freq = df[(df["Method"] == method)].Frequency.unique()
                 for time_point in time_points:
                     mean_value = df[(df["Method"] == method) & (df["Time"] == time_point)]["value"].mean()
                     method_time_values.append(mean_value)
 
-                method_means.append({"Method": method, "TimeValues": method_time_values})
+                method_means.append({"Method": method,  "TimeValues": method_time_values})
                 print("For Method:", method, variable, "Average over all conditions at each time point:",
                       method_time_values)
 
@@ -370,6 +372,10 @@ class TwoAgentAnalysis:
 
             for method_mean in method_means:
                 avg_time_df[method_mean["Method"]] = method_mean["TimeValues"]
+                # add the frequency to the dataframe:
+
+            # frequency_data = {method_mean["Method"]: method_mean["Frequency"] for method_mean in method_means}
+            # avg_time_df = avg_time_df.assign(Frequency=avg_time_df.columns.map(frequency_data))
 
             # Melt the DataFrame for Seaborn's lineplot
             avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Method", value_name="MeanValue")

@@ -83,20 +83,20 @@ class MyTestCase(unittest.TestCase):
         # result_folder = "./Results/test/1hz"
 
         methods_order = [
-                        # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                         "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                        # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                         "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                         # "NLS|horizon=10",
                         # "algebraic|horizon=10",
                         # "algebraic|frequency=1.0|horizon=10",
                         # "algebraic|frequency=10.0|horizon=100",
-                        #  "algebraic|frequency=1.0|horizon=100",
+                         "algebraic|frequency=1.0|horizon=100",
                         "algebraic|frequency=10.0|horizon=1000",
                         # "QCQP|horizon=10",
                         # "QCQP|frequency=1.0|horizon=10",
                         # "QCQP|frequency=10.0|horizon=100",
-                        # "QCQP|frequency=1.0|horizon=100",
+                        "QCQP|frequency=1.0|horizon=100",
                         "QCQP|frequency=10.0|horizon=1000"]
 
         methods_color = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
@@ -117,7 +117,7 @@ class MyTestCase(unittest.TestCase):
 
         methods_legend = {
                         # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, proposed",
-                          "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
+                          "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, proposed",
                           # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
                           "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
                         # "NLS|horizon=10": "NLS_10",
@@ -132,8 +132,9 @@ class MyTestCase(unittest.TestCase):
         # taa.delete_data()
         # taa.create_panda_dataframe()
         # taa.percent_to_load = 5
-        taa.boxplots(sigma_uwb=[0.1, 1.0], sigma_v=[0.1, 0.01], frequencies=[10.0],
+        taa.boxplots(sigma_uwb=[0.1, 1.0], sigma_v=[0.1, 0.01], frequencies=[1.0, 10.0],
                              methods_order = methods_order, methods_color= methods_color,
+                            variables=["error_x_relative", "error_h_relative", "calculation_time"],
                              methods_legend=methods_legend, start_time=10, save_fig=False)
         plt.show()
 

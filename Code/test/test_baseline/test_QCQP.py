@@ -9,7 +9,7 @@ from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
 
 class MyTestCase(unittest.TestCase):
     def init_test(self, sigma_dv=0.1, sigma_dw=0.1, sigma_uwb=0.1):
-        self.uwb_time_steps = 200  # (120 // 0.03)          # Paper simulation time = 120s
+        self.uwb_time_steps = 3000  # (120 // 0.03)          # Paper simulation time = 120s
         self.odom_time_step = 0.1
         self.uwb_time_step = 0.1 # Paper experiments UWB.py frequency = 37 Hz
         self.factor = int(self.uwb_time_step / self.odom_time_step)
@@ -67,13 +67,13 @@ class MyTestCase(unittest.TestCase):
 
     # ---- TEST CASES ----
     def test_move_randomly_los(self):
-        self.init_test(sigma_dv=0.1, sigma_dw=0.01, sigma_uwb=0.1
+        self.init_test(sigma_dv=0.001, sigma_dw=0.001, sigma_uwb=0.1
                        )
         self.init_drones(np.array([5, 5, 0]), np.pi / 4, max_range=20)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
                        random_movements_host_random_movements_connected)
 
-        self.qcqp = QCQP(horizon=100, sigma_uwb=self.sigma_uwb)
+        self.qcqp = QCQP(horizon=1000, sigma_uwb=self.sigma_uwb)
         self.qcqp_log = QCQP_Log(self.qcqp, self.host, self.drone)
 
         self.run_test(name="Move Randomly LOS")
