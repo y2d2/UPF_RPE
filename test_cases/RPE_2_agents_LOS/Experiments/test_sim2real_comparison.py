@@ -17,9 +17,9 @@ class MyTestCase(unittest.TestCase):
         sig_w = 0.12
         sig_uwb = 0.25
 
-        main_folder = "./Experiments/LOS_exp/"
+        main_folder = "./test_cases/RPE_2_agents_LOS/Experiments/LOS_exp/"
         results_folder = main_folder + "Results/sim2real_2/10hz"
-        data_folder = "Measurements_correction/"
+        data_folder = "./test_cases/RPE_2_agents_LOS/Measurements_correction/"
 
         experiment_data, measurements = create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb)
         methods = [
