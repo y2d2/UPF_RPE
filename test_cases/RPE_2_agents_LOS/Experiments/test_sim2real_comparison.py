@@ -17,25 +17,56 @@ class MyTestCase(unittest.TestCase):
         sig_uwb = 0.25
 
         main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/sim2real_2/1hz"
+        results_folder = main_folder + "Results/sim2real_2/10hz"
         data_folder = "Measurements_correction/"
 
         experiment_data, measurements = create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb)
-        methods = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        methods = [
+                    #"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    # "algebraic|frequency=1.0|horizon=10",
                    # "algebraic|frequency=10.0|horizon=100",
-                   "algebraic|frequency=1.0|horizon=10",
-                   "algebraic|frequency=1.0|horizon=100",
+                   # "algebraic|frequency=1.0|horizon=10",
+                   "algebraic|frequency=10.0|horizon=1000",
                    # "QCQP|frequency=10.0|horizon=100",
-                   "QCQP|frequency=1.0|horizon=10"
-                   "QCQP|frequency=1.0|horizon=100"
+                   # "QCQP|frequency=1.0|horizon=10"
+                   "QCQP|frequency=10.0|horizon=1000"
                    ]
 
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
         tas.debug_bool = True
         tas.plot_bool = False
-        tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data, res_type="simulation", prefix="sim_")
+        tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data, res_type="simulation", prefix="sim_")
+
+        return tas, measurements
+
+    def test_create_sim_data_from_real_NLS(self):
+        sig_v = 0.08
+        sig_w = 0.12
+        sig_uwb = 0.25
+
+        main_folder = "./Experiments/LOS_exp/"
+        results_folder = main_folder + "Results/sim2real_2/10hz"
+        data_folder = "Measurements_correction/"
+
+        experiment_data, measurements = create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb)
+        methods = [
+                    #"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   # "algebraic|frequency=1.0|horizon=10",
+                   # "algebraic|frequency=10.0|horizon=100",
+                   # "algebraic|frequency=1.0|horizon=10",
+                   "NLS|frequency=1.0|horizon=100",
+                   "NLS|frequency=1.0|horizon=10"
+                   # "QCQP|frequency=10.0|horizon=100",
+                   # "QCQP|frequency=1.0|horizon=10"
+                   # "QCQP|frequency=10.0|horizon=1000"
+                   ]
+
+        tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
+        tas.debug_bool = True
+        tas.plot_bool = False
+        tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data, res_type="simulation", prefix="sim_")
 
         return tas, measurements
 

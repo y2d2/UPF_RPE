@@ -93,17 +93,28 @@ class NLS:
                     self.d[s, i, j] = np.linalg.norm(self.x_origin[s, i, :3] - self.x_origin[s, j, :3])
 
     # --- Update Functions
+    def objective_function(self, x):
+        return np.sum(np.array(self.optimise(x)) ** 2)
 
     def update(self, d, dx_odom, q_odom):
         try:
-            x_origin_ravel = self.x_origin.copy()
-            x_origin_ravel = np.ravel(x_origin_ravel)
+
+            # x_origin_ravel = self.x_origin.copy()
+            # x_origin_ravel = np.ravel(x_origin_ravel)
             x = self.x_origin.copy()
             self.add_measurement(d, dx_odom, q_odom)
             x = np.ravel(x)
             try:
+
+                # sol = minimize_ipopt(
+                #     fun=self.objective_function,
+                #     x0=x,
+                #     # bounds=(lb, ub),
+                #     options={'maxiter': 100, 'disp': 5}
+                # )
                 sol = root(self.optimise, x, method='lm')
                 self.x_cov = sol.cov_x.copy()
+                # self.x_cov = np.linalg.inv(sol.jac.T @ sol.jac)  # approximate covariance matrix
                 x = sol.x.reshape(self.horizon, self.m, 4)
                 self.x_origin = x
                 self.calculate_relative_poses()
