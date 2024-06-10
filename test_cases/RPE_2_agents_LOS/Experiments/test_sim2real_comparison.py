@@ -3,7 +3,7 @@ import unittest
 import pickle as pkl
 from Code.UtilityCode.Measurement import create_experiment, create_experimental_sim_data
 import matplotlib
-matplotlib.use('Qt5Agg')
+# matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from Code.Analysis import TwoAgentAnalysis as TAA
 import seaborn as sns
