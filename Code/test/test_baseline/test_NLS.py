@@ -2,16 +2,16 @@ import unittest
 
 import matplotlib.pyplot as plt
 import numpy as np
-from Code.BaseLines import NLS, NLSDataLogger
+from Code.BaseLines.NLS import NLS, NLSDataLogger
 from Code.Simulation.BiRobotMovement import run_simulation, drone_flight, random_movements_host_random_movements_connected
 from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
 
 
 class MyTestCase(unittest.TestCase):
     def init_test(self, sigma_dv=0.1, sigma_dw=0.1, sigma_uwb=0.1):
-        self.uwb_time_steps = 20  # (120 // 0.03)          # Paper simulation time = 120s
-        self.odom_time_step = 0.2
-        self.uwb_time_step = 1  # Paper experiments UWB.py frequency = 37 Hz
+        self.uwb_time_steps = 3000  # (120 // 0.03)          # Paper simulation time = 120s
+        self.odom_time_step = 0.1
+        self.uwb_time_step = 0.1  # Paper experiments UWB.py frequency = 37 Hz
         self.factor = int(self.uwb_time_step / self.odom_time_step)
         self.simulation_time_steps = self.uwb_time_steps * self.factor
 
@@ -73,14 +73,14 @@ class MyTestCase(unittest.TestCase):
 
     # ---- TEST CASES ----
     def test_move_randomly_los(self):
-        self.init_test(sigma_dv=1.5e-1, sigma_dw=1e-1, sigma_uwb=2.5e-1)
+        self.init_test(sigma_dv=1.e-2, sigma_dw=1e-2, sigma_uwb=1e-1)
         self.init_drones(np.array([5, 5, 0]), np.pi / 4, max_range=20)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
                        random_movements_host_random_movements_connected)
 
         agents = {"drone_0": self.host, "drone_1": self.drone}
         # self.best_guess = x.copy()
-        self.NLS = NLS(agents, 10, self.sigma_uwb)
+        self.NLS = NLS(agents, 1000, self.sigma_uwb)
         self.nls_logger = NLSDataLogger(self.NLS)
         # alg_log.
 

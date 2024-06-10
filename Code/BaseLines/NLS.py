@@ -1,4 +1,5 @@
-from scipy.optimize import root
+from numpy.linalg import LinAlgError
+from scipy.optimize import root, least_squares
 from scipy.spatial.distance import mahalanobis
 import numpy as np
 
@@ -98,11 +99,17 @@ class NLS:
             x = self.x_origin.copy()
             self.add_measurement(d, dx_odom, q_odom)
             x = np.ravel(x)
-            sol = root(self.optimise, x, method="lm")
-            self.x_cov = sol.cov_x.copy()
-            x = sol.x.reshape(self.horizon, self.m, 4)
-            self.x_origin = x
-            self.calculate_relative_poses()
+            try:
+                sol = root(self.optimise, x, method='lm')
+                self.x_cov = sol.cov_x.copy()
+                x = sol.x.reshape(self.horizon, self.m, 4)
+                self.x_origin = x
+                self.calculate_relative_poses()
+            except LinAlgError as e:
+                self.calculate_relative_poses(converged=False)
+                print("LinAlgError")
+
+
         except AttributeError:
             print("NLS did not converged")
 
@@ -127,13 +134,13 @@ class NLS:
         res = []
         res = self.calculate_mesurement_error(x_test, res)
         res = self.calculate_drift_error(x_test, res)
-        res = self.calculate_prior_error(x, res)
+        res = self.calculate_prior_error(x_test, res)
         return res
 
     def calculate_prior_error(self, x, res):
         x_prev = self.x_origin.copy()
-        x_prev = np.ravel(x_prev)
-        dx = x - x_prev
+        # x_prev = np.ravel(x_prev)
+        dx = np.ravel(x - x_prev)
         for i in range(self.horizon * self.m * 4):
             if self.x_cov[i, i] != 0:
                 dx[i] = mahalanobis(np.array([0]), np.array([dx[i]]), np.array([1 / self.x_cov[i, i]]))
@@ -145,6 +152,7 @@ class NLS:
         for s in range(self.horizon):
             for i in range(self.m):
                 x[s, i] = x_origin[s, i] + get_4d_rot_matrix(x_origin[s, i, -1]) @ self.x_odom[s, i, :]
+
         for s in range(self.horizon):
             for i in range(self.m):
                 for k in range(self.m - i - 1):
@@ -152,6 +160,19 @@ class NLS:
                     distance = np.linalg.norm(x[s, i] - x[s, j])
                     error = mahalanobis(np.array([self.d[s, i, j]]), np.array([distance]), self.vi_uwb)
                     res.append(error)
+        # return res
+
+        # x = np.zeros((self.horizon, self.m, 4))
+        # for s in range(self.horizon):
+        #     for i in range(self.m):
+        #         x[s, i] = x_origin[s, i] + get_4d_rot_matrix(x_origin[s, i, -1]) @ self.x_odom[s, i, :]
+        # for s in range(self.horizon):
+        #     for i in range(self.m):
+        #         for k in range(self.m - i - 1):
+        #             j = i + k + 1
+        #             distance = np.linalg.norm(x[s, i] - x[s, j])
+        #             error = mahalanobis(np.array([self.d[s, i, j]]), np.array([distance]), self.vi_uwb)
+        #             res.append(error)
         return res
 
     def calculate_drift_error(self, x, res):
@@ -162,6 +183,14 @@ class NLS:
                 VI = np.linalg.inv(self.q[s, i])
                 error = mahalanobis(dx, np.zeros(4), VI)
                 res.append(error)
+
+        # for s in range(self.horizon):
+        #     for i in range(self.m):
+        #         dx = x[s, i] - self.x_origin[s, i]
+        #         dx[3] = limit_angle(dx[3])
+        #         VI = np.linalg.inv(self.q[s, i])
+        #         error = mahalanobis(dx, np.zeros(4), VI)
+        #         res.append(error)
         return res
 
     # --- Calculate relative poses.
@@ -170,26 +199,28 @@ class NLS:
             f = get_4d_rot_matrix(self.x_origin[-1, i, -1])
             self.x[i] = self.x_origin[-1, i] + f @ self.x_odom[-1, i]
 
-    def calculate_relative_poses(self):
+    def calculate_relative_poses(self, converged=True):
         self.calculate_poses()
         # Todo: Why do I go over the frames s, It seems s is not even used?
         # for s in range(self.n):
         for i in range(self.m):
             for k in range(self.m - i - 1):
                 j = i + k + 1
+                if converged:
+                    x_rel_ij = self.x[j] - self.x[i]
+                    x_rel_ji = - x_rel_ij
 
-                x_rel_ij = self.x[j] - self.x[i]
-                x_rel_ji = - x_rel_ij
+                    fi = get_4d_rot_matrix(self.x[i, -1])
+                    x_rel_ij = fi.T @ x_rel_ij
 
-                fi = get_4d_rot_matrix(self.x[i, -1])
-                x_rel_ij = fi.T @ x_rel_ij
+                    fj = get_4d_rot_matrix(self.x[j, -1])
+                    x_rel_ji = fj.T @ x_rel_ji
 
-                fj = get_4d_rot_matrix(self.x[j, -1])
-                x_rel_ji = fj.T @ x_rel_ji
-
-                self.x_rel[i, j] = x_rel_ij
-                self.x_rel[j, i] = x_rel_ji
-
+                    self.x_rel[i, j] = x_rel_ij
+                    self.x_rel[j, i] = x_rel_ji
+                else:
+                    self.x_rel[i, j] = np.array([np.NaN, np.NaN, np.NaN, np.NaN])
+                    self.x_rel[j, i] = np.array([np.NaN, np.NaN, np.NaN, np.NaN])
 
 class NLSDataLogger:
     def __init__(self, nls_solver: NLS):
