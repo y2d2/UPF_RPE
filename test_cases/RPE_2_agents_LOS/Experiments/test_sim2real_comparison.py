@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from Code.Analysis import TwoAgentAnalysis as TAA
 import seaborn as sns
 import os
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 
 class MyTestCase(unittest.TestCase):
