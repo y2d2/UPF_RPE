@@ -12,7 +12,7 @@ if __name__ == "__main__":
     #     shutil.rmtree("./" + generated_tests_folder)
     # os.mkdir("./"+generated_tests_folder)
 
-    redo_bool = True
+    redo_bool = False
     methods = [
                 # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                 # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
