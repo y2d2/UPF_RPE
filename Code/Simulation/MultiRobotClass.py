@@ -618,11 +618,14 @@ class TwoAgentSystem():
         name = "n".join(name.split("-"))
         self.result_file= os.path.join(self.result_folder, name+".pkl")
         if not os.path.isfile(self.result_file) or redo_bool:
-                self.data = {}
-                self.data[self.current_sim_name] = {}
-                self.data["parameters"] = self.parameters
-                self.data["parameters"]["type"] = self.type
-                return True
+            self.data = {}
+            self.data[self.current_sim_name] = {}
+            self.data["parameters"] = self.parameters
+            self.data["parameters"]["type"] = self.type
+            with open(self.result_file, "wb") as f:
+                pkl.dump(self.data, f)
+            f.close()
+            return True
         else:
             try :
                 print("Result file exists:", self.result_file)
@@ -808,6 +811,7 @@ class TwoAgentSystem():
                             os.remove(self.result_file)
                         with open(self.result_file, "wb") as f:
                             pkl.dump(self.data, f)
+                        f.close()
 
                 print("-----------------------------------")
             self.sims += 1
@@ -1255,6 +1259,7 @@ class TwoAgentSystem():
                     self.save_folder + "/" + self.current_sim_name + "/" + self.test_name + ".pkl",
                     'wb') as file:
                 pkl.dump(self.agents["drone_0"][self.test_name], file)
+            file.close()
 
     # ---- QCQP ----
     def init_QCQP_test(self, parameters={}):
@@ -1301,6 +1306,7 @@ class TwoAgentSystem():
                     qcqp_log = self.agents[drone_id][self.test_name+"_log"]
                     qcqp_log.qcqp = None
                     pkl.dump(qcqp_log, file)
+                file.close()
 
 
 
