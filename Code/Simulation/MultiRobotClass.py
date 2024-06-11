@@ -625,11 +625,13 @@ class TwoAgentSystem():
                 return True
         else:
             try :
+                print("Result file exists:", self.result_file)
                 with open(self.result_file, "rb") as f:
                     self.data = pkl.load(f)
                 f.close()
                 self.data={}
             except EOFError:
+                print("Error opening:", self.result_file)
                 self.data = {}
                 self.data[self.current_sim_name] = {}
                 self.data["parameters"] = self.parameters
