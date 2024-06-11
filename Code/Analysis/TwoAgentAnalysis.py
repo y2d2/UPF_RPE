@@ -271,11 +271,16 @@ class TwoAgentAnalysis:
     def filter_methods(self, methods, sigma_uwb, sigma_v, frequencies, start_time):
         self.create_panda_dataframe()
 
-        dfs = [df_i.loc[(df_i["Sigma_uwb"].isin(sigma_uwb)) &
-                        (df_i["Sigma_dv"].isin(sigma_v)) &
-                        (df_i["Time"] > df_i["Frequency"] * start_time) &
-                        (df_i["Frequency"].isin(frequencies))
-                        ] for df_i in self.dfs]
+        # if frequencies is None:
+
+        dfs = []
+        for df_i in self.dfs:
+            df_j = df_i.loc[(df_i["Sigma_uwb"].isin(sigma_uwb)) &
+                            (df_i["Sigma_dv"].isin(sigma_v)) &
+                            (df_i["Time"] > df_i["Frequency"] * start_time) &
+                            (df_i["Frequency"].isin(frequencies))]
+            df_j.Time = df_j.Time / df_j.Frequency
+            dfs.append(df_j)
 
         df = pd.concat(dfs)
         if not methods:
@@ -342,11 +347,11 @@ class TwoAgentAnalysis:
     # Time analysis
     #------------------------
 
-    def time_analysis(self, sigma_uwb=0.25, sigma_v=0.08, frequency = 10.0, start_time=0,
+    def time_analysis(self, sigma_uwb=0.25, sigma_v=0.08, frequencies = [1.0, 10.0], start_time=0,
                       methods_order=[], methods_color=None, methods_legend={},
                       variables=["error_x_relative", "error_h_relative"],
                       save_fig=False, save_name="time_plot"):
-        method_df, methods_order = self.filter_methods(methods_order, [sigma_uwb], [sigma_v], [frequency], start_time)
+        method_df, methods_order = self.filter_methods(methods_order, [sigma_uwb], [sigma_v], frequencies, start_time)
 
         fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 4))
         for i, variable in enumerate(variables):
@@ -379,7 +384,6 @@ class TwoAgentAnalysis:
 
             # Melt the DataFrame for Seaborn's lineplot
             avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Method", value_name="MeanValue")
-            avg_time_df_melted.Time = avg_time_df_melted.Time / frequency
             # Plotting
             plt.sca(axes[i])
 

@@ -602,7 +602,9 @@ class MyTestCase(unittest.TestCase):
                         # "QCQP|frequency=1.0|horizon=10",
                         # "QCQP|frequency=10.0|horizon=100",
                         "QCQP|frequency=1.0|horizon=100",
-                        "QCQP|frequency=10.0|horizon=1000"
+                        "QCQP|frequency=10.0|horizon=1000",
+                        "NLS|frequency=1.0|horizon=10",
+                        "NLS|frequency=1.0|horizon=100"
                         ]
 
         methods_color = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
@@ -617,7 +619,10 @@ class MyTestCase(unittest.TestCase):
                          # "QCQP|horizon=10": "tab:purple",
                          # "QCQP|frequency=1.0|horizon=10": "tab:blue",
                          "QCQP|frequency=1.0|horizon=100": "tab:blue",
-                         "QCQP|frequency=10.0|horizon=1000": "tab:blue"}
+                         "QCQP|frequency=10.0|horizon=1000": "tab:blue",
+                         "NLS|frequency=1.0|horizon=100": "tab:purple",
+                        "NLS|frequency=1.0|horizon=10": "tab:purple"
+                        }
 
         methods_legend = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
                           "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
@@ -627,7 +632,9 @@ class MyTestCase(unittest.TestCase):
                           "algebraic|frequency=1.0|horizon=100": "Algebraic",
                           # "QCQP|horizon=10": "QCQP_10",
                           # "QCQP|frequency=1.0|horizon=10": "QCQP",
-                          "QCQP|frequency=1.0|horizon=100": "QCQP"}
+                          "QCQP|frequency=1.0|horizon=100": "QCQP",
+                          "NLS|frequency=1.0|horizon=100": "NLS",
+                          }
 
 
         # taa.delete_data()
@@ -645,19 +652,22 @@ class MyTestCase(unittest.TestCase):
                             ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = [
-                        # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        #"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          # "NLS|horizon=10",
                          # "algebraic|horizon=10",
-                         # "algebraic|frequency=10.0|horizon=100",
+                         # "algebraic|frequency=1.0|horizon=10",
                          # "algebraic|frequency=1.0|horizon=100",
                          "algebraic|frequency=10.0|horizon=1000",
                          # "QCQP|horizon=10",
                          # "QCQP|frequency=10.0|horizon=100",
                          # "QCQP|frequency=1.0|horizon=100",
-                         "QCQP|frequency=10.0|horizon=1000"]
+                         "QCQP|frequency=10.0|horizon=1000",
+                        "NLS|frequency=1.0|horizon=10",
+                        "NLS|frequency=1.0|horizon=100"
+                         ]
 
         methods_color = {
                         "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
@@ -670,7 +680,10 @@ class MyTestCase(unittest.TestCase):
                          "algebraic|frequency=10.0|horizon=1000": "tab:orange",
                          # "QCQP|horizon=10": "tab:purple",
                          "QCQP|frequency=1.0|horizon=100": "tab:blue",
-                         "QCQP|frequency=10.0|horizon=1000": "tab:blue"}
+                         "QCQP|frequency=10.0|horizon=1000": "tab:blue",
+                        "NLS|frequency=1.0|horizon=100": "tab:purple",
+                        "NLS|frequency=1.0|horizon=10": "tab:purple"
+                        }
 
         methods_legend = {
                             "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
@@ -685,10 +698,12 @@ class MyTestCase(unittest.TestCase):
                           # "QCQP|horizon=10": "QCQP_10",
                           "QCQP|frequency=1.0|horizon=10": "QCQP",
                           "QCQP|frequency=10.0|horizon=1000": "QCQP",
-                          "QCQP|frequency=1.0|horizon=100": "QCQP"}
+                          "QCQP|frequency=1.0|horizon=100": "QCQP",
+                            "NLS|frequency=1.0|horizon=100": "NLS",
+                            "NLS|frequency=1.0|horizon=10": "NLS",}
         # taa.delete_data()
         taa.create_panda_dataframe()
-        taa.time_analysis(sigma_uwb=0.25, sigma_v=0.08, frequency = 10.0, start_time=10,
+        taa.time_analysis(sigma_uwb=0.25, sigma_v=0.08, frequencies = [1.0,10.0], start_time=0,
                           methods_order=methods_order, methods_color=methods_color, methods_legend=methods_legend, save_fig=False)
         # taa.boxplot_LOS_comp_time(save_fig=False)
         # taa.calculation_time(save_fig=False)

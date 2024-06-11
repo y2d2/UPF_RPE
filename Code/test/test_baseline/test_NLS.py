@@ -83,19 +83,19 @@ class MyTestCase(unittest.TestCase):
 
         agents = {"drone_0": self.host, "drone_1": self.drone}
         # self.best_guess = x.copy()
-        self.NLS = NLS(agents, 100, self.sigma_uwb)
+        self.NLS = NLS(agents, 10, self.sigma_uwb)
 
         drone0 = agents["drone_0"]
         drone1 = agents["drone_1"]
-        t_O_S0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
-        t_O_S1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
-
-        T_S0_O = inv_transformation_matrix(t_O_S0)
-        T_O_S1 = transform_matrix(t_O_S1)
-
-        T_S0_S1 = T_S0_O @ T_O_S1
-        t_S0_S1 = get_states_of_transform(T_S0_S1)
-        self.NLS.set_best_guess({"drone_1": t_S0_S1})
+        # t_O_S0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
+        # t_O_S1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
+        #
+        # T_S0_O = inv_transformation_matrix(t_O_S0)
+        # T_O_S1 = transform_matrix(t_O_S1)
+        #
+        # T_S0_S1 = T_S0_O @ T_O_S1
+        # t_S0_S1 = get_states_of_transform(T_S0_S1)
+        # self.NLS.set_best_guess({"drone_1": t_S0_S1})
 
 
         self.nls_logger = NLSDataLogger(self.NLS)

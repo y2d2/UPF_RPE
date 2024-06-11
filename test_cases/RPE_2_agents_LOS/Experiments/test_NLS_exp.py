@@ -32,8 +32,9 @@ class MyTestCase(unittest.TestCase):
         results_folder = main_folder + "Results/experiment_outlier_rejection_3/10hz"
 
 
-        methods = [ "NLS|frequency=1.0|horizon=100",
-                   "NLS|frequency=1.0|horizon=10"
+        methods = [
+                    "NLS|frequency=1.0|horizon=100",
+                   # "NLS|frequency=1.0|horizon=10"
                    ]
 
         experiment_data, measurements = create_experimental_data(exp_file, sig_v, sig_w, sig_uwb)
@@ -75,23 +76,23 @@ class MyTestCase(unittest.TestCase):
 
     def test_nls_exp_1(self):
         exp_file = "Measurements_correction/exp1_los_sampled.pkl"
-        self.test_create_sim_data_from_real_NLS(exp_file)
+        self.test_run_LOS_exp_gen(exp_file)
 
     def test_nls_exp_2(self):
         exp_file = "Measurements_correction/exp2_los_sampled.pkl"
-        self.test_create_sim_data_from_real_NLS(exp_file)
+        self.test_run_LOS_exp_gen(exp_file)
 
     def test_nls_exp_3(self):
         exp_file = "Measurements_correction/exp3_los_sampled.pkl"
-        self.test_create_sim_data_from_real_NLS(exp_file)
+        self.test_run_LOS_exp_gen(exp_file)
 
     def test_nls_exp_4(self):
         exp_file = "Measurements_correction/exp4_los_sampled.pkl"
-        self.test_create_sim_data_from_real_NLS(exp_file)
+        self.test_run_LOS_exp_gen(exp_file)
 
     def test_nls_exp_5(self):
         exp_file = "Measurements_correction/exp5_los_sampled.pkl"
-        self.test_create_sim_data_from_real_NLS(exp_file)
+        self.test_run_LOS_exp_gen(exp_file)
 
     def test_QCQP_boxplots(self):
         result_folder = "./Experiments/LOS_exp/Results/QCQP"
