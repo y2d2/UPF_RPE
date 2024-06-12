@@ -589,21 +589,21 @@ class MyTestCase(unittest.TestCase):
                           "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/10hz"]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = [
-                         "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                         # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                         "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                        "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                         "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
 
                         # "algebraic|frequency=1.0|horizon=10",
                         # "algebraic|frequency=10.0|horizon=100",
-                         "algebraic|frequency=1.0|horizon=100",
+                        # "algebraic|frequency=1.0|horizon=100",
                         "algebraic|frequency=10.0|horizon=1000",
 
                         # "QCQP|frequency=1.0|horizon=10",
                         # "QCQP|frequency=10.0|horizon=100",
-                        "QCQP|frequency=1.0|horizon=100",
+                        # "QCQP|frequency=1.0|horizon=100",
                         "QCQP|frequency=10.0|horizon=1000",
-                        "NLS|frequency=1.0|horizon=10",
+                        # "NLS|frequency=1.0|horizon=10",
                         "NLS|frequency=1.0|horizon=100"
                         ]
 
@@ -665,8 +665,9 @@ class MyTestCase(unittest.TestCase):
                          # "QCQP|frequency=10.0|horizon=100",
                          # "QCQP|frequency=1.0|horizon=100",
                          "QCQP|frequency=10.0|horizon=1000",
-                        "NLS|frequency=1.0|horizon=10",
-                        "NLS|frequency=1.0|horizon=100"
+                        # "NLS|frequency=1.0|horizon=10",
+                        "NLS|frequency=1.0|horizon=100",
+
                          ]
 
         methods_color = {
@@ -682,7 +683,7 @@ class MyTestCase(unittest.TestCase):
                          "QCQP|frequency=1.0|horizon=100": "tab:blue",
                          "QCQP|frequency=10.0|horizon=1000": "tab:blue",
                         "NLS|frequency=1.0|horizon=100": "tab:purple",
-                        "NLS|frequency=1.0|horizon=10": "tab:purple"
+                        "Sigma": "tab:olive"
                         }
 
         methods_legend = {
@@ -700,7 +701,8 @@ class MyTestCase(unittest.TestCase):
                           "QCQP|frequency=10.0|horizon=1000": "QCQP",
                           "QCQP|frequency=1.0|horizon=100": "QCQP",
                             "NLS|frequency=1.0|horizon=100": "NLS",
-                            "NLS|frequency=1.0|horizon=10": "NLS",}
+                            "NLS|frequency=1.0|horizon=10": "NLS",
+                            "Sigma": r" Proposed, $1 \sigma $ bound"}
         # taa.delete_data()
         taa.create_panda_dataframe()
         taa.time_analysis(sigma_uwb=0.25, sigma_v=0.08, frequencies = [1.0,10.0], start_time=0,
