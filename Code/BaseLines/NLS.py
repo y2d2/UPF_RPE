@@ -68,7 +68,7 @@ class NLS:
         self.vi_uwb = np.array([sigma_uwb ** -2])
         # single_agent_cov = np.eye(4) * 1.
 
-        self.x_cov = np.zeros((self.horizon * self.m * 4, self.horizon * self.m * 4))
+        self.x_cov = 0.1*np.ones((self.horizon * self.m * 4, self.horizon * self.m * 4))
         # for i in range(self.n * self.m):
         #     self.x_cov[i * 4:(i + 1) * 4, i * 4:(i + 1) * 4] = single_agent_cov
         self.res = []

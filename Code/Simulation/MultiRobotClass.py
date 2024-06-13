@@ -1175,7 +1175,12 @@ class TwoAgentSystem():
         self.method = "NLS"
         agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
         self.agents["drone_0"][self.test_name] = NLS(agents, horizon = int(self.horizon), sigma_uwb=self.sigma_uwb)
-        # best_guess = self.find_best_initial_guess()
+        if "perfect_guess" in parameters:
+            if  parameters["perfect_guess"] == 0:
+                best_guess = self.find_best_initial_guess()
+                self.agents["drone_0"][self.test_name].set_best_guess({"drone_1": best_guess})
+            # self.agents["drone_0"][self.test_name].set_best_guess(parameters["perfect_guess"])
+        #
         # initial_t = self.find_initial_t()
         # self.agents["drone_0"][self.test_name].set_best_guess({"drone_1": initial_t})
         self.agents["drone_0"][self.test_name].init_logging(NLSDataLogger(self.agents["drone_0"][self.test_name]))

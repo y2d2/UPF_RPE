@@ -210,13 +210,16 @@ class TwoAgentAnalysis:
     # Support plotting functions:
     # -----------------------
     def remove_x_ticks(self, g, x_order, unit=""):
-        # g.tick_params(bottom=False)
+        #
         g.set_axis_labels()
-
-        if len(x_order) > 1:
-            g.set_xticklabels(labels=[str(x) + unit for x in x_order])
-        else:
+        if x_order is None:
+            g.tick_params(bottom=False)
             g.set_xticklabels(labels=[""])
+        else:
+            if len(x_order) > 1:
+                g.set_xticklabels(labels=[str(x) + unit for x in x_order])
+            else:
+                g.set_xticklabels(labels=[""])
 
         g.set_axis_labels("", "")
         g.set_titles("")
@@ -268,6 +271,36 @@ class TwoAgentAnalysis:
                   df[df["Method"] == method]["value"].std(), "; median: ",
                   df[df["Method"] == method]["value"].median())
 
+
+    def generate_name(self, method_param={}):
+        name = method_param["Method"]
+        for key in method_param["Variables"]:
+            name = name + "|" + key + "_" + str(method_param["Variables"][key])
+        return name
+
+    def filter_methods_new(self, methods_param=[]):
+        self.create_panda_dataframe()
+        dfs = []
+
+        names =[]
+        colors = {}
+        legends = {}
+        for method_param in methods_param:
+            name = self.generate_name(method_param)
+            if name not in names:
+                names.append(name)
+                colors[name] = method_param["Color"]
+                legends[name] = method_param["Legend"]
+            for df_i in self.dfs:
+                df_j = df_i.loc[(df_i["Method"] == method_param["Method"])]
+                for key in method_param["Variables"]:
+                    df_j = df_j.loc[(df_j[key].isin(method_param["Variables"][key]))]
+                df_j = df_j.assign(Name=name)
+                dfs.append(df_j)
+        df = pd.concat(dfs)
+
+        return df, names, colors, legends
+
     def filter_methods(self, methods, sigma_uwb, sigma_v, frequencies, start_time):
         self.create_panda_dataframe()
 
@@ -280,6 +313,8 @@ class TwoAgentAnalysis:
                             (df_i["Time"] > df_i["Frequency"] * start_time) &
                             (df_i["Frequency"].isin(frequencies))]
             df_j.Time = df_j.Time / df_j.Frequency
+            if "NLS" in df_j.Method:
+                df_j.Frequency = 10* df_j.Frequency
             dfs.append(df_j)
 
         df = pd.concat(dfs)
@@ -343,11 +378,26 @@ class TwoAgentAnalysis:
             g.fig.savefig(self.result_folders[0] + "/" + save_name + "_" + variable + ".png")
         return g
 
+    def boxplot_exp(self, df,methods_color, methods_legend,
+                    hue_variable = None, hue_order=None,
+                    col_variable =None, col_order =None,
+                    row_variable=None, row_order=None,
+                    x_variable = None, x_order=None):
+
+
+
+        g = sns.catplot(data=df, kind='box', col=col_variable, row=row_variable, y='value', x=x_variable, hue='Name',
+                        dodge=True, aspect=0.65, palette=methods_color, hue_order=hue_order,
+                        legend=False)
+        a = [ "" for _ in df[x_variable].unique()]
+        self.remove_x_ticks(g, a)
+
+
     #------------------------
     # Time analysis
     #------------------------
 
-    def time_analysis(self, sigma_uwb=0.25, sigma_v=0.08, frequencies = [1.0, 10.0], start_time=0,
+    def time_analysis(self, sigma_uwbs=[0.25], sigma_vs=[0.08], frequencies = [1.0, 10.0], start_time=0,
                       methods_order=[], methods_color=None, methods_legend={},
                       variables=["error_x_relative", "error_h_relative"], sigma_bound = False,
                       save_fig=False, save_name="time_plot"):
@@ -356,7 +406,7 @@ class TwoAgentAnalysis:
             legend_col = 3
         else:
             legend_col = 5
-        method_df, methods_order = self.filter_methods(methods_order, [sigma_uwb], [sigma_v], frequencies, start_time)
+        method_df, methods_order = self.filter_methods(methods_order, sigma_uwbs, sigma_vs, frequencies, start_time)
 
         fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 4))
         for i, variable in enumerate(variables):
