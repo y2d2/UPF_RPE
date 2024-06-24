@@ -265,11 +265,12 @@ class TwoAgentAnalysis:
                 new_legend_data[name] = legend_data[name]
         g.add_legend(legend_data=new_legend_data)
 
-    def print_statistics(self, methods, variable, df):
-        for method in methods:
-            print(method, variable, df[df["Method"] == method]["value"].mean(), " pm ",
-                  df[df["Method"] == method]["value"].std(), "; median: ",
-                  df[df["Method"] == method]["value"].median())
+    def print_statistics(self, methods_name, variables, df):
+        for variable in variables:
+            for method in methods_name:
+                print(method, variable, df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean(), " pm ",
+                      df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].std(), "; median: ",
+                      df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].median())
 
 
     def generate_name(self, method_param={}):
@@ -349,8 +350,8 @@ class TwoAgentAnalysis:
         gs = []
         for variable in variables:
             gs.append(self.boxplot(method_df=method_df, variable=variable, methods_order=methods_order,
-                                   methods_color=methods_color, methods_legend=methods_legend, x_variable=x_variable,
-                                   x_order=x_order, unit=unit, save_fig=save_fig, save_name=save_name))
+                                   methods_color=methods_color, methods_legend=methods_legend, x_variable="Method",
+                                   x_order=methods_order, unit=unit, save_fig=save_fig, save_name=save_name))
 
     def boxplot(self, method_df, variable, methods_order, methods_color, methods_legend, x_variable, x_order, unit,
                 save_fig, save_name):
@@ -358,7 +359,7 @@ class TwoAgentAnalysis:
         g = sns.catplot(data=df, kind='box', col='Sigma_uwb', row="Sigma_dv", y='value', x=x_variable, hue='Method',
                         dodge=True, aspect=0.65, palette=methods_color, hue_order=methods_order,
                         legend=False)
-        self.remove_x_ticks(g, x_order, unit)
+        # self.remove_x_ticks(g, x_order, unit)
         self.set_labels(g)
         self.print_statistics(methods_order, variable, df)
 
@@ -382,15 +383,20 @@ class TwoAgentAnalysis:
                     hue_variable = None, hue_order=None,
                     col_variable =None, col_order =None,
                     row_variable=None, row_order=None,
-                    x_variable = None, x_order=None):
+                    x_variable = None, x_order=None,
+                    sharey = False):
 
 
 
         g = sns.catplot(data=df, kind='box', col=col_variable, row=row_variable, y='value', x=x_variable, hue='Name',
                         dodge=True, aspect=0.65, palette=methods_color, hue_order=hue_order,
-                        legend=False)
-        a = [ "" for _ in df[x_variable].unique()]
-        self.remove_x_ticks(g, a)
+                        legend=False, sharey=sharey)
+        if x_order is None:
+            x_order = ["" for _ in df[x_variable].unique()]
+        self.remove_x_ticks(g, x_order)
+        self.set_legend(g, hue_order, methods_legend)
+        return g
+
 
 
     #------------------------
@@ -408,7 +414,7 @@ class TwoAgentAnalysis:
             legend_col = 5
         method_df, methods_order = self.filter_methods(methods_order, sigma_uwbs, sigma_vs, frequencies, start_time)
 
-        fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 4))
+        fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 3))
         for i, variable in enumerate(variables):
             df = method_df.loc[(method_df["Variable"] == variable)]
             method_means = []
@@ -469,7 +475,7 @@ class TwoAgentAnalysis:
 
             legend_handles = [Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]
             legend_labels = [methods_legend[method] for method in methods_order]
-            fig.suptitle("Average error evolution of the experiments")
+            # fig.suptitle("Average error evolution of the experiments")
             fig.legend(handles=legend_handles, labels=legend_labels, ncol=legend_col, fontsize=12, loc="upper center",
                        bbox_to_anchor=(0.5, 0.92))
             plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)

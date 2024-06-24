@@ -12,6 +12,7 @@ from Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogg
 from Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger as UKFDL
 import pickle as pkl
 import os
+import seaborn as sns
 class MyTestCase(unittest.TestCase):
 
     def test_TAS_RPE(self):
@@ -82,26 +83,27 @@ class MyTestCase(unittest.TestCase):
 
     def test_analysis_LOS_simulation(self):
         result_folder = "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper"
+        result_folder = ("../../../Data/Results/test_files")
         # result_folder = "../../../Data/Results/Broken"
         # result_folder = "./Results/test/1hz"
 
         methods_order = [
                         # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                         "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-#                         "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                        "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                        # "NLS|horizon=10",
-                        # "algebraic|horizon=10",
-                        # "algebraic|frequency=1.0|horizon=10",
-                        # "algebraic|frequency=10.0|horizon=100",
-#                          "algebraic|frequency=1.0|horizon=100",
-                        "algebraic|frequency=10.0|horizon=1000",
-                        # "QCQP|horizon=10",
-                        # "QCQP|frequency=1.0|horizon=10",
-                        # "QCQP|frequency=10.0|horizon=100",
-#                         "QCQP|frequency=1.0|horizon=100",
-                        "QCQP|frequency=10.0|horizon=1000",
-                        "NLS|frequency=1.0|horizon=10",
+# #                         "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+#                         "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+#                         # "NLS|horizon=10",
+#                         # "algebraic|horizon=10",
+#                         # "algebraic|frequency=1.0|horizon=10",
+#                         # "algebraic|frequency=10.0|horizon=100",
+# #                          "algebraic|frequency=1.0|horizon=100",
+#                         "algebraic|frequency=10.0|horizon=1000",
+#                         # "QCQP|horizon=10",
+#                         # "QCQP|frequency=1.0|horizon=10",
+#                         # "QCQP|frequency=10.0|horizon=100",
+# #                         "QCQP|frequency=1.0|horizon=100",
+#                         "QCQP|frequency=10.0|horizon=1000",
+#                         "NLS|frequency=1.0|horizon=10",
         ]
 
         methods_color = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
@@ -145,6 +147,184 @@ class MyTestCase(unittest.TestCase):
                              methods_order = methods_order, methods_color= methods_color,
                             variables=["error_x_relative", "error_h_relative", "calculation_time"],
                              methods_legend=methods_legend, start_time=10, save_fig=False)
+        plt.show()
+
+    def test_print_statistics(self):
+        result_folder = "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper"
+        # result_folder = ("../../../Data/Results/test_files")
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
+        variables = ["error_x_relative", "error_h_relative", "calculation_time"]
+
+        upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "Variables": {
+                       "Type": ["simulation"],
+                       "Variable": variables,
+                       "Sigma_dv": [0.01, 0.1],
+                       "Sigma_uwb": [0.1, 1.],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:green",
+                   "Legend": "Ours, proposed",
+                   }
+        nodriftupf_exp = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                          "Variables": {
+                              "Type": ["simulation"],
+                              "Variable": variables,
+                              "Sigma_dv": [0.01, 0.1],
+                              "Sigma_uwb": [0.1, 1.],
+                              # "Sigma_dw": [],
+                              "Frequency": [10.0],
+                          },
+                          "Color": "tab:red",
+                          "Legend": "Ours, without drift correction",
+                          }
+        alg_exp = {"Method": "algebraic|frequency=10.0|horizon=1000",
+                   "Variables": {
+                       "Type": ["simulation"],
+                       "Variable": variables,
+                       "Sigma_dv": [0.01, 0.1],
+                       "Sigma_uwb": [0.1, 1.],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:orange",
+                   "Legend": "Algebraic",
+                   }
+        qcqp_exp = {"Method": "QCQP|frequency=10.0|horizon=1000",
+                    "Variables": {
+                        "Type": ["simulation"],
+                        "Variable": variables,
+                        "Sigma_dv": [0.01, 0.1],
+                        "Sigma_uwb": [0.1, 1.],
+                        # "Sigma_dw": [],
+                        "Frequency": [10.0],
+                    },
+                    "Color": "tab:blue",
+                    "Legend": "QCQP",
+                    }
+        nls_exp = {"Method": "NLS|frequency=1.0|horizon=10",
+                   "Variables": {
+                       "Type": ["simulation"],
+                       "Variable": variables,
+                       "Sigma_dv": [0.01, 0.1],
+                       "Sigma_uwb": [0.1, 1.],
+                       # "Sigma_dw": [],
+                       "Frequency": [1.],
+                   },
+                   "Color": "tab:purple",
+                   "Legend": "NLS",
+                   }
+
+        methods_order = [upf_exp,
+                         nodriftupf_exp,
+                         alg_exp,
+                         qcqp_exp,
+                         nls_exp,
+                         ]
+
+        df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
+        taa.print_statistics(methods_names, variables, df)
+
+    def test_sim_analysis(self):
+        result_folder = "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper"
+        # result_folder = ("../../../Data/Results/test_files")
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
+
+        upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "Variables": {
+                       "Type": ["simulation"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.01, 0.1],
+                       "Sigma_uwb": [0.1, 1.],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:green",
+                   "Legend": "Ours",
+                   }
+        nodriftupf_exp = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                          "Variables": {
+                              "Type": ["simulation"],
+                              "Variable": ["error_x_relative", "error_h_relative"],
+                              "Sigma_dv": [0.01, 0.1],
+                              "Sigma_uwb": [0.1, 1.],
+                              # "Sigma_dw": [],
+                              "Frequency": [10.0],
+                          },
+                          "Color": "tab:red",
+                          "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state",
+                          }
+        alg_exp = {"Method": "algebraic|frequency=10.0|horizon=1000",
+                   "Variables": {
+                       "Type": ["simulation"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.01, 0.1],
+                       "Sigma_uwb": [0.1, 1.],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:orange",
+                   "Legend": "Algebraic",
+                   }
+        qcqp_exp = {"Method": "QCQP|frequency=10.0|horizon=1000",
+                    "Variables": {
+                        "Type": ["simulation"],
+                        "Variable": ["error_x_relative", "error_h_relative"],
+                        "Sigma_dv": [0.01, 0.1],
+                        "Sigma_uwb": [0.1, 1.],
+                        # "Sigma_dw": [],
+                        "Frequency": [10.0],
+                    },
+                    "Color": "tab:blue",
+                    "Legend": "QCQP",
+                    }
+        nls_exp = {"Method": "NLS|frequency=1.0|horizon=10",
+                   "Variables": {
+                       "Type": ["simulation"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.01, 0.1],
+                       "Sigma_uwb": [0.1, 1.],
+                       # "Sigma_dw": [],
+                       "Frequency": [1.],
+                   },
+                   "Color": "tab:purple",
+                   "Legend": "NLS",
+                   }
+
+        methods_order = [ upf_exp,
+                          nodriftupf_exp,
+                         alg_exp,
+                          qcqp_exp,
+                          nls_exp,
+                        ]
+
+        df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
+        g = taa.boxplot_exp(df, methods_color=methods_colors, methods_legend=methods_legends,
+                        hue_variable="Name", hue_order=methods_names,
+                        col_variable="Variable", col_order = ["error_x_relative", "error_h_relative"],
+                        row_variable="Sigma_dv", row_order = [0.01, 0.1],
+                        x_variable="Sigma_uwb", x_order=[0.1, 1.],
+                        )
+        g.fig.set_size_inches(8, 4)
+        for ax in g.axes_dict:
+            if "error_x_relative" in ax:
+                g.axes_dict[ax].set_yscale("log")
+                if 0.1 in ax:
+                    g.axes_dict[ax].set_ylabel(r"$\sigma_v = 0.1 \frac{m}{s}$")
+                if 0.01 in ax:
+                    g.axes_dict[ax].set_ylabel(r"$\sigma_v = 0.01 \frac{m}{s}$")
+            if 0.1 in ax:
+                g.axes_dict[ax].set_xlabel(r"$\sigma_{uwb} [m]$")
+            if 0.01 in ax:
+                if "error_h_relative" in ax:
+                    g.axes_dict[ax].set_title(taa.y_label["error_h_relative"])
+                if  "error_x_relative" in ax:
+                    g.axes_dict[ax].set_title(taa.y_label["error_x_relative"])
+        # plt.figure(0).set_size_inches(10, 10)
+        sns.move_legend(g, loc="upper center", bbox_to_anchor=(0.5, 1.), ncol=5)
+        plt.subplots_adjust(top=0.8, bottom=0.12, left=0.12, right=0.99)
+        # plt.suptitle("Monte Carlo simulation")
         plt.show()
 
     def test_time_analysis(self):

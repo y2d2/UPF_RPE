@@ -349,8 +349,8 @@ class NewRobot:
         ax.plot3D(self.x_slam[i, 0], self.x_slam[i, 1], self.x_slam[i, 2],
                   color=color, marker="x", linestyle=linestyle, alpha=alpha)
 
-    def plot_trajectory(self, ax, color="k"):
-        ax.plot3D(self.x_real[:, 0], self.x_real[:, 1], self.x_real[:, 2], color=color)
+    def plot_trajectory(self, ax, color="k", label=None):
+        ax.plot3D(self.x_real[:, 0], self.x_real[:, 1], self.x_real[:, 2], color=color, label=label)
 
 
 

@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import pickle as pkl
-
+import seaborn as sns
 
 class MyTestCase(unittest.TestCase):
 
@@ -605,13 +605,11 @@ class MyTestCase(unittest.TestCase):
 
     def test_exp_analysis(self):
         result_folders = [
-                # "./Experiments/LOS_exp/Results/experiments_paper/Experiments",
+                "./Experiments/LOS_exp/Results/experiments_paper/Experiments",
                 "./Experiments/LOS_exp/Results/experiments_paper/Sim",
                           ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
-        methods_order = [
-                         # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                        {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        upf_sim = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "Variables": {
                             "Type": ["simulation"],
                              "Variable":["error_x_relative", "error_h_relative"],
@@ -620,10 +618,10 @@ class MyTestCase(unittest.TestCase):
                              # "Sigma_dw": [],
                              "Frequency": [10.0],
                          },
-                         "Color": "tab:green",
-                         "Legend": "Proposed, ours",
-                         },
-                        {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                           "Color": "lightgreen",
+                           "Legend": "Ours (s)",
+                           }
+        nodriftupf_sim = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "Variables": {
                              "Type": ["simulation"],
                              "Variable": ["error_x_relative", "error_h_relative"],
@@ -632,112 +630,251 @@ class MyTestCase(unittest.TestCase):
                              # "Sigma_dw": [],
                              "Frequency": [10.0],
                          },
-                         "Color": "tab:red",
-                         "Legend": "Proposed, ours",
+                         "Color": "salmon",
+                         "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state (s)",
+                         }
+        alg_sim = {"Method": "algebraic|frequency=10.0|horizon=1000",
+                         "Variables": {
+                             "Type": ["simulation"],
+                             "Variable": ["error_x_relative", "error_h_relative"],
+                             "Sigma_dv": [0.08],
+                             "Sigma_uwb": [0.25],
+                             # "Sigma_dw": [],
+                             "Frequency": [10.0],
                          },
-                        # {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                        #  "Variables": {
-                        #      "Type": ["experiment"],
-                        #      "Sigma_dv": [0.08],
-                        #      "Sigma_uwb": [0.25],
-                        #      # "Sigma_dw": [],
-                        #      "Frequency": [10.0],
-                        #  },
-                        #  "Color": "tab:green",
-                        #  "Legend": "Proposed, ours",
-                        #  },
+                         "Color": "bisque",
+                         "Legend": "Algebraic (s)",
+                         }
+        qcqp_sim = {"Method":"QCQP|frequency=10.0|horizon=1000",
+                         "Variables": {
+                             "Type": ["simulation"],
+                             "Variable": ["error_x_relative", "error_h_relative"],
+                             "Sigma_dv": [0.08],
+                             "Sigma_uwb": [0.25],
+                             # "Sigma_dw": [],
+                             "Frequency": [10.0],
+                         },
+                         "Color": "cornflowerblue",
+                         "Legend": "QCQP (s)",
+                         }
+        nls_sim = {"Method": "NLS|frequency=1.0|horizon=10",
+                         "Variables": {
+                             "Type": ["simulation"],
+                             "Variable": ["error_x_relative", "error_h_relative"],
+                             "Sigma_dv": [0.08],
+                             "Sigma_uwb": [0.25],
+                             "Sigma_dw": [0.05],
+                             "Frequency": [1.0],
+                         },
+                         "Color": "thistle",
+                         "Legend": "NLS (s)",
+                         }
 
-                        # # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                        # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                        #
-                        # # "algebraic|frequency=1.0|horizon=10",
-                        # # "algebraic|frequency=10.0|horizon=100",
-                        # # "algebraic|frequency=1.0|horizon=100",
-                        # "algebraic|frequency=10.0|horizon=1000",
-                        #
-                        # # "QCQP|frequency=1.0|horizon=10",
-                        # # "QCQP|frequency=10.0|horizon=100",
-                        # # "QCQP|frequency=1.0|horizon=100",
-                        # "QCQP|frequency=10.0|horizon=1000",
-                        # # "NLS|frequency=1.0|horizon=10",
-                        # "NLS|frequency=1.0|horizon=10|perfect_guess=0",
-                        # "NLS|frequency=1.0|horizon=100|perfect_guess=0"
+        upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.08],
+                       "Sigma_uwb": [0.25],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:green",
+                   "Legend": "Ours",
+                   }
+        nodriftupf_exp = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                          "Variables": {
+                              "Type": ["experiment"],
+                              "Variable": ["error_x_relative", "error_h_relative"],
+                              "Sigma_dv": [0.08],
+                              "Sigma_uwb": [0.25],
+                              # "Sigma_dw": [],
+                              "Frequency": [10.0],
+                          },
+                          "Color": "tab:red",
+                          "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state",
+                          }
+        alg_exp = {"Method": "algebraic|frequency=10.0|horizon=1000",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.08],
+                       "Sigma_uwb": [0.25],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:orange",
+                   "Legend": "Algebraic",
+                   }
+        qcqp_exp = {"Method": "QCQP|frequency=10.0|horizon=1000",
+                    "Variables": {
+                        "Type": ["experiment"],
+                        "Variable": ["error_x_relative", "error_h_relative"],
+                        "Sigma_dv": [0.08],
+                        "Sigma_uwb": [0.25],
+                        # "Sigma_dw": [],
+                        "Frequency": [10.0],
+                    },
+                    "Color": "tab:blue",
+                    "Legend": "QCQP",
+                    }
+        nls_exp = {"Method": "NLS|frequency=1.0|horizon=10",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.08],
+                       "Sigma_uwb": [0.35],
+                       "Sigma_dw": [0.05],
+                       "Frequency": [1.0],
+                   },
+                   "Color": "tab:purple",
+                   "Legend": "NLS",
+                   }
+
+        methods_order = [
+                        upf_exp, upf_sim,
+                          nodriftupf_exp, nodriftupf_sim,
+                         alg_exp, alg_sim,
+                          qcqp_exp, qcqp_sim,
+                          nls_exp, nls_sim,
                         ]
 
         df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
-        taa.boxplot_exp(df, methods_color=methods_colors, methods_legend=methods_legends,
+        taa.print_statistics(methods_names, ["error_x_relative", "error_h_relative"], df)
+        g = taa.boxplot_exp(df, methods_color=methods_colors, methods_legend=methods_legends,
                         hue_variable="Name", hue_order=methods_names,
                         col_variable="Variable",
                         row_variable=None,
                         x_variable="Sigma_dv", 
                         )
+
+        g.axes_dict["error_x_relative"].set_yscale("log")
+        g.axes_dict["error_h_relative"].set_ylabel(taa.y_label["error_h_relative"])
+        g.axes_dict["error_x_relative"].set_ylabel(taa.y_label["error_x_relative"])
+        sns.move_legend(g, loc="upper center", bbox_to_anchor= (0.5, 0.98), ncol=5)
+        plt.subplots_adjust(top=0.8, bottom=0.12, left=0.06, right=0.99)
+        # plt.suptitle("Experiments")
         plt.show()
 
-        # methods_color = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
-        #                  "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
-        #                  "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:green",
-        #                  "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
-        #                  # "NLS|horizon=10": "tab:red",
-        #                  # "algebraic|horizon=10": "tab:green",
-        #                  # "algebraic|frequency=1.0|horizon=10": "tab:orange",
-        #                  "algebraic|frequency=1.0|horizon=100": "tab:orange",
-        #                  "algebraic|frequency=10.0|horizon=1000": "tab:orange",
-        #                  # "QCQP|horizon=10": "tab:purple",
-        #                  # "QCQP|frequency=1.0|horizon=10": "tab:blue",
-        #                  "QCQP|frequency=1.0|horizon=100": "tab:blue",
-        #                  "QCQP|frequency=10.0|horizon=1000": "tab:blue",
-        #                  "NLS|frequency=1.0|horizon=100": "tab:purple",
-        #                 "NLS|frequency=1.0|horizon=10": "tab:purple",
-        #                 "NLS|frequency=1.0|horizon=10|perfect_guess=0": "tab:purple",
-        #                 "NLS|frequency=1.0|horizon=100|perfect_guess=0": "tab:olive",
-        #                 }
-        #
-        # methods_legend = {"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
-        #                   "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
-        #                   # "NLS|horizon=10": "NLS_10",
-        #                   # "algebraic|horizon=10": "Algebraic_10",
-        #                   # "algebraic|frequency=1.0|horizon=10": "Algebraic 10s",
-        #                   "algebraic|frequency=1.0|horizon=100": "Algebraic",
-        #                   # "QCQP|horizon=10": "QCQP_10",
-        #                   # "QCQP|frequency=1.0|horizon=10": "QCQP",
-        #                   "QCQP|frequency=1.0|horizon=100": "QCQP",
-        #                   "NLS|frequency=1.0|horizon=100": "NLS",
-        #                   "NLS|frequency=1.0|horizon=10|perfect_guess=0": "NLS",
-        #                   # "NLS|frequency=1.0|horizon=100|perfect_guess=0": "NLS (100)",
-        #                   }
-        #
-        #
-        # # taa.delete_data()
-        # # taa.create_panda_dataframe()
-        # taa.boxplots(sigma_uwb=[0.25, 0.35], sigma_v=[0.08], frequencies=[1.0, 10.0],
-        #                      methods_order=methods_order, methods_color=methods_color, x_variable="Type",
-        #                      methods_legend=methods_legend, start_time=10, save_fig=False)
-        # plt.show()
+
+
+    def test_exp_individual_try_analysis(self):
+        #Todo: Plot resutls per drone per simulation run.
+        result_folders = [
+                "./Experiments/LOS_exp/Results/experiments_paper/Experiments",
+                # "./Experiments/LOS_exp/Results/experiments_paper/Sim",
+                          ]
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
+
+
+        upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.08],
+                       "Sigma_uwb": [0.25],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:green",
+                   "Legend": "Ours, proposed",
+                   }
+        nodriftupf_exp = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                          "Variables": {
+                              "Type": ["experiment"],
+                              "Variable": ["error_x_relative", "error_h_relative"],
+                              "Sigma_dv": [0.08],
+                              "Sigma_uwb": [0.25],
+                              # "Sigma_dw": [],
+                              "Frequency": [10.0],
+                          },
+                          "Color": "tab:red",
+                          "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state",
+                          }
+        alg_exp = {"Method": "algebraic|frequency=10.0|horizon=1000",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.08],
+                       "Sigma_uwb": [0.25],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:orange",
+                   "Legend": "Algebraic",
+                   }
+        qcqp_exp = {"Method": "QCQP|frequency=10.0|horizon=1000",
+                    "Variables": {
+                        "Type": ["experiment"],
+                        "Variable": ["error_x_relative", "error_h_relative"],
+                        "Sigma_dv": [0.08],
+                        "Sigma_uwb": [0.25],
+                        # "Sigma_dw": [],
+                        "Frequency": [10.0],
+                    },
+                    "Color": "tab:blue",
+                    "Legend": "QCQP",
+                    }
+        nls_exp = {"Method": "NLS|frequency=1.0|horizon=10|perfect_guess=0",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.08],
+                       "Sigma_uwb": [0.35],
+                       # "Sigma_dw": [],
+                       "Frequency": [1.0],
+                   },
+                   "Color": "tab:purple",
+                   "Legend": "NLS",
+                   }
+
+        methods_order = [ upf_exp,
+                          nodriftupf_exp,
+                         alg_exp,
+                          qcqp_exp,
+                          nls_exp,
+                        ]
+
+        df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
+        g = taa.boxplot_exp(df, methods_color=methods_colors, methods_legend=methods_legends,
+                        hue_variable="Name", hue_order=methods_names,
+                        col_variable="Variable",
+                        row_variable=None,
+                        x_variable="Sigma_dv",
+                        )
+
+        g.axes_dict["error_x_relative"].set_yscale("log")
+        g.axes_dict["error_h_relative"].set_xlabel(taa.y_label["error_h_relative"])
+        g.axes_dict["error_x_relative"].set_xlabel(taa.y_label["error_x_relative"])
+        sns.move_legend(g, loc="upper center", bbox_to_anchor= (0.5, 0.92), ncol=5)
+        plt.subplots_adjust(top=0.8, bottom=0.12, left=0.06, right=0.99)
+        plt.suptitle("Experiments")
+        plt.show()
 
     def test_exp_time_analysis(self):
         # result_folder = "./Experiments/LOS_exp/Results/new_nls_correct_init_test/"
         result_folders = [
-                            # "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/1hz",
-                            "./Experiments/LOS_exp/Results/experiments_paper"
+                            "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/10hz",
+                            # "./Experiments/LOS_exp/Results/experiments_paper/exp5"
                             ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = [
                         #"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                         # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        #  # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                         # "NLS|horizon=10",
-                         # "algebraic|horizon=10",
-                         # "algebraic|frequency=1.0|horizon=10",
-                         # "algebraic|frequency=1.0|horizon=100",
+                        #  # "NLS|horizon=10",
+                        #  # "algebraic|horizon=10",
+                        #  # "algebraic|frequency=1.0|horizon=10",
+                        #  # "algebraic|frequency=1.0|horizon=100",
                          "algebraic|frequency=10.0|horizon=1000",
-                         # "QCQP|horizon=10",
-                         # "QCQP|frequency=10.0|horizon=100",
-                         # "QCQP|frequency=1.0|horizon=100",
+                        #  # "QCQP|horizon=10",
+                        #  # "QCQP|frequency=10.0|horizon=100",
+                        #  # "QCQP|frequency=1.0|horizon=100",
                          "QCQP|frequency=10.0|horizon=1000",
                         # "NLS|frequency=1.0|horizon=10",
-                        # "NLS|frequency=1.0|horizon=10",
-                        "NLS|frequency=1.0|horizon=10|perfect_guess=0",
+                        # "NLS|frequency=1.0|horizon=100",
+                        "NLS|frequency=1.0|horizon=10",
         ]
 
         methods_color = {
@@ -759,10 +896,10 @@ class MyTestCase(unittest.TestCase):
                         }
 
         methods_legend = {
-                            "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
-                            "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Proposed, ours",
-                          "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
-                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, without drift correction",
+                            "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours",
+                            "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours",
+                          "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": r"Ours, $\tilde{\text{w}}$ pseudo-state",
+                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": r"Ours, $\tilde{\text{w}}$ pseudo-state",
                           # "NLS|horizon=10": "NLS_10",
                           # "algebraic|horizon=10": "Algebraic_10",
                           "algebraic|frequency=1.0|horizon=10": "Algebraic 10s",
@@ -776,10 +913,10 @@ class MyTestCase(unittest.TestCase):
                             "NLS|frequency=1.0|horizon=10": "NLS",
                         "NLS|frequency=1.0|horizon=10|perfect_guess=0": "NLS",
 
-            "Sigma": r" Proposed, $1 \sigma $ bound"}
+            "Sigma": r" Ours, $1 \sigma$-bound"}
         # taa.delete_data()
         taa.create_panda_dataframe()
-        taa.time_analysis(sigma_uwbs=[0.25, 0.35], sigma_vs=[0.08], frequencies = [1.0,10.0], start_time=0,
+        taa.time_analysis(sigma_uwbs=[0.25, 0.35], sigma_vs=[0.08], frequencies = [1.0,10.0], start_time=0.,
                           methods_order=methods_order, methods_color=methods_color, methods_legend=methods_legend,
                           sigma_bound=True, save_fig=False)
         # taa.boxplot_LOS_comp_time(save_fig=False)

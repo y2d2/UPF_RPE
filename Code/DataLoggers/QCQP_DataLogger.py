@@ -57,9 +57,13 @@ class QCQP_Log:
         if ax is None:
             _, ax = plt.subplots(2, 1)
         ax[0].plot(self.x_ca_r_error)
+        # ax[0].set_xlabel("Time step")
+        ax[0].set_ylabel("Position error [m]")
         ax[0].legend()
         ax[0].grid(True)
         ax[1].plot(self.x_ca_r_heading_error)
+        ax[1].set_xlabel("Time step")
+        ax[1].set_ylabel("Orientation error [(rad)]")
         ax[1].legend()
         ax[1].grid(True)
 
