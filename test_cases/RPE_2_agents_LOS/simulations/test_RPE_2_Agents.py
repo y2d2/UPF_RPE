@@ -2,8 +2,8 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import unittest
-import Code.Simulation.MultiRobotClass as MRC
-import Code.Analysis.TwoAgentAnalysis as TAA
+import RPE_Code.Simulation.MultiRobotClass as MRC
+import RPE_Code.Analysis.TwoAgentAnalysis as TAA
 
 
 

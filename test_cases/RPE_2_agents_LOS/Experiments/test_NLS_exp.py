@@ -1,6 +1,6 @@
 import os
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
-from Code.UtilityCode.Measurement import create_experiment, create_experimental_sim_data
+from RPE_Code.UtilityCode.Measurement import create_experiment, create_experimental_sim_data
 
 import unittest
 
@@ -8,14 +8,14 @@ import rosbags.rosbag2 as rb2
 import unittest
 from rosbags.serde import deserialize_cdr
 
-import Code.Simulation.MultiRobotClass as MRC
-from Code.UtilityCode.turtlebot4 import Turtlebot4
+import RPE_Code.Simulation.MultiRobotClass as MRC
+from RPE_Code.UtilityCode.turtlebot4 import Turtlebot4
 import numpy as np
 
-from Code.UtilityCode.Measurement import Measurement, create_experiment, create_experimental_data
-from Code.Analysis import TwoAgentAnalysis as TAA
+from RPE_Code.UtilityCode.Measurement import Measurement, create_experiment, create_experimental_data
+from RPE_Code.Analysis import TwoAgentAnalysis as TAA
 
-from Code.Simulation.RobotClass import NewRobot
+from RPE_Code.Simulation.RobotClass import NewRobot
 import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
