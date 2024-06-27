@@ -120,9 +120,11 @@ class Test_TargetTrackingUKF(unittest.TestCase):
 
                     self.ukf.weight = 1.
                     if self.bool_host_agent_drift:
-                        self.ukf.run_filter(dx, q, uwb_measurement, x_ha_est, q_ha, self.sigma_uwb, bool_drift= self.bool_host_agent_drift)
+                        self.ukf.run_filter(dx, q, uwb_measurement, x_ha_est, q_ha, self.sigma_uwb,
+                                            bool_drift=self.bool_host_agent_drift)
                     else:
-                        self.ukf.run_filter(dx, q, uwb_measurement, x_ha, q_ha, self.sigma_uwb, bool_drift=self.bool_host_agent_drift)
+                        self.ukf.run_filter(dx, q, uwb_measurement, x_ha, q_ha, self.sigma_uwb,
+                                            bool_drift=self.bool_host_agent_drift)
 
                     # Reset integration parameters
                     dx = np.zeros(4)

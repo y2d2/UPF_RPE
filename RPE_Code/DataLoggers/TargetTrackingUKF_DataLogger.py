@@ -82,16 +82,7 @@ class UKFDatalogger():
             self.ha_s = []
 
             self.estimated_ca_position = np.empty((0, 3))
-            # metric variables:
-            self.mean_error_relative_transformation_est = []
-            self.sigma_error_relative_transformation_est = []
-            self.mean_error_relative_heading_est = []
-            self.sigma_error_relative_heading_est = []
 
-            self.mean_error_relative_transformation_slam = []
-            self.sigma_error_relative_transformation_slam = []
-            self.mean_error_relative_heading_slam = []
-            self.sigma_error_relative_heading_slam = []
 
     def save_graphs(self, folder="./"):
         self.now = datetime.now()
@@ -112,19 +103,6 @@ class UKFDatalogger():
         self.log_cartesian_data(self.i)
         self.log_slam_data(self.i)
         self.log_variances()
-        # self.log_metric()
-
-    @deprecated
-    def log_metric(self):
-        self.mean_error_relative_heading_slam.append(np.mean(self.error_relative_heading_slam))
-        self.sigma_error_relative_heading_slam.append(np.std(self.error_relative_heading_slam))
-        self.mean_error_relative_transformation_slam.append(np.mean(self.error_relative_transformation_slam))
-        self.sigma_error_relative_transformation_slam.append(np.std(self.error_relative_transformation_slam))
-
-        self.mean_error_relative_heading_est.append(np.mean(self.error_relative_heading_est))
-        self.sigma_error_relative_heading_est.append(np.std(self.error_relative_heading_est))
-        self.mean_error_relative_transformation_est.append(np.mean(self.error_relative_transformation_est))
-        self.sigma_error_relative_transformation_est.append(np.std(self.error_relative_transformation_est))
 
     def log_variances(self):
         self.likelihood.append(self.ukf.kf.likelihood)
@@ -455,8 +433,8 @@ class UKFDatalogger():
             # a.legend()
             a.grid(True)
 
-    def copy(self, ukf):
-        copyDL = UKFDatalogger(self.host_agent, self.connected_agent, ukf)
+    def copy(self):
+        copyDL = UKFDatalogger(self.host_agent, self.connected_agent, self.ukf)
 
         copyDL.i = copy.deepcopy(self.i)
         copyDL.host_agent_trajectory = copy.deepcopy(self.host_agent_trajectory)

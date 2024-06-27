@@ -61,7 +61,7 @@ class TargetTrackingUKF:
     Todo: Add documentation
     """
 
-    def __init__(self, x_ha_0=np.zeros(4), weight=1., data_logging_bool=True, drift_correction_bool=True):
+    def __init__(self, x_ha_0=np.zeros(4), weight=1., data_logging_bool=True, drift_correction_bool=True, parent=None):
 
         # ---- Input variables:
         # Dt_sj : Delta position odometry of the connected agent expressed in his local odometry frame.
@@ -94,7 +94,7 @@ class TargetTrackingUKF:
         self.t_oi_sj = np.zeros(4)
         self.t_oi_cji = np.zeros(4)
         self.t_cji_sj = np.zeros(4)
-        self.D_t_sj = np.zeros(4) # Apperently not uses, self.Dt_sj is used.
+        self.D_t_sj = np.zeros(4)  # Apperently not uses, self.Dt_sj is used.
 
         # transformation from VIO reference frame to UWB antenna
         self.t_si_uwb = np.zeros(4)
@@ -120,6 +120,8 @@ class TargetTrackingUKF:
         self.sigma_dh_ca = 0
         self.sigma_dx_ca = 0
 
+        self.parent = parent
+
         # ---- Data logging variables:
         self.time_i = None
         self.data_logging_bool = data_logging_bool
@@ -142,31 +144,30 @@ class TargetTrackingUKF:
         self.kf = ModifiedUnscentedKalmanFilter(dim_x=self.kf_variables, dim_z=1, dt=self.dt, fx=self.fx, hx=self.hx,
                                                 points=points, residual_x=subtract)
 
-
     def calculate_initial_state(self, s, ca_heading):
         # Due to UWB having extrinsicity, the initial state of the connected agent has to be calculated using this and
         # The measured distance to the connected agent.
         r = s[0]
         s_1 = s.copy()
-        s_1[0] = 1 # Unity vector of the direction of the connected agent.
+        s_1[0] = 1  # Unity vector of the direction of the connected agent.
         T_si_uwb = TMF.transformation_matrix_from_4D_t(self.t_si_uwb)
         T_sj_uwb = TMF.transformation_matrix_from_4D_t(self.t_sj_uwb)
         t_1_cijcji = sphericalToCartesian(s_1)
-        R_1_cijcji = TMF.get_rotation(TMF.transformation_matrix_from_4D_t(np.array([0,0,0,ca_heading])))
+        R_1_cijcji = TMF.get_rotation(TMF.transformation_matrix_from_4D_t(np.array([0, 0, 0, ca_heading])))
         R_si_uwb = TMF.get_rotation(T_si_uwb)
         t_si_uwb = TMF.get_translation(T_si_uwb)
         t_sj_uwb = TMF.get_translation(T_sj_uwb)
 
-        t_star= t_si_uwb + R_si_uwb @ R_1_cijcji @ t_sj_uwb
+        t_star = t_si_uwb + R_si_uwb @ R_1_cijcji @ t_sj_uwb
         t_plus = R_si_uwb @ t_1_cijcji
-        b = 2*np.dot(t_plus, t_star)
-        c = np.linalg.norm(t_star)**2 - r**2
+        b = 2 * np.dot(t_plus, t_star)
+        c = np.linalg.norm(t_star) ** 2 - r ** 2
 
-        D = b**2 - 4*c
+        D = b ** 2 - 4 * c
         if D < 0:
             raise ValueError("No real solution")
-        sol1 = (-b + np.sqrt(D))/2
-        if sol1 < 0 :
+        sol1 = (-b + np.sqrt(D)) / 2
+        if sol1 < 0:
             raise ValueError("No real solution")
         return np.array([sol1, s_1[1], s_1[2]])
 
@@ -178,23 +179,27 @@ class TargetTrackingUKF:
         self.calculate_x_ca()
         self.calculate_P_x_ca()
 
-    def set_uwb_extrinsicity(self,t_si_uwb, t_sj_uwb):
+    def set_uwb_extrinsicity(self, t_si_uwb, t_sj_uwb):
         self.t_si_uwb = t_si_uwb
         self.t_sj_uwb = t_sj_uwb
+
     # -------------------------------------------------------------------------------------- #
     # --- Filter functions: Main function
     # -------------------------------------------------------------------------------------- #
-    def run_filter(self, dx_ca, q_ca, measurement, x_ha, P_x_ha, sigma_uwb, bool_drift = True, time_i=None):
+    def run_filter(self, dx_ca, q_ca, measurement, x_ha, P_x_ha, sigma_uwb, bool_drift=True, time_i=None,
+                   update_bool=True):
         self.time_i = time_i
         self.t_oi_si = x_ha
         self.set_host_agent_uncertainty(P_x_ha)
         self.predict(dx_ca, q_ca)
-        self.update(measurement, x_ha, P_x_ha, sigma_uwb, bool_drift)
+        if update_bool:
+            self.update(measurement, x_ha, P_x_ha, sigma_uwb, bool_drift)
+            self.weight = self.weight * self.kf.likelihood
         self.calculate_x_ca()
         self.calculate_P_x_ca()
-        self.weight = self.weight * self.kf.likelihood
         return None
         # self.weight = self.kf.likelihood
+
     # -------------------------------------------------------------------------------------- #
     # --- Prediction functions
     # -------------------------------------------------------------------------------------- #
@@ -252,7 +257,7 @@ class TargetTrackingUKF:
     def calculate_r(self, sigma_uwb):
         self.kf.R = np.diag([np.linalg.norm(self.q_ha[:3, :3]) ** 2 + sigma_uwb ** 2])
 
-    def update(self, z, x_ha, P_x_ha, sigma_uwb, bool_drift = True):
+    def update(self, z, x_ha, P_x_ha, sigma_uwb, bool_drift=True):
         # Prediction step
         self.calculate_q()
         self.kf.predict()
@@ -284,7 +289,6 @@ class TargetTrackingUKF:
         # # calculate the end position of the connected agent in the absolute reference frame of the host agent.
         # x_ca = x_ca_0 + get_rot_matrix(self.x_ha_0[-1]) @ get_rot_matrix(x[3]) @ x[4:-2]
         # # Calculate the distance between the two agents.
-
 
         return np.array([r])
 
@@ -352,7 +356,7 @@ class TargetTrackingUKF:
         # f = get_4d_rot_matrix(self.x_ha_prev[-1]).astype(np.float64)
         self.q_ha = self.q_ha + f @ P_x_ha.astype(np.float64) @ f.T
 
-    def set_residual_drift(self, bool_drift = True):
+    def set_residual_drift(self, bool_drift=True):
         # Should be called at the PF level in case there is residual drift.
         self.kf.P[:, -1] = np.zeros(self.kf_variables)
         self.kf.P[-1, :] = np.zeros(self.kf_variables)
@@ -361,9 +365,9 @@ class TargetTrackingUKF:
         if bool_drift:
             self.q_ca[:3, :3] = self.q_ca[:3, :3] + self.q_ha[:3, :3]
             self.kf.P[-1, -1] = self.kf.P[-1, -1] + self.q_ha[-1, -1]
-            if np.sqrt(self.kf.P[-1, -1]) > np.pi :
-                self.kf.P[-1, -1] = np.pi**2
-        self.q_ha = np.zeros((4,4))
+            if np.sqrt(self.kf.P[-1, -1]) > np.pi:
+                self.kf.P[-1, -1] = np.pi ** 2
+        self.q_ha = np.zeros((4, 4))
 
     # -------------------------------------------------------------------------------------- #
     # --- Copy functions
@@ -384,7 +388,7 @@ class TargetTrackingUKF:
         # copiedUKF.dh_ca = copy.deepcopy(self.dh_ca)
         copiedUKF.q_ca = copy.deepcopy(self.q_ca)
         copiedUKF.x_ha = copy.deepcopy(self.t_oi_si)
-        copiedUKF.x_ha_prev =  copy.deepcopy(self.t_oi_si_prev)
+        copiedUKF.x_ha_prev = copy.deepcopy(self.t_oi_si_prev)
         copiedUKF.q_ha = copy.deepcopy(self.q_ha)
 
         # copiedUKF.h_ha = copy.deepcopy(self.h_ha)
