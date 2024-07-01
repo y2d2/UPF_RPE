@@ -3,7 +3,27 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from RPE_Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from RPE_Code.Simulation.RobotClass import NewRobot
-from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
+from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, TargetTrackingParticle
+import copy
+class TargetTrackingParticle_DataLogger:
+    def __init__(self, hostAgent: NewRobot, connectedAgent: NewRobot, particle: TargetTrackingParticle, parent =None):
+        self.particle = particle
+        self.rpea_datalogger = UKFDatalogger(hostAgent, connectedAgent, particle.rpea)
+        self.los_state = []
+        self.weight = []
+        self.likelihood = []
+
+        if parent is not None:
+            self.rpea_datalogger = parent.rpea_datalogger.copy(ukf=particle.rpea)
+            self.nlos_state = copy.deepcopy(parent.los_state)
+            self.weight = copy.deepcopy(parent.weight)
+            self.likelihood = copy.deepcopy(parent.likelihood)
+
+    def log_data(self, i):
+        self.rpea_datalogger.log_data(i)
+        # self.los_state.append(self.particle.los_state)
+        self.weight.append(self.particle.weight)
+        self.likelihood.append(self.particle.likelihood)
 
 
 class UPFConnectedAgentDataLogger:
@@ -26,19 +46,19 @@ class UPFConnectedAgentDataLogger:
         # Timing variables:
         self.calulation_time = []
 
-    def find_particle_log(self, particle) -> UKFDatalogger:
+    def find_particle_log(self, particle) -> TargetTrackingParticle_DataLogger:
         for particle_log in self.particle_logs:
-            if particle_log.ukf == particle:
+            if particle_log.particle == particle:
                 return particle_log
         self.add_particle(particle)
         return self.particle_logs[-1]
 
-    def get_best_particle_log(self) -> UKFDatalogger:
-        return self.find_particle_log(self.upf_connected_agent.best_particle)
+    def get_best_particle_log(self) -> TargetTrackingParticle_DataLogger:
+        return self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
 
     def add_particle(self, particle):
         # particle.set_datalogger(self.host_agent, self.connected_agent, name="Particle " + str(self.particle_count))
-        particle_log = UKFDatalogger(self.host_agent, self.connected_agent, particle, name="Particle " + str(self.particle_count))
+        particle_log = TargetTrackingParticle_DataLogger(self.host_agent, self.connected_agent, particle)
         self.particle_count += 1
         self.particle_logs.append(particle_log)
 
@@ -55,7 +75,7 @@ class UPFConnectedAgentDataLogger:
             self.i = self.upf_connected_agent.time_i
         self.log_ha_data()
         for particle in self.upf_connected_agent.particles:
-            particle_log: UKFDatalogger= self.find_particle_log(particle)
+            particle_log: TargetTrackingParticle_DataLogger= self.find_particle_log(particle)
             particle_log.log_data(i)
 
 
@@ -104,13 +124,13 @@ class UPFConnectedAgentDataLogger:
 
     def plot_estimated_trajectory(self, ax, color="k", alpha=0.1, name = "connected agent"):
         for particle_log in self.particle_logs:
-            particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=0.1,linestyle=":", label=None)
+            particle_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=0.1,linestyle=":", label=None)
         for particle in self.upf_connected_agent.particles:
             particle_log = self.find_particle_log(particle)
-            particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color,  alpha=1, label=None)
+            particle_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color,  alpha=1, label=None)
 
     def plot_self(self, los=None, host_id="No host id"):
-        bp_dl: UKFDatalogger =self.find_particle_log(self.upf_connected_agent.best_particle)
+        bp_dl: UKFDatalogger =self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
         fig = plt.figure(figsize=(18, 10))  # , layout="constrained")
         fig.suptitle("Host Agent: " + host_id + "; Connected agent: " + self.upf_connected_agent.id)
         ax = []
@@ -188,19 +208,19 @@ class UPFConnectedAgentDataLogger:
 
     def plot_best_particle(self, ax, color="gold", alpha=1., history=None):
         # print(self.upf_connected_agent.best_particle)
-        best_particle_log = self.find_particle_log(self.upf_connected_agent.best_particle)
+        best_particle_log = self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
         best_particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=alpha,
                                                                    label="Best Particle",  history=history)
 
     def plot_best_particle_variance_graph(self):
-        best_particle_log = self.find_particle_log(self.upf_connected_agent.best_particle)
+        best_particle_log = self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
         best_particle_log.plot_error_graph()
         for particles in self.upf_connected_agent.particles:
-            particle_log = self.find_particle_log(particles)
+            particle_log = self.find_particle_log(particles).rpea_datalogger
             particle_log.plot_error_graph()
 
     def plot_connected_agent(self, ax):
-        bp_dl = self.find_particle_log(self.upf_connected_agent.best_particle)
+        bp_dl = self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
         bp_dl.plot_ukf_drift(ax[:2])
 
         likelihood_ax = ax[2]
@@ -216,7 +236,7 @@ class UPFConnectedAgentDataLogger:
 
 
     def plot_ca_best_particle(self, ax, i, color, history):
-        bp_dl = self.find_particle_log(self.upf_connected_agent.best_particle)
+        bp_dl = self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
         bp_dl.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i=i, history=history)
 
     def plot_ca_active_particles(self, ax, i, color, history):

@@ -98,14 +98,133 @@ class KFHostAgent:
         return dx, q
 
 
+class TargetTrackingParticle:
+    def __init__(self, weight):
+        self.weight = weight
+        self.likelihood = 1.
+        self.rpea = None
+
+    def run_model(self, dt_i, q_i, t_i, P_i, dt_j, q_j, d_ij, sig_uwb, time_i):
+        """
+        This function should invoke the RPEA algorithm to update the particle.
+        This function should update the likelihood and weight of the particle.
+        """
+        pass
+
+    def copy(self):
+        pass
+
+
+class UKFLOSTargetTrackingParticle(TargetTrackingParticle):
+    def __init__(self, rpea: TargetTrackingUKF, weight=1.):
+        super().__init__(weight)
+        self.rpea: TargetTrackingUKF = rpea
+        self.drift_correction_bool = True
+
+    def run_model(self, dt_i, q_i, t_i, P_i, dt_j, q_j, d_ij, sig_uwb, time_i):
+        self.rpea.run_filter(dt_j, q_j, t_i, P_i, d_ij, sig_uwb, self.drift_correction_bool, True, time_i)
+        self.likelihood = self.rpea.kf.likelihood
+        self.weight = self.weight * self.likelihood
+
+    def copy(self):
+        rpea_copy = self.rpea.copy()
+        return UKFLOSTargetTrackingParticle(rpea_copy, self.weight)
+
+
+class ListOfTargetTrackingParticles:
+    def __init__(self):
+        self.particles = []
+        self.n_altitude = 1
+        self.n_azimuth = 1
+        self.n_heading = 1
+
+    def create_particle(self, t_i, t_j_0, sig_t_j_0, d_ij, sig_d) -> TargetTrackingParticle:
+        pass
+
+    def add_particle_with_know_start_pose(self, t_j_0, sig_j):
+        s = cartesianToSpherical(t_j_0[:3]).tolist()
+        # self.particles.append(particle)
+
+    def split_sphere_in_equal_areas(self, t_i, d_ij: float, sigma_uwb: float, n_altitude: int, n_azimuth: int,
+                                    n_heading: int):
+        """
+        Function to split the area of a sphere in almost equal areas (= weights)
+        Starting from the n_altitude that has to be uneven (will be made uneven).
+        For each altitude
+        """
+        self.n_altitude = n_altitude
+        self.n_azimuth = n_azimuth
+        self.n_heading = n_heading
+        # self.sigma_uwb = self.sigma_uwb_factor * sigma_uwb
+
+        if n_altitude % 2 == 0:
+            n_altitude += 1
+        # n_altitude = n_altitude+2
+        altitude_delta = np.pi / (n_altitude)
+        # altitudes = np.round([-np.pi / 2  + i * altitude_delta for i in range(1,n_altitude-1)], 4)
+        altitudes = np.round([-np.pi / 2 + altitude_delta / 2 + i * altitude_delta for i in range(n_altitude)], 4)
+        # calculate the areas to calculate the number of azimuth angles is needed.
+        altitude_surfaces = [(np.sin(altitude + altitude_delta / 2) - np.sin(altitude - altitude_delta / 2)) / 2 for
+                             altitude in altitudes]
+        # print(altitude_surfaces)
+        area = altitude_surfaces[int((len(altitude_surfaces) - 1) / 2)] / n_azimuth
+        azimuth_bins = [math.ceil(altitude_surface / area) for altitude_surface in altitude_surfaces]
+
+        sigma_azimuths = [(2 * np.pi / azimuthBin) / np.sqrt(-8 * np.log(0.5)) for azimuthBin in azimuth_bins]
+        sigma_altitude = (np.pi / n_altitude) / np.sqrt(-8 * np.log(0.5))
+
+        headings = [-np.pi + (2 * np.pi / n_heading) * j for j in range(n_heading)]
+        sigma_heading = (2 * np.pi / n_heading) / np.sqrt(-8 * np.log(0.5))
+
+        for i, altitude in enumerate(altitudes):
+            azimuths = [-np.pi + (2 * np.pi / azimuth_bins[i]) * j for j in range(azimuth_bins[i])]
+            sigma_s = [2 * sigma_uwb, sigma_azimuths[i], sigma_altitude, sigma_heading]
+            for azimuth in azimuths:
+                # s = np.array([d_ij, azimuth, altitude], dtype=float)
+                for heading in headings:
+                    s = np.array([d_ij, azimuth, altitude, heading], dtype=float)
+                    particle = self.create_particle(t_i, s, sigma_s, d_ij, sigma_uwb)
+                    # particle.set_initial_state(s, sigma_s, heading, sigma_heading, self.sigma_uwb)
+                    self.particles.append(particle)
+
+
+class ListOfUKFLOSTargetTrackingParticles(ListOfTargetTrackingParticles):
+    def __init__(self):
+        super().__init__()
+        self.alpha = 1
+        self.beta = 2
+        self.kappa = -1
+        self.t_sj_uwb = np.zeros(4)
+        self.t_si_uwb = np.zeros(4)
+
+    def set_uwb_extrinsicity(self, t_si_uwb, t_sj_uwb):
+        self.t_si_uwb = t_si_uwb
+        self.t_sj_uwb = t_sj_uwb
+
+    def set_ukf_parameters(self, kappa=-1, alpha=1, beta=2):
+        self.kappa = kappa
+        self.alpha = alpha
+        self.beta = beta
+
+    def create_particle(self, t_i, t_j_0, sig_t_j_0, d_ij, sig_d) -> UKFLOSTargetTrackingParticle:
+        # weight = 1. / self.n_azimuth / self.n_altitude / self.n_heading
+        rpea: TargetTrackingUKF = TargetTrackingUKF(x_ha_0=t_i)
+        rpea.set_uwb_extrinsicity(self.t_si_uwb, self.t_sj_uwb)
+        rpea.set_ukf_properties(self.kappa, self.alpha, self.beta)
+        rpea.set_initial_state(t_j_0, sig_t_j_0)
+
+        particle = UKFLOSTargetTrackingParticle(rpea=rpea)
+        return particle
+
+
 class UPFConnectedAgent:
     """
     Class that represents the individual particle filters per connected agent
     on the estimation of the trajectory of the connected agents.
     """
 
-    def __init__(self, id="0x000", x_ha_0=np.zeros(4), drift_correction_bool=True, sigma_uwb_factor=1.0,
-                 resample_factor=1.0):
+    def __init__(self, list_of_particles = [], x_ha_0=np.zeros(4), drift_correction_bool=True,
+                 sigma_uwb = 0.1, sigma_uwb_factor=1.0, resample_factor=1.0, id="0x000"):
 
         self.id = id
         # State variables:
@@ -117,10 +236,11 @@ class UPFConnectedAgent:
         # self.iterations = 0
 
         # Particle Filter variables:
-        self.particles: List[TargetTrackingUKF] = []
+        self.particles: List[TargetTrackingParticle] = list_of_particles
+        self.particle_type = TargetTrackingUKF
         self.weights = []
         self.totalWeight = 1.
-        self.best_particle: TargetTrackingUKF | None = None
+        self.best_particle: TargetTrackingParticle | None = None
         # self.min_likelihood = 5e-1
         self.min_likelihood = 1e-1
         self.degeneration_factor = 0.8
@@ -141,8 +261,8 @@ class UPFConnectedAgent:
         self.measurement = 0
 
         # Uncertainty variables:
+        self.sigma_uwb = sigma_uwb
         self.sigma_x_ha = 0
-        self.sigma_uwb = 0
         self.sigma_dh_ca = 0
         self.sigma_dx_ca = 0
         self.sigma_dx_ha = 0
@@ -211,22 +331,27 @@ class UPFConnectedAgent:
         particle.weight = 0.1
         s = np.array([self.uwb_measurement, azimuth, altitude], dtype=float)
         sigma_s = [2 * self.sigma_uwb, sigma_azimuth, sigma_altitude]
-        particle.set_initial_state(s, sigma_s, heading, sigma_heading, self.sigma_uwb)
+        particle.set_initial_state(s, sigma_s)
         self.particles.append(particle)
 
-    def create_particle(self) -> TargetTrackingUKF:
+    def create_particle(self):
         weight = 1. / self.n_azimuth / self.n_altitude / self.n_heading
-        particle = TargetTrackingUKF(x_ha_0=self.ha.x_ha_0, weight=weight,
-                                     drift_correction_bool=self.drift_correction_bool)
+        particle = self.particle_type(x_ha_0=self.ha.x_ha_0, weight=weight,
+                                      drift_correction_bool=self.drift_correction_bool)
         particle.set_uwb_extrinsicity(self.t_si_uwb, self.t_sj_uwb)
         particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
         return particle
 
     def add_particle_with_know_start_pose(self, x_ca_0, azimuth_n, altitude_n, heading_n, sigma_uwb):
+        self.n_altitude = 1
+        self.n_azimuth = 1
+        self.n_heading = 1
+        self.sigma_uwb = self.sigma_uwb_factor * sigma_uwb
+
         sigma_azimuth = (2 * np.pi / azimuth_n) / np.sqrt(-8 * np.log(0.5))
         sigma_altitude = (np.pi / altitude_n) / np.sqrt(-8 * np.log(0.5))
         sigma_heading = (2 * np.pi / heading_n) / np.sqrt(-8 * np.log(0.5))
-        sigma_s = [sigma_uwb, sigma_azimuth, sigma_altitude]
+        sigma_s = [2 * sigma_uwb, sigma_azimuth, sigma_altitude]
 
         particle = self.create_particle()
         s = cartesianToSpherical(x_ca_0[:3]).tolist()
@@ -235,7 +360,7 @@ class UPFConnectedAgent:
         # sigma_x_ca = np.linalg.norm(np.sqrt(np.diag(P_x_ca_0[:3, :3])))
         # sigma_angle = sigma_x_ca / d
         # sigma_s = [sigma_x_ca, sigma_angle, sigma_angle]
-        particle.set_initial_state(s, sigma_s, x_ca_0[3], sigma_heading, sigma_uwb)
+        particle.set_initial_state(s, sigma_s)
         self.particles.append(particle)
         self.set_best_particle(self.particles[0])
 
@@ -282,7 +407,7 @@ class UPFConnectedAgent:
                 s = np.array([r, azimuth, altitude], dtype=float)
                 for heading in headings:
                     particle = self.create_particle()
-                    particle.set_initial_state(s, sigma_s, heading, sigma_heading, self.sigma_uwb)
+                    particle.set_initial_state(s, sigma_s)
                     self.particles.append(particle)
         # for alt in [-np.pi/2, np.pi/2]:
         #     for az in [-np.pi, np.pi]:
@@ -302,7 +427,7 @@ class UPFConnectedAgent:
         # self.check_validity(dx_ca, q_ca)
         self.run_predict_update_los(dx_ca, measurement, q_ca)
         self.resample()
-        self.calculate_average_particle()
+        # self.calculate_average_particle()
         if len(self.particles) > 5000:
             raise Exception("Too many particles")
 
@@ -314,9 +439,6 @@ class UPFConnectedAgent:
             print("No distance can be calculated")
 
     def run_predict_update_los(self, dx_ca, measurement, q_ca=None):
-        """"
-        Debug function to force los behaviour when debugging.
-        """
         keep = []
         self.totalWeight = 0
         self.weights = []
@@ -325,8 +447,8 @@ class UPFConnectedAgent:
 
         for particle in self.particles:
             try:
-                particle.run_filter(dx_ca, q_ca, measurement, self.ha.x_ha, P_x_ha, self.sigma_uwb,
-                                    self.drift_correction_bool, self.time_i)
+                particle.run_model(dt_i=np.zeros(4), q_i=np.zeros((4, 4)), t_i=self.ha.x_ha, P_i=P_x_ha,
+                                   dt_j=dx_ca, q_j=q_ca, d_ij=measurement, sig_uwb=self.sigma_uwb, time_i=self.time_i)
                 keep.append(particle)
                 self.weights.append(particle.weight)
                 self.totalWeight += particle.weight
@@ -455,7 +577,7 @@ class UPFConnectedAgent:
             weight = int(particle.weight / average_weight)
 
             if weight > 0:
-                if weight > 1/self.resample_factor:
+                if weight > 1 / self.resample_factor:
                     weight = 2.
                 else:
                     weight = 1.
@@ -465,13 +587,13 @@ class UPFConnectedAgent:
                     if self.compare_particle(kept_particle, particle):
                         kept_particle.weight += weight
                         new_weight += weight
-                        new_weights[i] += particle.kf.likelihood
+                        new_weights[i] += particle.weight
                         merged = True
                         break
                 if not merged:
                     particle.weight = weight
                     new_particles.append(particle)
-                    new_weights.append(particle.kf.likelihood)
+                    new_weights.append(particle.weight)
                     new_weight += particle.weight
                     # particle.weight = weight*average_weight
                     # new_particles.append(particle)
@@ -502,7 +624,7 @@ class UPFConnectedAgent:
     def set_best_particle(self, best_particle):
         self.best_particle = best_particle
 
-    def compare_particle(self, particle_1: TargetTrackingUKF, particle_2: TargetTrackingUKF):
+    def compare_particle(self, particle_1: TargetTrackingParticle, particle_2: TargetTrackingParticle):
         # TODO: Improve this, (does not take into account uncertainty.)
         """
         Compare the particle with the best particle.
@@ -510,7 +632,7 @@ class UPFConnectedAgent:
         :return:
         """
         if particle_1 is not particle_2:
-            e_par = particle_2.t_si_sj - particle_1.t_si_sj
+            e_par = particle_2.rpea.t_si_sj - particle_1.rpea.t_si_sj
             if np.linalg.norm(e_par[:3]) < 1e-1 and np.abs(e_par[-1]) < 1e-1:
                 # if np.max(particle.kf.P - best_particle.kf.P) < 1e-5:
                 # print(particle_2.t_si_sj, particle_2.los_state)

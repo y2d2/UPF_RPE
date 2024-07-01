@@ -114,7 +114,7 @@ class UKFDatalogger():
 
         self.sigma_x_ca_0.append(self.ukf.sigma_x_ca_0)
         self.sigma_x_ca.append(self.ukf.sigma_x_ca)
-        self.sigma_x_ca_r.append(self.ukf.sigma_x_ca_r)
+        # self.sigma_x_ca_r.append(self.ukf.sigma_x_ca_r)
         self.sigma_h_ca.append(self.ukf.sigma_h_ca)
 
     def log_spherical_data(self, i):
@@ -433,10 +433,11 @@ class UKFDatalogger():
             # a.legend()
             a.grid(True)
 
-    def copy(self):
-        copyDL = UKFDatalogger(self.host_agent, self.connected_agent, self.ukf)
+    def copy(self, ukf: TargetTrackingUKF):
+        copyDL = UKFDatalogger(self.host_agent, self.connected_agent, ukf)
 
         copyDL.i = copy.deepcopy(self.i)
+
         copyDL.host_agent_trajectory = copy.deepcopy(self.host_agent_trajectory)
         copyDL.connected_agent_trajectory = copy.deepcopy(self.connected_agent_trajectory)
         copyDL.connected_agent_heading = copy.deepcopy(self.connected_agent_heading)
@@ -470,9 +471,16 @@ class UKFDatalogger():
         copyDL.sigma_x_ca_0 = copy.deepcopy(self.sigma_x_ca_0)
         copyDL.sigma_x_ca = copy.deepcopy(self.sigma_x_ca)
         copyDL.sigma_x_ca_r = copy.deepcopy(self.sigma_x_ca_r)
+        copyDL.sigma_h_ca = copy.deepcopy(self.sigma_h_ca)
 
         copyDL.likelihood = copy.deepcopy(self.likelihood)
         copyDL.weight = copy.deepcopy(self.weight)
+
+        copyDL.ca_s = copy.deepcopy(self.ca_s)
+        copyDL.ha_s = copy.deepcopy(self.ha_s)
+        copyDL.estimated_ca_position = copy.deepcopy(self.estimated_ca_position)
+
+        copyDL.data_logged = copy.deepcopy(self.data_logged)
 
         return copyDL
 

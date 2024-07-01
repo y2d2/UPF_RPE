@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Have to use this since Spyder_WS is a project.
-from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
+from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, ListOfUKFLOSTargetTrackingParticles, UKFLOSTargetTrackingParticle
 from RPE_Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger
 
 from RPE_Code.Simulation.BiRobotMovement import random_movements_host_random_movements_connected, \
@@ -27,7 +27,7 @@ class TestConnectedAgent(unittest.TestCase):
     def init_test(self, sigma_v=0.1, sigma_w=0.1, sigma_uwb=0.1, drifting_host=False):
         # Paper = Relative Transformation Estimation Based on Fusion of Odometry and UWB.py Ranging Data
 
-        self.uwb_time_steps = 3000  # (120 // 0.03)          # Paper simulation time = 120s
+        self.uwb_time_steps = 300  # (120 // 0.03)          # Paper simulation time = 120s
         self.odom_time_step = 0.1
         self.uwb_time_step = 0.1 # Paper experiments UWB.py frequency = 37 Hz
         self.factor = int(self.uwb_time_step / self.odom_time_step)
@@ -36,10 +36,9 @@ class TestConnectedAgent(unittest.TestCase):
         self.sigma_uwb = sigma_uwb  # Paper sigma uwb = 0.1
         self.sigma_v = sigma_v  # Paper sigma odom = 0.001 m -> not sure how this relates with the heading error.
         self.sigma_w = sigma_w  # / 180 * np.pi  # In the paper they use degrees.
-
+        self.nlos_man = NLOS_Manager(nlos_bias=2.)
         self.los = []
         self.drifting_host = drifting_host
-        self.nlos_man = NLOS_Manager(nlos_bias=2.)
         self.debug = False
 
     def init_drones(self, x_ca_0, h_ca_0, max_range=None):
@@ -55,7 +54,6 @@ class TestConnectedAgent(unittest.TestCase):
         self.startMeasurement = distance + np.random.randn(1) * self.sigma_uwb
 
     def run_test(self, nlos_function, name="Unidentified Test"):
-        self.dl = UPFConnectedAgentDataLogger(self.host, self.drone, self.ca)
         # self.ca.set_logging(self.dl)
         # self.dl.log_data(0)
         dx_ca = np.zeros(4)
@@ -73,6 +71,8 @@ class TestConnectedAgent(unittest.TestCase):
 
             # if self.drifting_host:
             d_dx_ha = np.concatenate((self.host.dx_slam[i], np.array([self.host.dh_slam[i]])))
+
+
             self.ca.ha.predict(d_dx_ha, self.host.q)
 
             if i % self.factor == 0:
@@ -108,7 +108,7 @@ class TestConnectedAgent(unittest.TestCase):
         # Length of NLOS  is proportional to error on odom?
         # TODO: There is an interplay between sigma_v and sigma_uwb:
         #  More specifically if sigma_dx = sigma_dv* dt > sigma_uwb/10 it seems the UPF becomes over confident.
-        self.init_test(sigma_v=0.1, sigma_w=0.01, sigma_uwb=0.1,
+        self.init_test(sigma_v=0.001, sigma_w=0.001, sigma_uwb=0.1,
                        drifting_host=True)
         self.init_drones(np.array([15., 15., 0]), 0, max_range=25)
         # self.init_drones(np.array([22,0,0]), 0, max_range=40)
@@ -116,16 +116,25 @@ class TestConnectedAgent(unittest.TestCase):
                        random_movements_host_random_movements_connected)
         # run_simulation(self.simulation_time_steps, self.host, self.drone,
         #                fix_host_fix_connected)
+        lop = ListOfUKFLOSTargetTrackingParticles()
+        lop.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
+        t_i = np.concatenate((self.host.x_start, [self.host.h_start]))
+        lop.split_sphere_in_equal_areas(t_i= t_i, d_ij= self.startMeasurement[0], sigma_uwb= self.sigma_uwb,
+                                        n_altitude=3, n_azimuth=4, n_heading=4 )
 
-        self.ca = UPFConnectedAgent("0x000", x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])), sigma_uwb_factor=1., resample_factor=0.1)
+        self.ca = UPFConnectedAgent(lop.particles, x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])),
+                                    sigma_uwb=self.sigma_uwb, sigma_uwb_factor=1., resample_factor=0.1, id="0x000")
+
         # self.ca.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
         # self.ca.set_normal_resampling(resample_factor=0.1, uwb_sigma_factor=2.)
         # self.ca.set_branch_kill_resampling(resample_factor=0.5, sigma_uwb_factor=2.)
-        self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], self.sigma_uwb,
-                                            n_altitude=3, n_azimuth=4, n_heading=4)
+        # self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], self.sigma_uwb,
+        #                                     n_altitude=3, n_azimuth=4, n_heading=4)
 
 
         # self.ca.set_regeneration_parameters()
+        self.dl = UPFConnectedAgentDataLogger(self.host, self.drone, self.ca)
+        self.dl.log_data(0)
 
         self.run_test(nlos_function=self.nlos_man.los)
 
@@ -136,18 +145,19 @@ class TestConnectedAgent(unittest.TestCase):
         plt.show()
 
     def test_tc1_known_start_pose(self):
-        self.init_test(sigma_v=0.1, sigma_w=0.01, sigma_uwb=0.1,
+        self.init_test(sigma_v=0.001, sigma_w=0.001, sigma_uwb=0.1,
                        drifting_host=True)
         self.init_drones(np.array([5, 5, 0]), 0, max_range=20)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
                        random_movements_host_random_movements_connected)
-        self.ca = UPFConnectedAgent("0x000", x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])))
+        self.ca = UPFConnectedAgent([], x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])),
+                                    sigma_uwb_factor=1., resample_factor=0.1, id="0x000")
         self.ca.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
         # x_ca_0 = np.array([5, 5, 0, 0])
         x_ha_0 = np.concatenate((self.host.x_start, np.array([self.host.h_start])))
         x_ca_0 = np.concatenate((self.drone.x_start, np.array([self.drone.h_start])))
         x_ca = get_4d_rot_matrix(-x_ha_0[-1]) @ (x_ca_0 - x_ha_0)
-        self.ca.add_particle_with_know_start_pose(x_ca_0=x_ca, azimuth_n=8, altitude_n=5, heading_n=8,
+        self.ca.add_particle_with_know_start_pose(x_ca_0=x_ca, azimuth_n=100, altitude_n=100, heading_n=100,
                                                   sigma_uwb=self.sigma_uwb)
 
         # sigma2_dx_ha = (self.sigma_dv * self.odom_time_step) ** 2
@@ -170,7 +180,7 @@ class TestConnectedAgent(unittest.TestCase):
         self.init_drones(np.array([2, 0, 0]), 0, max_range=3)
         run_simulation(self.simulation_time_steps, self.host, self.drone,
                        fix_host_fix_connected)
-        self.ca = UPFConnectedAgent("0x000", x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])))
+        self.ca = UPFConnectedAgent([], x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])), id="0x000")
         self.ca.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
         self.ca.split_sphere_in_equal_areas(self.startMeasurement[0], 2*self.sigma_uwb,
                                             n_altitude=3, n_azimuth=4, n_heading=4)
@@ -274,7 +284,7 @@ class TestConnectedAgent(unittest.TestCase):
                 if agent1 != agent:
                     other_drone : NewRobot = self.agents[agent1]["drone"]
             x_0 = np.concatenate((drone.x_start, np.array([drone.h_start])))
-            upf = UPFConnectedAgent(agent, x_ha_0=x_0)
+            upf = UPFConnectedAgent([], x_ha_0=x_0, id=agent)
             upf.set_ukf_parameters(kappa=-1, alpha=1, beta=2, drift_correction_bool=True)
             upf.set_nlos_detection_parameters(min_likelihood=0.1, degeneration_factor=0.9, min_likelihood_factor=0.2)
             upf.split_sphere_in_equal_areas(self.distances[0], self.sigma_uwb,
