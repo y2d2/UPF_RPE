@@ -1056,7 +1056,7 @@ class TwoAgentSystem():
             upf: UPFConnectedAgent = self.agents[drone_id][self.test_name]
             dl_ca: UPFConnectedAgentDataLogger = self.agents[drone_id]["log"]
             # dl_ca: UPFConnectedAgentDataLogger = upf.upf_connected_agent_logger
-            dl_bp: UKFDatalogger = dl_ca.get_best_particle_log().rpea_datalogger
+            dl_bp: UKFDatalogger = dl_ca.get_best_particle_log()
 
             upf_result = {"number_of_particles": dl_ca.number_of_particles,
                           "calculation_time": dl_ca.calulation_time,

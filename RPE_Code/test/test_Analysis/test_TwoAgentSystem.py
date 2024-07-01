@@ -46,12 +46,13 @@ class MyTestCase(unittest.TestCase):
         TAS.set_ukf_properties(alpha, beta, kappa, n_azimuth, n_altitude, n_heading)
         # TAS.run_simulations(methods=["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"], redo_bool=True)
         methods = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "algebraic|frequency=1.0|horizon=10",
-                   "algebraic|frequency=10.0|horizon=100",
-                   "QCQP|frequency=1.0|horizon=10",
-                   "QCQP|frequency=10.0|horizon=100"]
-        TAS.run_simulations(methods=methods, redo_bool=False)
+                   # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   # "algebraic|frequency=1.0|horizon=10",
+                   # "algebraic|frequency=10.0|horizon=100",
+                   # "QCQP|frequency=1.0|horizon=10",
+                   # "QCQP|frequency=10.0|horizon=100"
+                   ]
+        TAS.run_simulations(methods=methods, redo_bool=True)
 
     def test_UPF_detail(self):
         upfs = []
@@ -84,6 +85,7 @@ class MyTestCase(unittest.TestCase):
     def test_analysis_LOS_simulation(self):
         result_folder = "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper"
         result_folder = ("../../../Data/Results/test_files")
+        result_folder = ("./Results/test_new_system")
         # result_folder = "../../../Data/Results/Broken"
         # result_folder = "./Results/test/1hz"
 
@@ -228,17 +230,19 @@ class MyTestCase(unittest.TestCase):
 
     def test_sim_analysis(self):
         result_folder = "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper"
+        result_folder = "./Results/test_new_system"
+
         # result_folder = ("../../../Data/Results/test_files")
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
 
-        upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        upf_exp = {"Method": "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    "Variables": {
                        "Type": ["simulation"],
                        "Variable": ["error_x_relative", "error_h_relative"],
                        "Sigma_dv": [0.01, 0.1],
                        "Sigma_uwb": [0.1, 1.],
                        # "Sigma_dw": [],
-                       "Frequency": [10.0],
+                       "Frequency": [1.0],
                    },
                    "Color": "tab:green",
                    "Legend": "Ours",
@@ -293,10 +297,10 @@ class MyTestCase(unittest.TestCase):
                    }
 
         methods_order = [ upf_exp,
-                          nodriftupf_exp,
-                         alg_exp,
-                          qcqp_exp,
-                          nls_exp,
+                         #  nodriftupf_exp,
+                         # alg_exp,
+                         #  qcqp_exp,
+                         #  nls_exp,
                         ]
 
         df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
