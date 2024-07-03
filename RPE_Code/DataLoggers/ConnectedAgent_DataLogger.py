@@ -4,26 +4,8 @@ from matplotlib.gridspec import GridSpec
 from RPE_Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from RPE_Code.Simulation.RobotClass import NewRobot
 from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, TargetTrackingParticle
+from RPE_Code.DataLoggers.TargetTrackingParticle_DataLogger import TargetTrackingParticle_DataLogger
 import copy
-class TargetTrackingParticle_DataLogger:
-    def __init__(self, hostAgent: NewRobot, connectedAgent: NewRobot, particle: TargetTrackingParticle, parent =None):
-        self.particle = particle
-        self.rpea_datalogger = UKFDatalogger(hostAgent, connectedAgent, particle.rpea)
-        self.los_state = []
-        self.weight = []
-        self.likelihood = []
-
-        if parent is not None:
-            self.rpea_datalogger = parent.rpea_datalogger.copy(ukf=particle.rpea)
-            self.nlos_state = copy.deepcopy(parent.los_state)
-            self.weight = copy.deepcopy(parent.weight)
-            self.likelihood = copy.deepcopy(parent.likelihood)
-
-    def log_data(self, i):
-        self.rpea_datalogger.log_data(i)
-        # self.los_state.append(self.particle.los_state)
-        self.weight.append(self.particle.weight)
-        self.likelihood.append(self.particle.likelihood)
 
 
 class UPFConnectedAgentDataLogger:
@@ -58,7 +40,10 @@ class UPFConnectedAgentDataLogger:
 
     def add_particle(self, particle):
         # particle.set_datalogger(self.host_agent, self.connected_agent, name="Particle " + str(self.particle_count))
-        particle_log = TargetTrackingParticle_DataLogger(self.host_agent, self.connected_agent, particle)
+        parent_log = None
+        if particle.parent is not None:
+            parent_log = self.find_particle_log(particle.parent)
+        particle_log = TargetTrackingParticle_DataLogger(self.host_agent, self.connected_agent, particle, parent = parent_log)
         self.particle_count += 1
         self.particle_logs.append(particle_log)
 
@@ -130,7 +115,7 @@ class UPFConnectedAgentDataLogger:
             particle_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color,  alpha=1, label=None)
 
     def plot_self(self, los=None, host_id="No host id"):
-        bp_dl: UKFDatalogger =self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
+        bp_dl: TargetTrackingParticle_DataLogger =self.find_particle_log(self.upf_connected_agent.best_particle)
         fig = plt.figure(figsize=(18, 10))  # , layout="constrained")
         fig.suptitle("Host Agent: " + host_id + "; Connected agent: " + self.upf_connected_agent.id)
         ax = []
@@ -141,7 +126,7 @@ class UPFConnectedAgentDataLogger:
         # ---- Best Particle Axis
         ax_best_particle = [fig.add_subplot(gs[i, -1]) for i in range(2)]
         # ax_best_particle[0].set_title("Best Particle")
-        bp_dl.plot_ukf_drift(ax_best_particle)
+        bp_dl.rpea_datalogger.plot_ukf_drift(ax_best_particle)
         ax_best_particle[0].legend(loc="upper left")
 
         # ---- Host agent Axis
@@ -175,34 +160,8 @@ class UPFConnectedAgentDataLogger:
         particle_ax.grid(True)
 
         likelihood_ax = fig.add_subplot(gs[3, 1])
-        likelihood_ax.plot(self.calulation_time, label="Calculation time")
-        likelihood_ax.set_title("Calculation time")
-        likelihood_ax.legend()
 
-        # ---- Likelihood Axis
-        # likelihood_ax = fig.add_subplot(gs[3, 1])
-        # plt.figure()
-        # likelihood_ax = plt
-        likelihood_ax.plot(bp_dl.likelihood, label="Likelihood")
-        likelihood_ax.plot(bp_dl.weight, label="Weigth")
-        if los is not None:
-            likelihood_ax.plot(los, color="k", label="Real LOS State")
-
-        likelihood_ax.legend()
-        likelihood_ax.grid(True)
-        likelihood_ax.set_title("LOS state and likelihood best particle.")
-        # likelihood_ax.suptitle("LOS state and likelihood best particle.")
-        # likelihood_ax.set_xlabel("Time [s]")
-
-        # plt.figure()
-        # if los is not None:
-        #     plt.plot(los, color="k", label="LOS State")
-        #     plt.plot(bp_dl.los_state, linestyle="--", color="crimson", label="LOS state estimation")
-        #
-        # plt.xlabel("Time [s]")
-        # plt.legend()
-        # plt.grid(True)
-
+        bp_dl.plot_self(particle_ax=likelihood_ax, los=los)
 
         return fig
 

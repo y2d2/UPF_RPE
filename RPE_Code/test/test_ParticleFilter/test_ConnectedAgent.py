@@ -11,7 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Have to use this since Spyder_WS is a project.
-from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, ListOfUKFLOSTargetTrackingParticles, UKFLOSTargetTrackingParticle
+from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
+from RPE_Code.ParticleFilter.TargetTrackingParticle import ListOfUKFLOSTargetTrackingParticles, UKFLOSTargetTrackingParticle
 from RPE_Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger
 
 from RPE_Code.Simulation.BiRobotMovement import random_movements_host_random_movements_connected, \

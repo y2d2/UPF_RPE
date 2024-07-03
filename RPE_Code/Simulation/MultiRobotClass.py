@@ -21,7 +21,8 @@ from RPE_Code.UtilityCode.utility_fuctions import sphericalToCartesian, limit_an
 from RPE_Code.Simulation.BiRobotMovement import run_multi_drone_simulation, drone_flight, random_moving_drones
 from RPE_Code.Simulation.RobotClass import load_trajectory_from_dict, NewRobot
 from RPE_Code.Simulation.NLOS_Manager import NLOS_Manager
-from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, ListOfUKFLOSTargetTrackingParticles
+from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
+from RPE_Code.ParticleFilter.TargetTrackingParticle import ListOfUKFLOSTargetTrackingParticles
 from RPE_Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger
 from RPE_Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from RPE_Code.BaseLines.AlgebraicMethod4DoF import AlgebraicMethod4DoF, Algebraic4DoF_Logger
@@ -1252,7 +1253,7 @@ class TwoAgentSystem():
         t1 = time.time()
         self.agents["drone_0"][self.test_name].update(d, dx, q_odom)
         t2 = time.time()
-        self.agents["drone_0"][self.test_name].nls_logger.log(i, t2 - t1)
+        self.agents["drone_0"][self.test_name].nls_logger.log_data(i, t2 - t1)
 
         if self.debug_bool:
             print("NLS time 0 + 1: ", t2 - t1)
