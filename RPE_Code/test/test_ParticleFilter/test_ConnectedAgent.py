@@ -10,6 +10,7 @@ import unittest
 import numpy as np
 import matplotlib.pyplot as plt
 
+from RPE_Code.DataLoggers.TargetTrackingParticle_DataLogger import UKFTargetTrackingParticle_DataLogger
 # Have to use this since Spyder_WS is a project.
 from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
 from RPE_Code.ParticleFilter.TargetTrackingParticle import ListOfUKFLOSTargetTrackingParticles, UKFLOSTargetTrackingParticle
@@ -92,7 +93,7 @@ class TestConnectedAgent(unittest.TestCase):
                     x_ha = np.concatenate([x_ha, np.array([h_ha])])
 
                 self.ca.ha.update(x_ha, q_ha)
-                self.ca.run_model(dx_ca, uwb_measurement, q_ca=q)
+                self.ca.run_model(dt_j = dx_ca,  q_j=q, dt_i = np.zeros(4), q_i= np.zeros((4,4)), d_ij= uwb_measurement)
 
                 self.dl.log_data(i)
 
@@ -134,7 +135,7 @@ class TestConnectedAgent(unittest.TestCase):
 
 
         # self.ca.set_regeneration_parameters()
-        self.dl = UPFConnectedAgentDataLogger(self.host, self.drone, self.ca)
+        self.dl = UPFConnectedAgentDataLogger(self.host, self.drone, self.ca, particle_type=UKFTargetTrackingParticle_DataLogger)
         self.dl.log_data(0)
 
         self.run_test(nlos_function=self.nlos_man.los)
@@ -244,8 +245,8 @@ class TestConnectedAgent(unittest.TestCase):
                 uwb_measurement, los_state = nlos_function(int(i / self.factor), uwb_measurement)
                 self.los.append(los_state)
 
-                self.agents["drone_0"]["upf"].run_model(dx_1, uwb_measurement, q_ca=q_1, time_i=i)
-                self.agents["drone_1"]["upf"].run_model(dx_0, uwb_measurement, q_ca=q_0, time_i=i)
+                self.agents["drone_0"]["upf"].run_model(dx_1, uwb_measurement, q_i=q_1, time_i=i)
+                self.agents["drone_1"]["upf"].run_model(dx_0, uwb_measurement, q_i=q_0, time_i=i)
 
                 self.agents["drone_0"]["dl"].log_data(i)
                 self.agents["drone_1"]["dl"].log_data(i)

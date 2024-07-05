@@ -34,16 +34,17 @@ class NLS:
         self.horizon = horizon
         self.likelihood = 1.0
         self.distances = 0.
+        self.agents = agents
         # Dict of agents (names + drone)
         # number of agents
         self.m = len(agents)
         x_0 = np.zeros((self.m, 4))
         self.names = []
-        self.agents = []
+        self.agents_list = []
         i = 0
         for agent in agents:
             self.names.append(agent)
-            self.agents.append(agents[agent])
+            self.agents_list.append(agents[agent])
             x_0[i] = np.concatenate((agents[agent].x_start, np.array([agents[agent].h_start])))
             i += 1
 
@@ -99,7 +100,7 @@ class NLS:
 
     def calculate_likelihood(self):
         dist_sq = self.distances ** 2
-        det_cov = self.vi_uwb**(-1)
+        det_cov = self.sigma_uwb**(2)
         norm_factor = (2 * np.pi) ** (1/ 2) * np.sqrt(det_cov)
         self.likelihood = (1 / norm_factor) * np.exp(-0.5 * dist_sq)
 
@@ -144,6 +145,8 @@ class NLS:
         for i in range(self.m):
             self.q_prev[i] = self.q_prev[i] + get_4d_rot_matrix(self.x_odom_prev[i, -1]) @ q_odom[i] @ get_4d_rot_matrix(self.x_odom_prev[i, -1]).T
             self.x_odom_prev[i, :] = self.x_odom_prev[i, :] + get_4d_rot_matrix(self.x_odom_prev[ i, -1]) @ dx_odom[i, :]
+
+
 
         if update:
             self.x_odom = np.vstack((self.x_odom, self.x_odom_prev.reshape(1, *self.x_odom_prev.shape)))
@@ -266,4 +269,5 @@ class NLS:
         copy_NLS.vi_uwb = copy.deepcopy(self.vi_uwb)
         copy_NLS.likelihood = copy.deepcopy(self.likelihood)
         copy_NLS.distances = copy.deepcopy(self.distances)
+        return copy_NLS
 

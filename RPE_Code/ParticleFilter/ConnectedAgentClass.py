@@ -7,7 +7,6 @@ Created on Tue Jan 31 14:24:51 2023
 """
 import copy
 import math
-
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List
@@ -186,22 +185,26 @@ class UPFConnectedAgent:
         self.t_si_uwb = t_si_uwb
         self.t_sj_uwb = t_sj_uwb
 
+    # @deprecated()
     def set_ukf_parameters(self, kappa=-1, alpha=1, beta=2):
         self.kappa = kappa
         self.alpha = alpha
         self.beta = beta
         # self.drift_correction_bool = drift_correction_bool
 
+    # @deprecated()
     def set_regeneration_parameters(self, max_number_of_particles=10, regeneration=True):
         self.regeneration_bool = regeneration
         self.max_number_of_particles = max_number_of_particles
         # self.regenaration_sigmas = regeneration_sigmas
 
+    # @deprecated()
     def generate_new_particles(self):
         if self.regeneration_bool:
             while len(self.particles) < self.max_number_of_particles:
                 self.generate_new_particle()
 
+    # @deprecated()
     def generate_new_particle(self):
         azimuth = np.random.uniform(-np.pi, np.pi)
         altitude = np.random.uniform(-np.pi / 2, np.pi / 2)
@@ -217,6 +220,7 @@ class UPFConnectedAgent:
         particle.set_initial_state(s, sigma_s)
         self.particles.append(particle)
 
+    # @deprecated()
     def create_particle(self):
         weight = 1. / self.n_azimuth / self.n_altitude / self.n_heading
         particle = self.particle_type(x_ha_0=self.ha.x_ha_0, weight=weight,
@@ -225,6 +229,7 @@ class UPFConnectedAgent:
         particle.set_ukf_properties(self.kappa, self.alpha, self.beta)
         return particle
 
+    # @deprecated()
     def add_particle_with_know_start_pose(self, x_ca_0, azimuth_n, altitude_n, heading_n, sigma_uwb):
         self.n_altitude = 1
         self.n_azimuth = 1
@@ -247,6 +252,7 @@ class UPFConnectedAgent:
         self.particles.append(particle)
         self.set_best_particle(self.particles[0])
 
+    # @deprecated()
     def split_sphere_in_equal_areas(self, r: float, sigma_uwb: float, n_altitude: int, n_azimuth: int, n_heading: int):
         """
         Function to split the area of a sphere in almost equal areas (= weights)
@@ -303,12 +309,12 @@ class UPFConnectedAgent:
 
         self.set_best_particle(self.particles[0])
 
-    def run_model(self, dx_ca, measurement, q_ca=None, time_i=None):
+    def run_model(self, dt_j, q_j,  dt_i, q_i, d_ij,  time_i=None):
         # self.iterations += 1
-        self.uwb_measurement = measurement
+        self.uwb_measurement = d_ij
         self.time_i = time_i
         # self.check_validity(dx_ca, q_ca)
-        self.run_predict_update_los(dx_ca, measurement, q_ca)
+        self.run_predict_update_los(dt_j, q_j,  dt_i, q_i, d_ij)
         self.resample()
         # self.calculate_average_particle()
         if len(self.particles) > 5000:
@@ -321,7 +327,7 @@ class UPFConnectedAgent:
         else:
             print("No distance can be calculated")
 
-    def run_predict_update_los(self, dx_ca, measurement, q_ca=None):
+    def run_predict_update_los(self, dt_j, q_j,  dt_i, q_i, d_ij):
         keep = []
         self.totalWeight = 0
         self.weights = []
@@ -330,8 +336,8 @@ class UPFConnectedAgent:
 
         for particle in self.particles:
             try:
-                particle.run_model(dt_i=np.zeros(4), q_i=np.zeros((4, 4)), t_i=self.ha.x_ha, P_i=P_x_ha,
-                                   dt_j=dx_ca, q_j=q_ca, d_ij=measurement, sig_uwb=self.sigma_uwb, time_i=self.time_i)
+                particle.run_model(dt_i=dt_i, q_i=q_i, t_i=self.ha.x_ha, P_i=P_x_ha,
+                                   dt_j=dt_j, q_j=q_j, d_ij=d_ij, sig_uwb=self.sigma_uwb, time_i=self.time_i)
                 keep.append(particle)
                 self.weights.append(particle.weight)
                 self.totalWeight += particle.weight
@@ -468,11 +474,12 @@ class UPFConnectedAgent:
                 merged = False
                 for i, kept_particle in enumerate(new_particles):
                     if self.compare_particle(kept_particle, particle):
-                        kept_particle.weight += weight
-                        new_weight += weight
-                        new_weights[i] += particle.weight
-                        merged = True
-                        break
+                        pass
+                        # kept_particle.weight += weight
+                        # new_weight += weight
+                        # new_weights[i] += particle.weight
+                        # merged = True
+                        # break
                 if not merged:
                     particle.weight = weight
                     new_particles.append(particle)
@@ -490,7 +497,7 @@ class UPFConnectedAgent:
         best_particle = self.particles[np.where(new_weights == np.max(new_weights))[0][0]]
         self.set_best_particle(best_particle)
 
-        self.generate_new_particles()
+        # self.generate_new_particles()
         if not self.particles:
             raise Exception("No particles left")
 
@@ -515,17 +522,8 @@ class UPFConnectedAgent:
         :return:
         """
         if particle_1 is not particle_2:
-            e_par = particle_2.rpea.t_si_sj - particle_1.rpea.t_si_sj
-            if np.linalg.norm(e_par[:3]) < 1e-1 and np.abs(e_par[-1]) < 1e-1:
-                # if np.max(particle.kf.P - best_particle.kf.P) < 1e-5:
-                # print(particle_2.t_si_sj, particle_2.los_state)
-                # print(particle_1.t_si_sj, particle_1.los_state)
-                # print(np.linalg.norm(e_par[:3]), np.abs(e_par[-1]), particle_2.los_state == particle_1.los_state)
-                #
-                # print(e_par)
-                # print("Particle is close to best particle.")
-                return True
-        return False
+            particle_1.compare(particle_2)
+
 
 
 class UPFConnectedAgentDataLogger:

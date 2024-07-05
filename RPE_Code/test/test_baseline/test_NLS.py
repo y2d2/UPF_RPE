@@ -99,10 +99,10 @@ class MyTestCase(unittest.TestCase):
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        self.NLS.agents[0].set_plotting_settings(color="tab:blue")
-        self.NLS.agents[0].plot_real_position(ax)
-        self.NLS.agents[1].set_plotting_settings(color="tab:orange")
-        self.NLS.agents[1].plot_real_position(ax)
+        self.NLS.agents_list[0].set_plotting_settings(color="tab:blue")
+        self.NLS.agents_list[0].plot_real_position(ax)
+        self.NLS.agents_list[1].set_plotting_settings(color="tab:orange")
+        self.NLS.agents_list[1].plot_real_position(ax)
         self.nls_particle_logger.rpea_datalogger.plot_corrected_estimated_trajectory(ax, color="tab:blue", linestyle="--")
         self.nls_particle_logger.rpea_datalogger.plot_corrected_estimated_trajectory(ax, agent=1, color="tab:orange", linestyle="--")
 

@@ -32,8 +32,8 @@ class NLSDataLogger:
         for i in range(self.n_agents):
             for k in range(self.n_agents - i - 1):
                 j = i + k + 1
-                agent_i = self.nls_solver.agents[i]
-                agent_j = self.nls_solver.agents[j]
+                agent_i = self.nls_solver.agents_list[i]
+                agent_j = self.nls_solver.agents_list[j]
 
                 x_rel_ij = agent_j.x_real[t] - agent_i.x_real[t]
                 x_rel_ij = np.append(x_rel_ij, np.array([agent_j.h_real[t] - agent_i.h_real[t]]))
@@ -83,10 +83,10 @@ class NLSDataLogger:
 
     def calculate_pose(self, i):
         #TODO: adapt to multi agent? (Only made for 2 agents.)
-        a0_p_real = self.nls_solver.agents[0].x_real[i]
-        a0_h_real = self.nls_solver.agents[0].h_real[i]
-        a1_p_real = self.nls_solver.agents[1].x_real[i]
-        a1_h_real = self.nls_solver.agents[1].h_real[i]
+        a0_p_real = self.nls_solver.agents_list[0].x_real[i]
+        a0_h_real = self.nls_solver.agents_list[0].h_real[i]
+        a1_p_real = self.nls_solver.agents_list[1].x_real[i]
+        a1_h_real = self.nls_solver.agents_list[1].h_real[i]
 
         t_G_s0 = np.append(a0_p_real, np.array([a0_h_real]))
         t_G_s1 = np.append(a1_p_real, np.array([a1_h_real]))

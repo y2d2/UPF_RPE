@@ -1,8 +1,7 @@
 import math
 
 import numpy as np
-
-
+from scipy.linalg import sqrtm, det, inv, logm
 from RPE_Code.ParticleFilter.TargetTrackingUKF import TargetTrackingUKF
 from RPE_Code.BaseLines.NLS import NLS
 from RPE_Code.UtilityCode.utility_fuctions import cartesianToSpherical
@@ -14,13 +13,39 @@ class TargetTrackingParticle:
         self.parent = parent
         self.likelihood = 1.
         self.rpea = None
+        self.t_si_sj = np.zeros(4)
+        self.P_t_si_sj = np.zeros((4, 4))
 
     def run_model(self, dt_i, q_i, t_i, P_i, dt_j, q_j, d_ij, sig_uwb, time_i):
         """
         This function should invoke the RPEA algorithm to update the particle.
         This function should update the likelihood and weight of the particle.
+        This function should update the t_si_sj and P_t_si_sj.
         """
         pass
+
+    def compare(self, other_particle):
+        """
+        This function should compare the particle with another particle.
+        """
+        #TODO continue here
+        def kl_divergence(mu_P, sigma_P, mu_Q, sigma_Q):
+            # Proposed by chatgpt 3.5
+            k = len(mu_P)
+            term1 = np.log(det(sigma_Q) / det(sigma_P))
+            term2 = np.trace(inv(sigma_Q).dot(sigma_P))
+            term3 = (mu_Q - mu_P).T.dot(inv(sigma_Q)).dot(mu_Q - mu_P)
+            return 0.5 * (term1 - k + term2 + term3)
+
+
+        distance = kl_divergence(self.t_si_sj[:3], self.P_t_si_sj[:3,:3],
+                                 other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
+        distance_angle = kl_divergence([self.t_si_sj[-1]], [self.P_t_si_sj[-1,-1]],
+                                       [other_particle.t_si_sj[-1]], [other_particle.P_t_si_sj[-1,-1]])
+        print(distance_angle, distance)
+        if distance < 0.1 and distance_angle < 0.1:
+            print("similar Particle")
+
 
     def copy(self):
         pass
@@ -36,6 +61,8 @@ class UKFLOSTargetTrackingParticle(TargetTrackingParticle):
         self.rpea.run_filter(dt_j, q_j, t_i, P_i, d_ij, sig_uwb, self.drift_correction_bool, True, time_i)
         self.likelihood = self.rpea.kf.likelihood
         self.weight = self.weight * self.likelihood
+        self.t_si_sj = self.rpea.t_si_sj
+        self.P_t_si_sj = self.rpea.P_t_si_sj
 
     def copy(self):
         rpea_copy = self.rpea.copy()
@@ -54,6 +81,8 @@ class NLSLOSTargetTrackingParticle(TargetTrackingParticle):
         d = np.array([[0, d_ij], [0, 0]])
         self.rpea.update(d, dx, q_odom)
         # self.rpea.run_filter(dt_j, q_j, t_i, P_i, d_ij, sig_uwb, self.drift_correction_bool, True, time_i)
+        self.t_si_sj = self.rpea.t_si_sj
+        self.P_t_si_sj = self.rpea.P_t_si_sj
         self.likelihood = self.rpea.likelihood
         self.weight = self.weight * self.likelihood
 

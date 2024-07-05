@@ -4,12 +4,13 @@ from matplotlib.gridspec import GridSpec
 from RPE_Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from RPE_Code.Simulation.RobotClass import NewRobot
 from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, TargetTrackingParticle
-from RPE_Code.DataLoggers.TargetTrackingParticle_DataLogger import TargetTrackingParticle_DataLogger
+from RPE_Code.DataLoggers.TargetTrackingParticle_DataLogger import TargetTrackingParticle_DataLogger, UKFTargetTrackingParticle_DataLogger
 import copy
 
 
 class UPFConnectedAgentDataLogger:
-    def __init__(self, host_agent: NewRobot, connected_agent: NewRobot, upf_connected_agent: UPFConnectedAgent):
+    def __init__(self, host_agent: NewRobot, connected_agent: NewRobot, upf_connected_agent: UPFConnectedAgent, particle_type):
+        self.particle_type = particle_type
         self.host_agent = host_agent
         self.connected_agent = connected_agent
         self.upf_connected_agent = upf_connected_agent
@@ -43,7 +44,7 @@ class UPFConnectedAgentDataLogger:
         parent_log = None
         if particle.parent is not None:
             parent_log = self.find_particle_log(particle.parent)
-        particle_log = TargetTrackingParticle_DataLogger(self.host_agent, self.connected_agent, particle, parent = parent_log)
+        particle_log = self.particle_type(self.host_agent, self.connected_agent, particle, parent = parent_log)
         self.particle_count += 1
         self.particle_logs.append(particle_log)
 

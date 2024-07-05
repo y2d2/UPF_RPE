@@ -89,6 +89,7 @@ class TargetTrackingUKF:
         self.t_oi_si = x_ha_0
 
         self.t_si_sj = np.zeros(4)
+        self.P_t_si_sj = np.zeros((4, 4))
         self.t_cij_cji = np.zeros(4)
         self.t_oi_sj = np.zeros(4)
         self.t_oi_cji = np.zeros(4)
@@ -336,6 +337,8 @@ class TargetTrackingUKF:
                                   + np.linalg.norm(self.kf.P[4:-2, 4:-2].astype(np.float64))
                                   + np.linalg.norm(self.q_ca[:3, :3].astype(np.float64)))
         self.sigma_h_ca = np.sqrt(self.kf.P[3, 3] + self.kf.P[-2, -2] + self.q_ca[-1, -1])
+        self.P_t_si_sj[:3,:3] = np.eye(3) * dis_0**2 + self.kf.P[4:-2, 4:-2].astype(np.float64) + self.q_ca[:3, :3].astype(np.float64)
+        self.P_t_si_sj[-1,-1] = self.kf.P[-2,-2] + self.q_ca[-1,-1]
 
     # -------------------------------------------------------------------------------------- #
     # --- Residual drift functions
@@ -362,7 +365,6 @@ class TargetTrackingUKF:
     # -------------------------------------------------------------------------------------- #
     # --- Copy functions
     # -------------------------------------------------------------------------------------- #
-
     def copy(self):
         copiedUKF = TargetTrackingUKF(x_ha_0=self.t_oi_cij, weight=self.weight,
                                       drift_correction_bool=self.drift_correction_bool, parent=self)

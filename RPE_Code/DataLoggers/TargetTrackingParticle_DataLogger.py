@@ -41,7 +41,7 @@ class UKFTargetTrackingParticle_DataLogger(TargetTrackingParticle_DataLogger):
         super().__init__(hostAgent, connectedAgent, particle, parent=parent)
         self.rpea_datalogger = UKFDatalogger(hostAgent, connectedAgent, particle.rpea)
         if parent is not None:
-            self.rpea_datalogger = parent.rpea_datalogger.copy(ukf=particle.rpea)
+            self.rpea_datalogger = parent.rpea_datalogger.copy(particle.rpea)
 
 class NLSTargetTrackingParticle_DataLogger(TargetTrackingParticle_DataLogger):
     def __init__(self,  hostAgent: NewRobot, connectedAgent: NewRobot, particle: TargetTrackingParticle, parent =None):

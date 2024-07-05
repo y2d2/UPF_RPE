@@ -26,7 +26,8 @@ from RPE_Code.ParticleFilter.TargetTrackingParticle import ListOfUKFLOSTargetTra
 from RPE_Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger
 from RPE_Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from RPE_Code.BaseLines.AlgebraicMethod4DoF import AlgebraicMethod4DoF, Algebraic4DoF_Logger
-from RPE_Code.BaseLines.NLS import NLS, NLSDataLogger
+from RPE_Code.BaseLines.NLS import NLS
+from RPE_Code.DataLoggers.NLS_DataLogger import NLSDataLogger
 from RPE_Code.BaseLines.QCQP import QCQP
 from RPE_Code.DataLoggers.QCQP_DataLogger import QCQP_Log
 
@@ -1016,7 +1017,7 @@ class TwoAgentSystem():
         upf0.ha.update(x_ha_0, q_0)
         # Timing the execution of the algorihtm
         t1 = time.time()
-        upf0.run_model(dx_1, uwb_measurement, q_ca=q_1, time_i=i)
+        upf0.run_model(dx_1, uwb_measurement, q_i=q_1, time_i=i)
         t2 = time.time()
         # Logging
         upf0log.log_data(i, t2 - t1)
@@ -1028,7 +1029,7 @@ class TwoAgentSystem():
         upf1.ha.update(x_ha_1, q_1)
         # Timing the execution of the algorihtm
         t3 = time.time()
-        upf1.run_model(dx_0, uwb_measurement, q_ca=q_0, time_i=i)
+        upf1.run_model(dx_0, uwb_measurement, q_i=q_0, time_i=i)
         t4 = time.time()
         # Logging
         upf1log.log_data(i, t4 - t3)

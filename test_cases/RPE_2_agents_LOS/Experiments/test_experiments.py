@@ -1104,11 +1104,11 @@ class MyTestCase(unittest.TestCase):
         # slam_x_error = tas.data["exp1_unobservable_sampled"]["slam"]["drone_1"]["error_x_relative"]
         ax = plt.figure().add_subplot(projection='3d')
 
-        tas.agents["drone_0"]["losupf"].upf_connected_agent_logger.plot_poses(ax, color_ha="darkblue", color_ca="red",
-                                                                           name_ha="$a_0$", name_ca="$a_1$")
+        tas.agents_list["drone_0"]["losupf"].upf_connected_agent_logger.plot_poses(ax, color_ha="darkblue", color_ca="red",
+                                                                                   name_ha="$a_0$", name_ca="$a_1$")
         # ax = plt.figure().add_subplot(projection='3d')
-        tas.agents["drone_1"]["losupf"].upf_connected_agent_logger.plot_poses(ax, color_ha="maroon", color_ca="dodgerblue",
-                                                                           name_ha="$a_1$", name_ca="$a_0$")
+        tas.agents_list["drone_1"]["losupf"].upf_connected_agent_logger.plot_poses(ax, color_ha="maroon", color_ca="dodgerblue",
+                                                                                   name_ha="$a_1$", name_ca="$a_0$")
         ax.plot(0,0, color="darkblue", label=r"$T_{\mathcal{W}, \mathcal{S}_0}$" )
         ax.plot(0, 0, color='red', alpha=1, linestyle="--",
                 label="Active particles of $a_0$ for $T_{\mathcal{W}, \mathcal{S}_0}\hat{T}_{\mathcal{S}_0, \mathcal{S}_1}$")  # for estimation of "+ name)
