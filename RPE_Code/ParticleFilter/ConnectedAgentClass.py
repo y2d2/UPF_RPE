@@ -473,13 +473,12 @@ class UPFConnectedAgent:
                 # weight = int(size / factor) + 1.
                 merged = False
                 for i, kept_particle in enumerate(new_particles):
-                    if self.compare_particle(kept_particle, particle):
-                        pass
-                        # kept_particle.weight += weight
-                        # new_weight += weight
-                        # new_weights[i] += particle.weight
-                        # merged = True
-                        # break
+                    if self.compare_particle(kept_particle, particle) is not None:
+                        kept_particle.weight += weight
+                        new_weight += weight
+                        new_weights[i] += particle.weight
+                        merged = True
+                        break
                 if not merged:
                     particle.weight = weight
                     new_particles.append(particle)
@@ -522,7 +521,11 @@ class UPFConnectedAgent:
         :return:
         """
         if particle_1 is not particle_2:
-            particle_1.compare(particle_2)
+
+           if particle_1.compare(particle_2):
+               return particle_1
+
+        return None
 
 
 

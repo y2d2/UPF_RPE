@@ -40,11 +40,14 @@ class TargetTrackingParticle:
 
         distance = kl_divergence(self.t_si_sj[:3], self.P_t_si_sj[:3,:3],
                                  other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
-        distance_angle = kl_divergence([self.t_si_sj[-1]], [self.P_t_si_sj[-1,-1]],
-                                       [other_particle.t_si_sj[-1]], [other_particle.P_t_si_sj[-1,-1]])
-        print(distance_angle, distance)
-        if distance < 0.1 and distance_angle < 0.1:
-            print("similar Particle")
+        # distance_angle = kl_divergence([self.t_si_sj[-1]], [self.P_t_si_sj[-1,-1]],
+        #                                [other_particle.t_si_sj[-1]], [other_particle.P_t_si_sj[-1,-1]])
+        # print(distance_angle, distance)
+        print(distance)
+        # if distance < 0.1 and distance_angle < 0.1:
+        if distance < 0.01:
+            return True
+        return False
 
 
     def copy(self):
