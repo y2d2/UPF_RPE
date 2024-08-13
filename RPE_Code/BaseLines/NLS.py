@@ -76,7 +76,7 @@ class NLS:
         # single_agent_cov = np.eye(4) * 1.
 
         #Give a bit of initial uncertainty otherwise to stiff and initial bad measurements can pull the solution of to much.
-        self.x_cov = 100*np.ones((self.horizon * self.m * 4, self.horizon * self.m * 4))
+        self.x_cov = 0.01*np.ones((self.horizon * self.m * 4, self.horizon * self.m * 4))
         # for i in range(self.n * self.m):
         #     self.x_cov[i * 4:(i + 1) * 4, i * 4:(i + 1) * 4] = single_agent_cov
         self.res = []

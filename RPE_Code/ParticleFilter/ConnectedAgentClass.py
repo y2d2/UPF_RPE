@@ -176,6 +176,7 @@ class UPFConnectedAgent:
         self.resample_factor = resample_factor
         self.sigma_uwb_factor = sigma_uwb_factor
 
+        self.max_dis = 0.1
         # def set_logging(self, ca_logger):
 
     #     self.logging = True
@@ -521,8 +522,7 @@ class UPFConnectedAgent:
         :return:
         """
         if particle_1 is not particle_2:
-
-           if particle_1.compare(particle_2):
+           if particle_1.compare(particle_2) < self.max_dis:
                return particle_1
 
         return None

@@ -127,8 +127,11 @@ class UPFConnectedAgentDataLogger:
         # ---- Best Particle Axis
         ax_best_particle = [fig.add_subplot(gs[i, -1]) for i in range(2)]
         # ax_best_particle[0].set_title("Best Particle")
-        bp_dl.rpea_datalogger.plot_ukf_drift(ax_best_particle)
-        ax_best_particle[0].legend(loc="upper left")
+        try:
+            bp_dl.rpea_datalogger.plot_ukf_drift(ax_best_particle)
+            ax_best_particle[0].legend(loc="upper left")
+        except AttributeError:
+            pass
 
         # ---- Host agent Axis
         ha_ax = fig.add_subplot(gs[2, -1])

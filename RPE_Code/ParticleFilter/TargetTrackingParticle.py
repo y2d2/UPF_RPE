@@ -4,7 +4,7 @@ import numpy as np
 from scipy.linalg import sqrtm, det, inv, logm
 from RPE_Code.ParticleFilter.TargetTrackingUKF import TargetTrackingUKF
 from RPE_Code.BaseLines.NLS import NLS
-from RPE_Code.UtilityCode.utility_fuctions import cartesianToSpherical
+from RPE_Code.UtilityCode.utility_fuctions import cartesianToSpherical, get_4d_rot_matrix
 
 
 class TargetTrackingParticle:
@@ -40,14 +40,7 @@ class TargetTrackingParticle:
 
         distance = kl_divergence(self.t_si_sj[:3], self.P_t_si_sj[:3,:3],
                                  other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
-        # distance_angle = kl_divergence([self.t_si_sj[-1]], [self.P_t_si_sj[-1,-1]],
-        #                                [other_particle.t_si_sj[-1]], [other_particle.P_t_si_sj[-1,-1]])
-        # print(distance_angle, distance)
-        print(distance)
-        # if distance < 0.1 and distance_angle < 0.1:
-        if distance < 0.01:
-            return True
-        return False
+        return distance
 
 
     def copy(self):
@@ -84,8 +77,8 @@ class NLSLOSTargetTrackingParticle(TargetTrackingParticle):
         d = np.array([[0, d_ij], [0, 0]])
         self.rpea.update(d, dx, q_odom)
         # self.rpea.run_filter(dt_j, q_j, t_i, P_i, d_ij, sig_uwb, self.drift_correction_bool, True, time_i)
-        self.t_si_sj = self.rpea.t_si_sj
-        self.P_t_si_sj = self.rpea.P_t_si_sj
+        self.t_si_sj = self.rpea.x_rel[0, 1]
+        self.P_t_si_sj = get_4d_rot_matrix(self.rpea.x[0, -1]) * self.rpea.x_cov[-8:-4, -8:-4] + self.rpea.x_cov[-4:, -4:]
         self.likelihood = self.rpea.likelihood
         self.weight = self.weight * self.likelihood
 

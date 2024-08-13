@@ -104,7 +104,7 @@ class NLSDataLogger:
         est_t_s = np.array([est_t_G_s1, est_t_G_s0])
         self.estimated_ca_position = np.append(self.estimated_ca_position, est_t_s[:, :3].reshape(1, 2, 3), axis=0)
 
-    def plot_corrected_estimated_trajectory(self, ax, agent=0, color="k", alpha=1, linestyle="--", marker="", label=None, i=-1, history=None):
+    def plot_corrected_estimated_trajectory(self, ax, agent=0, color="k", alpha=1., linestyle="--", marker="", label=None, i=-1, history=None):
         try:
             if history is None or history > i:
                 self.plot_trajectory(self.estimated_ca_position[ 1:i,agent,:], ax, color, alpha, linestyle, marker, label)
@@ -116,7 +116,7 @@ class NLSDataLogger:
         except IndexError:
             print("index error")
 
-    def plot_trajectory(self, data, ax, color="k", alpha=1, linestyle="-", marker="", label=None):
+    def plot_trajectory(self, data, ax, color="k", alpha=1., linestyle="-", marker="", label=None):
         if self.data_logged:
             ax.plot3D(data[:, 0], data[:, 1], data[:, 2],
                       marker=marker, alpha=alpha, linestyle=linestyle, label=label, color=color)
@@ -124,6 +124,14 @@ class NLSDataLogger:
                       marker="o", alpha=alpha, color=color)
             ax.plot3D(data[-1, 0], data[-1, 1], data[-1, 2],
                       marker="x", alpha=alpha, color=color)
+
+    def plot_ca_corrected_estimated_trajectory(self, ax, color, alpha=0.1,linestyle=":", label=None, history=None):
+        # self.plot_corrected_estimated_trajectory(ax, agent=0,
+        #                                          color =color, alpha=alpha, linestyle=linestyle, label=label,
+        #                                          history=history)
+        self.plot_corrected_estimated_trajectory(ax, agent=1,
+                                                 color=color, alpha=alpha, linestyle=linestyle, label=label,
+                                                 history=history)
 
     def plot_estimated_pose(self,ax, id, i=-1):
 
