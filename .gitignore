@@ -130,12 +130,13 @@ dmypy.json
 
 
 
-/RPE_Code/test/test_Analysis/robot_trajectories/
-/RPE_Code/test/test_Simulation/Simulations/
+/Code/test/test_Analysis/robot_trajectories/
+/Code/test/test_Simulation/Simulations/
 /test_cases/RPE_2_agents_LOS/simulations/robot_trajectories/
-/RPE_Code/test/test_Analysis/Results/
-/RPE_Code/test/test_Analysis/small_robot_trajectories/
+/Code/test/test_Analysis/Results/
+/Code/test/test_Analysis/small_robot_trajectories/
 /Data/Results/
 /generated_tests/
 /test_cases/RPE_2_agents_LOS/simulations/Simulation_runs/generated_tests/
 /test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/
+/test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/sim2real/

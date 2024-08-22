@@ -1,11 +1,11 @@
 import unittest
 
 import pickle as pkl
-from RPE_Code.UtilityCode.Measurement import create_experiment, create_experimental_sim_data
+from Code.UtilityCode.Measurement import create_experiment, create_experimental_sim_data
 import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
-from RPE_Code.Analysis import TwoAgentAnalysis as TAA
+from Code.Analysis import TwoAgentAnalysis as TAA
 import seaborn as sns
 import os
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
