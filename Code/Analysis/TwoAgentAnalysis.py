@@ -286,13 +286,19 @@ class TwoAgentAnalysis:
         names =[]
         colors = {}
         legends = {}
+        styles = {}
         for method_param in methods_param:
             name = self.generate_name(method_param)
             if name not in names:
                 names.append(name)
                 colors[name] = method_param["Color"]
                 legends[name] = method_param["Legend"]
+                if "Style" in method_param:
+                    styles[name] = method_param["Style"]
+                else:
+                    styles[name] =  ""
             for df_i in self.dfs:
+                # df_j = df_i.loc[(df_i["Method"] == method_param["Method"])]
                 df_j = df_i.loc[(df_i["Method"] == method_param["Method"])]
                 for key in method_param["Variables"]:
                     df_j = df_j.loc[(df_j[key].isin(method_param["Variables"][key]))]
@@ -300,7 +306,7 @@ class TwoAgentAnalysis:
                 dfs.append(df_j)
         df = pd.concat(dfs)
 
-        return df, names, colors, legends
+        return df, names, colors, styles, legends
 
     def filter_methods(self, methods, sigma_uwb, sigma_v, frequencies, start_time):
         self.create_panda_dataframe()
@@ -480,8 +486,39 @@ class TwoAgentAnalysis:
                        bbox_to_anchor=(0.5, 0.92))
             plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
-    def lineplot(self):
-        pass
+    def lineplot(self, df, methods_names, methods_colors =None, methods_styles=None, variables=["error_x_relative", "error_h_relative"]):
+        fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 3))
+        for i, variable in enumerate(variables):
+            var_df = df.loc[(df["Variable"] == variable)]
+            method_means = []
+            time_points = var_df["Time"].unique()
+            # methods = var_df["Method"].unique()
+            for method_name in methods_names:
+                method_time_values = []                  # to store values at each time point for a specific method
+                for time_point in time_points:
+                    mean_value = var_df[(var_df["Name"] == method_name) & (var_df["Time"] == time_point)]["value"].mean()
+                    method_time_values.append(mean_value)
+
+                method_means.append({"Method": method_name,  "TimeValues": method_time_values})
+                print("For Method:", method_name, variable, "Average over all conditions at each time point:",
+                      method_time_values)
+
+            avg_time_df = pd.DataFrame({"Time": time_points})
+            for method_mean in method_means:
+                avg_time_df[method_mean["Method"]] = method_mean["TimeValues"]
+            avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Method", value_name="MeanValue")
+
+            plt.sca(axes[i])
+
+            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method" ,linewidth=2.5, legend=False,
+                              palette=methods_colors, style = "Method", linestyle = methods_styles)
+            axes[i].set_xlabel("time [s]", fontsize=12)
+            axes[i].set_ylabel(self.y_label[variable], fontsize=12)
+            if variable == "error_x_relative":
+                axes[i].set_yscale("log")
+
+        # g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
+        #                  palette=methods_color, hue_order=methods_order, linewidth=2.5, legend=False)
 
 
 if __name__ == "__main__":

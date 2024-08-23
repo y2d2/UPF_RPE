@@ -483,7 +483,7 @@ class MyTestCase(unittest.TestCase):
 
         experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
 
-        methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
         #            "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
         #            "algebraic|frequency=1.0|horizon=10",
         #            "algebraic|frequency=10.0|horizon=100",
@@ -739,7 +739,7 @@ class MyTestCase(unittest.TestCase):
                           nls_exp, nls_sim,
                         ]
 
-        df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
+        df, methods_names, methods_colors, methods_styles, methods_legends = taa.filter_methods_new(methods_order)
         taa.print_statistics(methods_names, ["error_x_relative", "error_h_relative"], df)
         g = taa.boxplot_exp(df, methods_color=methods_colors, methods_legend=methods_legends,
                         hue_variable="Name", hue_order=methods_names,
@@ -835,7 +835,7 @@ class MyTestCase(unittest.TestCase):
                           nls_exp,
                         ]
 
-        df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
+        df, methods_names, methods_colors, methods_styles, methods_legends = taa.filter_methods_new(methods_order)
         g = taa.boxplot_exp(df, methods_color=methods_colors, methods_legend=methods_legends,
                         hue_variable="Name", hue_order=methods_names,
                         col_variable="Variable",

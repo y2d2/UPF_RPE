@@ -75,7 +75,7 @@ In the Data folder, the measurements and simulation data can be found.
 ### Measurements
 For the measurements, the rosbags with camera images are not uploaded here, however, can be made available upon request. 
 ### Simulations
-The simulations include the corrupted VIO and UWB measurements so that all algorithms have exactly the same input. 
+The simulations include the cropped VIO and UWB measurements so that all algorithms have exactly the same input. 
 
 ## Benchmark algorithms
-An implementation of a NLS and Algebraic solution for the 4-dof problem can be found in the Code/Baselines folder
+An implementation of a NLS, QCQP and Algebraic solution for the 4-dof problem can be found in the `Code/BaseLines` folder

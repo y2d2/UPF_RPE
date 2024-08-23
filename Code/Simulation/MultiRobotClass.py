@@ -17,7 +17,7 @@ import matplotlib
 
 # import Experiments.RealRobot
 from Code.UtilityCode.utility_fuctions import sphericalToCartesian, limit_angle, transform_matrix, \
-    inv_transformation_matrix, get_states_of_transform
+    inv_transformation_matrix, get_states_of_transform, cartesianToSpherical
 from Code.Simulation.BiRobotMovement import run_multi_drone_simulation, drone_flight, random_moving_drones
 from Code.Simulation.RobotClass import load_trajectory_from_dict, NewRobot
 # from NLOS_RPE_Code.Simulations.NLOS_Manager import NLOS_Manager
@@ -961,6 +961,12 @@ class TwoAgentSystem():
 
         lop = ListOfUKFLOSTargetTrackingParticles()
         lop.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
+        if "multi_particles" in parameters and parameters["multi_particles"] ==0 :
+            # TODO: add code to find the intial transform and convert ti
+            t_S0_S1 = self.find_initial_t()
+            s_SO_S1 = np.concatenate((cartesianToSpherical(t_S0_S1[:3]), np.array([t_S0_S1[-1]])))
+            lop.create_particle(x_ha_0)
+
         lop.split_sphere_in_equal_areas(t_i= x_ha_0, d_ij= self.d0, sigma_uwb = self.sigma_uwb,
                                         n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
 

@@ -173,8 +173,6 @@ class TestConnectedAgent(unittest.TestCase):
         # self.dl.plot_best_particle_variance_graph()
         plt.show()
 
-
-
     def test_tc2(self):
         # Length of NLOS  is proportional to error on odom?
         self.init_test(sigma_v=0.1, sigma_w=0.001, sigma_uwb=0.1,
@@ -197,7 +195,7 @@ class TestConnectedAgent(unittest.TestCase):
 
     # -----------------------
     # Precalulated trajectories
-    # -----------------------   s
+    # -----------------------
     def load_drones(self, folder_name, sigma_v=0.1, sigma_w=0.1, sigma_uwb=0.1):
         self.uwb_time_step = 1
         self.sigma_uwb = sigma_uwb

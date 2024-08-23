@@ -28,7 +28,6 @@ class TargetTrackingParticle:
         """
         This function should compare the particle with another particle.
         """
-        #TODO continue here
         def kl_divergence(mu_P, sigma_P, mu_Q, sigma_Q):
             # Proposed by chatgpt 3.5
             k = len(mu_P)

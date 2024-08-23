@@ -182,7 +182,7 @@ class MyTestCase(unittest.TestCase):
                          # nls_100,
                          ]
 
-        df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
+        df, methods_names, methods_colors,  methods_styles, methods_legends = taa.filter_methods_new(methods_order)
         taa.print_statistics(methods_names, ["error_x_relative", "error_h_relative", "calculation_time"], df)
         g = taa.boxplot_exp(df, methods_color=methods_colors, methods_legend=methods_legends,
                             hue_variable="Name", hue_order=methods_names,
