@@ -5,7 +5,7 @@ import shutil
 if __name__ == "__main__":
     result_folder = "Data/Results/Sim_LOS_QCQP_new"
     trajectory_folder = "Data/Simulations"
-    trajectory_folder = "../robot_trajectories"
+    # trajectory_folder = "../robot_trajectories"
     generated_tests_folder = "generated_tests"
     if generated_tests_folder not in os.listdir("./"):
         os.mkdir("./"+generated_tests_folder)
