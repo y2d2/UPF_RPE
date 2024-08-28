@@ -11,26 +11,26 @@ class MyTestCase(unittest.TestCase):
     def test_generate_trajectories(self):
         test = "test"
         # Create a trajectory
-        folder_name = 'robot_trajectories'
+        folder_name = 'small_trajectories'
         MRS = MRC.MultiRobotSimulation()
-        MRS.set_simulation_parameters(max_v=1, max_w=0.05, slowrate_v=0.1, slowrate_w=0.005,
+        MRS.set_simulation_parameters(max_v=0.2, max_w=0.1, slowrate_v=0.05, slowrate_w=0.005,
                                       simulation_time_step=0.05, simulation_time=5*60,
-                                      number_of_drones=2, max_range=25, range_origin_bool=True,
+                                      number_of_drones=2, max_range=10, range_origin_bool=True,
                                       trajectory_folder_name=folder_name, reset_trajectories=True)
-        MRS.create_trajectories(50)
+        MRS.create_trajectories(10)
 
     def test_generate_sim_data(self):
-        folder_name = 'robot_trajectories'
+        folder_name = 'small_trajectories'
         MRS = MRC.MultiRobotSimulation(trajectory_folder_name=folder_name)
-        sigma_vs = [0.1, 0.01, 0.001]
-        sigma_ds = [1, 0.1, 0.01]
+        sigma_vs = [0.1, 0.01]
+        sigma_ds = [1, 0.1]
         sigma_v_long = []
         sigma_w_long = []
         sigma_d_long = []
         for sigma_v in sigma_vs:
             for sigma_d in sigma_ds:
                 sigma_v_long.append(sigma_v)
-                sigma_w_long.append(sigma_v*0.1)
+                sigma_w_long.append(sigma_v)
                 sigma_d_long.append(sigma_d)
 
         MRS.run_simulations(sigma_v_long, sigma_w_long, sigma_d_long)

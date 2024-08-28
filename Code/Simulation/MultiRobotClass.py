@@ -102,7 +102,7 @@ class MultiRobotSingleSimulation:
         drones = []
         # for j in range(self.number_of_drones):
         for start_pose in start_poses:
-            drones.append(drone_flight(start_pose, start_velocity=np.array([1., 0, 0, 0]), sigma_dv=0, sigma_dw=0,
+            drones.append(drone_flight(start_pose, start_velocity=np.array([max_v, 0, 0, 0]), sigma_dv=0, sigma_dw=0,
                                        max_range=max_range,
                                        origin_bool=range_origin_bool, simulation_time_step=simulation_time_step,
                                        slowrate_v=slowrate_v, slowrate_w=slowrate_w, max_v=max_v, max_w=max_w))
