@@ -3,8 +3,9 @@ import os
 import shutil
 
 if __name__ == "__main__":
-    result_folder = "Data/Results/Sim_LOS_06_2024"
+    result_folder = "Data/Results/Sim_LOS_QCQP_new"
     trajectory_folder = "Data/Simulations"
+    trajectory_folder = "../robot_trajectories"
     generated_tests_folder = "generated_tests"
     if generated_tests_folder not in os.listdir("./"):
         os.mkdir("./"+generated_tests_folder)
@@ -20,7 +21,7 @@ if __name__ == "__main__":
                 # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                 # "NLS|frequency=1.0|horizon=10",
                 # "NLS|frequency=1.0|horizon=10",
-                "NLS|frequency=1.0|horizon=100"
+                # "NLS|frequency=1.0|horizon=100"
                 # "NLS|frequency=1.0|horizon=100",
                 # "NLS|frequency=10.0|horizon=100",
                 # "NLS|frequency=10.0|horizon=1000"
@@ -30,7 +31,7 @@ if __name__ == "__main__":
                 # "algebraic|frequency=1.0|horizon=100"
                 # "QCQP|frequency=10.0|horizon=100",
                 # "QCQP|frequency=1.0|horizon=10",
-                # "QCQP|frequency=10.0|horizon=1000",
+                "QCQP|frequency=10.0|horizon=1000",
                 # "QCQP|frequency=1.0|horizon=100"
                 ]
     dvs = [0.1, 0.01]

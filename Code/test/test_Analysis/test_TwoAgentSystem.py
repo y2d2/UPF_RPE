@@ -294,9 +294,10 @@ class MyTestCase(unittest.TestCase):
 
     def test_time_analysis_new(self):
         result_folder = [
-                        "./Results/UPF_perfect_guess",
+                        # "./Results/UPF_perfect_guess",
                         # "../../../Data/Results/Sim_LOS_06_2024/1_sim",
-                        "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper",
+                        # "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper",
+                        "./Results/small_trajectories",
                          "../../../test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/experiments_paper/Experiments",
                          ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
@@ -356,10 +357,11 @@ class MyTestCase(unittest.TestCase):
 
     def test_time_analysis_new_perfect_guess(self):
         result_folder = [
-            "./Results/UPF_perfect_guess",
-            "../../../test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/UPF_perfect_guess",
-            # "../../../Data/Results/Sim_LOS_06_2024/1_sim",
-            "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper",
+            # "./Results/UPF_perfect_guess",
+            # "../../../test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/UPF_perfect_guess",
+            # # "../../../Data/Results/Sim_LOS_06_2024/1_sim",
+            # "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper",
+            "./Results/small_trajectories",
             "../../../test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/experiments_paper/Experiments",
         ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)

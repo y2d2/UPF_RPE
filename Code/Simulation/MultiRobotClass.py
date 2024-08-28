@@ -1085,7 +1085,8 @@ class TwoAgentSystem():
                           "error_x_relative": dl_bp.error_relative_transformation_est,
                           "error_h_relative": dl_bp.error_relative_heading_est,
                           "sigma_h_relative": dl_bp.sigma_h_ca,
-                          "sigma_x_relative": dl_bp.sigma_x_ca}
+                          "sigma_x_relative": dl_bp.sigma_x_ca,
+                          "NIS": dl_bp.NIS}
             self.data[self.current_sim_name][self.test_name][drone_id] = upf_result
 
             if self.save_bool:
@@ -1318,7 +1319,7 @@ class TwoAgentSystem():
         t2 = time.time()
         self.agents["drone_0"][self.test_name + "_log"].log(i, t2 - t1)
         t3 = time.time()
-        self.agents["drone_1"][self.test_name].update(dx_0, dx_1, uwb_measurement)
+        self.agents["drone_1"][self.test_name].update(dx_1, dx_0, uwb_measurement)
         t4 = time.time()
         self.agents["drone_1"][self.test_name + "_log"].log(i, t4 - t3)
 

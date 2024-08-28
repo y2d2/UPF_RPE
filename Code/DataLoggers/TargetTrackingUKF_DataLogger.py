@@ -82,6 +82,8 @@ class UKFDatalogger():
             self.ha_s = []
 
             self.estimated_ca_position = np.empty((0, 3))
+            self.NIS = []
+            self.NEES = []
 
 
     def save_graphs(self, folder="./"):
@@ -103,6 +105,7 @@ class UKFDatalogger():
         self.log_cartesian_data(self.i)
         self.log_slam_data(self.i)
         self.log_variances()
+        self.log_nis_nees()
 
     def log_variances(self):
         self.likelihood.append(self.ukf.kf.likelihood)
@@ -219,6 +222,11 @@ class UKFDatalogger():
 
         self.error_ca_position_slam.append(np.linalg.norm(ca_p_slam - ca_p_real))
         self.error_ca_heading_slam.append(np.abs(limit_angle(ca_h_real - ca_h_slam)))
+
+    def log_nis_nees(self):
+        nis = self.ukf.kf.y @ self.ukf.kf.SI @ self.ukf.kf.y
+        self.NIS.append(nis)
+
 
     def plot_ukf_drift(self, ax):
         # plot drift of the position
@@ -415,6 +423,7 @@ class UKFDatalogger():
 
             ax[3, -1].plot(self.likelihood, color="black", label="Likelihood")
             ax[3, -1].plot(self.weight, color="red", label="Weight")
+            ax[3, -1].plot(self.NIS, color="blue", label="NIS")
 
             for i in ax[:, -1]:
                 # for i in a:
