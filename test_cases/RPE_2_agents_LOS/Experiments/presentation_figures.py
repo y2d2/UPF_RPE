@@ -120,7 +120,7 @@ class MyTestCase(unittest.TestCase):
 
                 # self.alg_solver.get_update(d=d, dx_ha=dx_ha, dx_ca=dx_ca, q_ha=q_ha, q_ca=q_ca)
 
-                nls_logger.log(j)
+                nls_logger.log_data(j)
 
                 dx_ca = np.zeros(4)
                 q_ca = np.zeros((4, 4))

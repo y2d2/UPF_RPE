@@ -82,16 +82,7 @@ class UKFDatalogger():
             self.ha_s = []
 
             self.estimated_ca_position = np.empty((0, 3))
-            # metric variables:
-            self.mean_error_relative_transformation_est = []
-            self.sigma_error_relative_transformation_est = []
-            self.mean_error_relative_heading_est = []
-            self.sigma_error_relative_heading_est = []
 
-            self.mean_error_relative_transformation_slam = []
-            self.sigma_error_relative_transformation_slam = []
-            self.mean_error_relative_heading_slam = []
-            self.sigma_error_relative_heading_slam = []
 
     def save_graphs(self, folder="./"):
         self.now = datetime.now()
@@ -112,19 +103,6 @@ class UKFDatalogger():
         self.log_cartesian_data(self.i)
         self.log_slam_data(self.i)
         self.log_variances()
-        # self.log_metric()
-
-    @deprecated
-    def log_metric(self):
-        self.mean_error_relative_heading_slam.append(np.mean(self.error_relative_heading_slam))
-        self.sigma_error_relative_heading_slam.append(np.std(self.error_relative_heading_slam))
-        self.mean_error_relative_transformation_slam.append(np.mean(self.error_relative_transformation_slam))
-        self.sigma_error_relative_transformation_slam.append(np.std(self.error_relative_transformation_slam))
-
-        self.mean_error_relative_heading_est.append(np.mean(self.error_relative_heading_est))
-        self.sigma_error_relative_heading_est.append(np.std(self.error_relative_heading_est))
-        self.mean_error_relative_transformation_est.append(np.mean(self.error_relative_transformation_est))
-        self.sigma_error_relative_transformation_est.append(np.std(self.error_relative_transformation_est))
 
     def log_variances(self):
         self.likelihood.append(self.ukf.kf.likelihood)
@@ -136,7 +114,7 @@ class UKFDatalogger():
 
         self.sigma_x_ca_0.append(self.ukf.sigma_x_ca_0)
         self.sigma_x_ca.append(self.ukf.sigma_x_ca)
-        self.sigma_x_ca_r.append(self.ukf.sigma_x_ca_r)
+        # self.sigma_x_ca_r.append(self.ukf.sigma_x_ca_r)
         self.sigma_h_ca.append(self.ukf.sigma_h_ca)
 
     def log_spherical_data(self, i):
@@ -455,10 +433,11 @@ class UKFDatalogger():
             # a.legend()
             a.grid(True)
 
-    def copy(self, ukf):
+    def copy(self, ukf: TargetTrackingUKF):
         copyDL = UKFDatalogger(self.host_agent, self.connected_agent, ukf)
 
         copyDL.i = copy.deepcopy(self.i)
+
         copyDL.host_agent_trajectory = copy.deepcopy(self.host_agent_trajectory)
         copyDL.connected_agent_trajectory = copy.deepcopy(self.connected_agent_trajectory)
         copyDL.connected_agent_heading = copy.deepcopy(self.connected_agent_heading)
@@ -492,9 +471,16 @@ class UKFDatalogger():
         copyDL.sigma_x_ca_0 = copy.deepcopy(self.sigma_x_ca_0)
         copyDL.sigma_x_ca = copy.deepcopy(self.sigma_x_ca)
         copyDL.sigma_x_ca_r = copy.deepcopy(self.sigma_x_ca_r)
+        copyDL.sigma_h_ca = copy.deepcopy(self.sigma_h_ca)
 
         copyDL.likelihood = copy.deepcopy(self.likelihood)
         copyDL.weight = copy.deepcopy(self.weight)
+
+        copyDL.ca_s = copy.deepcopy(self.ca_s)
+        copyDL.ha_s = copy.deepcopy(self.ha_s)
+        copyDL.estimated_ca_position = copy.deepcopy(self.estimated_ca_position)
+
+        copyDL.data_logged = copy.deepcopy(self.data_logged)
 
         return copyDL
 

@@ -65,5 +65,6 @@ class MyTestCase(unittest.TestCase):
                      methods_legend=methods_legend, start_time=100, save_fig=False)
         plt.show()
 
+
 if __name__ == '__main__':
     unittest.main()

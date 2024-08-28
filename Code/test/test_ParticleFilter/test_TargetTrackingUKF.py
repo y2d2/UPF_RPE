@@ -61,9 +61,9 @@ class Test_TargetTrackingUKF(unittest.TestCase):
                n_azimuth=4, n_altitude=3, n_heading_c=4):
         sigma_azimuth = (2 * np.pi / n_azimuth) / np.sqrt(-8 * np.log(0.5))
         sigma_altitude = (np.pi / n_altitude) / np.sqrt(-8 * np.log(0.5))
-        sigma_s = [self.sigma_uwb, sigma_azimuth, sigma_altitude]
-
         ca_sigma_heading = (2 * np.pi / n_heading_c) / np.sqrt(-8 * np.log(0.5))
+        sigma_s = [self.sigma_uwb, sigma_azimuth, sigma_altitude, ca_sigma_heading]
+
 
         # # Very small start position uncertainty
         # sigma_s = np.ones(3)*1e-4
@@ -73,11 +73,10 @@ class Test_TargetTrackingUKF(unittest.TestCase):
         x_ca_0 = np.concatenate((self.drone.x_start, np.array([self.drone.h_start])))
         x_ca = get_4d_rot_matrix(-x_ha_0[-1]) @ (x_ca_0 - x_ha_0)
         s = cartesianToSpherical(x_ca[:3])
-        ca_heading = x_ca[-1]
-
+        s = np.array([s[0], s[1], s[2],  x_ca[-1]])
         self.ukf = TargetTrackingUKF(x_ha_0=x_ha_0)
         self.ukf.set_ukf_properties(kappa, alpha, beta)
-        self.ukf.set_initial_state(s, sigma_s, ca_heading, ca_sigma_heading, self.sigma_uwb)
+        self.ukf.set_initial_state(s, sigma_s)
 
 
     def run_test(self, name="Unidentified Testcase", nlos_function= None):
@@ -120,9 +119,11 @@ class Test_TargetTrackingUKF(unittest.TestCase):
 
                     self.ukf.weight = 1.
                     if self.bool_host_agent_drift:
-                        self.ukf.run_filter(dx, q, uwb_measurement, x_ha_est, q_ha, self.sigma_uwb, bool_drift= self.bool_host_agent_drift)
+                        self.ukf.run_filter(dx, q, x_ha_est, q_ha, uwb_measurement, self.sigma_uwb,
+                                            bool_drift=self.bool_host_agent_drift)
                     else:
-                        self.ukf.run_filter(dx, q, uwb_measurement, x_ha, q_ha, self.sigma_uwb, bool_drift=self.bool_host_agent_drift)
+                        self.ukf.run_filter(dx, q, x_ha, q_ha, uwb_measurement, self.sigma_uwb,
+                                            bool_drift=self.bool_host_agent_drift)
 
                     # Reset integration parameters
                     dx = np.zeros(4)
@@ -380,7 +381,7 @@ class Test_TargetTrackingUKF(unittest.TestCase):
         self.uwb_time_steps = 200
         copiedUKF = None
 
-        self.ukf.set_datalogger(self.host, self.drone, TEST_CASE_NAME)
+        # self.ukf.set_datalogger(self.host, self.drone, TEST_CASE_NAME)
         self.ukf.weight = 0.
         # self.ukf.datalogger.log_data(0)
         for i in range(self.uwb_time_steps):

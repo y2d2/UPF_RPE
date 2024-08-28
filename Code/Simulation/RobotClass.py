@@ -8,6 +8,7 @@ Created on Wed Jan 11 16:45:10 2023
 from deprecated import deprecated
 import pickle as pkl
 import numpy as np
+import matplotlib.pyplot as plt
 
 from Code.UtilityCode.utility_fuctions import get_rot_matrix, get_4d_rot_matrix, sphericalToCartesian, cartesianToSpherical, limit_angle
 from Code.UtilityCode import Transformation_Matrix_Fucntions as TMF
@@ -349,8 +350,23 @@ class NewRobot:
         ax.plot3D(self.x_slam[i, 0], self.x_slam[i, 1], self.x_slam[i, 2],
                   color=color, marker="x", linestyle=linestyle, alpha=alpha)
 
-    def plot_trajectory(self, ax, color="k"):
-        ax.plot3D(self.x_real[:, 0], self.x_real[:, 1], self.x_real[:, 2], color=color)
+    def plot_slam_error(self, ax = None, annotation="", linestyle="-", color = None, alpha=1, i=-1):
+        error = self.x_real[1:,:] - self.x_slam
+        t = np.arange(0, len(error))*0.1
+        error_h = np.array(self.h_real[1:]) - np.array(self.h_slam)
+        for i in range(len(error_h)):
+            error_h[i] = limit_angle(error_h[i])
+        if ax is None:
+            _, ax = plt.subplots(4,1)
+
+        legend = ["x", "y", "z", "heading"]
+        for i in range(3):
+            ax[i].plot(t, error[:, i], color=color, linestyle=linestyle, alpha=alpha, label=annotation + " " + legend[i]+ " error")
+        ax[-1].plot(t, error_h, color=color, linestyle=linestyle, alpha=alpha, label=annotation + " " + "heading error")
+        return ax
+
+    def plot_trajectory(self, ax, color="k", label=None):
+        ax.plot3D(self.x_real[:, 0], self.x_real[:, 1], self.x_real[:, 2], color=color, label=label)
 
 
 

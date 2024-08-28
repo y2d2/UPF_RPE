@@ -15,17 +15,20 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib
 
+from Code.DataLoggers.TargetTrackingParticle_DataLogger import UKFTargetTrackingParticle_DataLogger
 # import Experiments.RealRobot
 from Code.UtilityCode.utility_fuctions import sphericalToCartesian, limit_angle, transform_matrix, \
-    inv_transformation_matrix, get_states_of_transform
+    inv_transformation_matrix, get_states_of_transform, cartesianToSpherical
 from Code.Simulation.BiRobotMovement import run_multi_drone_simulation, drone_flight, random_moving_drones
 from Code.Simulation.RobotClass import load_trajectory_from_dict, NewRobot
-from Code.Simulation.NLOS_Manager import NLOS_Manager
+# from NLOS_RPE_Code.Simulations.NLOS_Manager import NLOS_Manager
 from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
+from Code.ParticleFilter.TargetTrackingParticle import ListOfUKFLOSTargetTrackingParticles, UKFLOSTargetTrackingParticle
 from Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger
 from Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from Code.BaseLines.AlgebraicMethod4DoF import AlgebraicMethod4DoF, Algebraic4DoF_Logger
-from Code.BaseLines.NLS import NLS, NLSDataLogger
+from Code.BaseLines.NLS import NLS
+from Code.DataLoggers.NLS_DataLogger import NLSDataLogger
 from Code.BaseLines.QCQP import QCQP
 from Code.DataLoggers.QCQP_DataLogger import QCQP_Log
 
@@ -99,7 +102,7 @@ class MultiRobotSingleSimulation:
         drones = []
         # for j in range(self.number_of_drones):
         for start_pose in start_poses:
-            drones.append(drone_flight(start_pose, start_velocity=np.array([1., 0, 0, 0]), sigma_dv=0, sigma_dw=0,
+            drones.append(drone_flight(start_pose, start_velocity=np.array([max_v, 0, 0, 0]), sigma_dv=0, sigma_dw=0,
                                        max_range=max_range,
                                        origin_bool=range_origin_bool, simulation_time_step=simulation_time_step,
                                        slowrate_v=slowrate_v, slowrate_w=slowrate_w, max_v=max_v, max_w=max_w))
@@ -539,19 +542,17 @@ class TwoAgentSystem():
         # self.uwb_rate = 1. # second
         self.frequency = None
         self.factor = None
-        self.nlos_man = NLOS_Manager(nlos_bias=2.)
+        # self.nlos_man = NLOS_Manager(nlos_bias=2.)
         self.los_state = []
         self.d0 = None
-
-
 
         # Experiment variables:
         self.experiment_data = None
 
         #Parameters
-        self.parameters={}
+        self.parameters = {}
         self.type = ""
-        self.prefix =""
+        self.prefix = ""
 
         # QCQP and Algebraic parameters:
         self.horizon = 100
@@ -587,7 +588,7 @@ class TwoAgentSystem():
 
         # Sims
         self.sims = 0
-        self.total_sims  = 0
+        self.total_sims = 0
         self.current_sim_name = ""
 
     def set_uncertainties(self, sigma_dv=1., sigma_dw=1., sigma_uwb=0.1):
@@ -595,7 +596,8 @@ class TwoAgentSystem():
         self.sigma_dw = sigma_dw
         self.sigma_uwb = sigma_uwb
 
-    def set_ukf_properties(self, kappa=-1, alpha=1, beta=2, n_azimuth=4, n_altitude=3, n_heading=4, resample_factor =0.1, sigma_uwb_factor= 1.0):
+    def set_ukf_properties(self, kappa=-1, alpha=1, beta=2, n_azimuth=4, n_altitude=3, n_heading=4, resample_factor=0.1,
+                           sigma_uwb_factor=1.0):
         self.kappa = kappa
         self.alpha = alpha
         self.beta = beta
@@ -613,10 +615,11 @@ class TwoAgentSystem():
 
         i = 0
         exists = True
-        name = self.prefix+self.test_name+"|"+self.current_sim_name+"|s_uwb="+str(self.sigma_uwb)+"|s_dv="+str(self.sigma_dv)+"|s_dw="+str(self.sigma_dw)
+        name = self.prefix + self.test_name + "|" + self.current_sim_name + "|s_uwb=" + str(
+            self.sigma_uwb) + "|s_dv=" + str(self.sigma_dv) + "|s_dw=" + str(self.sigma_dw)
         name = "c".join(name.split("."))
         name = "n".join(name.split("-"))
-        self.result_file= os.path.join(self.result_folder, name+".pkl")
+        self.result_file = os.path.join(self.result_folder, name + ".pkl")
         if not os.path.isfile(self.result_file) or redo_bool:
             self.data = {}
             self.data[self.current_sim_name] = {}
@@ -627,12 +630,12 @@ class TwoAgentSystem():
             f.close()
             return True
         else:
-            try :
+            try:
                 print("Result file exists:", self.result_file)
                 with open(self.result_file, "rb") as f:
                     self.data = pkl.load(f)
                 f.close()
-                self.data={}
+                self.data = {}
             except EOFError:
                 print("Error opening:", self.result_file)
                 self.data = {}
@@ -649,16 +652,13 @@ class TwoAgentSystem():
         #         self.result_file = file
         #         exists = False
 
-
-
-
     @DeprecationWarning
     def get_results_file(self):
         if self.result_file is None:
             # result_name = "number_of_agents_" + str(self.number_of_agents)
             result_name = "_sigma_dv_" + str(np.round(self.sigma_dv, 3)) + "_sigma_dw_" + str(
                 np.round(self.sigma_dw, 3)) \
-                           + "_sigma_uwb_" + str(np.round(self.sigma_uwb, 3))
+                          + "_sigma_uwb_" + str(np.round(self.sigma_uwb, 3))
             result_name += "_freq_" + str(self.uwb_rate)
             # result_name += "_alpha_" + str(self.alpha) + "_kappa_" + str(self.kappa) + "_beta_" + str(self.beta)
             result_name = "c".join(result_name.split("."))
@@ -706,8 +706,8 @@ class TwoAgentSystem():
     # ---- Experiments Functions
     #-----------------------------
 
-    def run_experiment(self, methods=[], redo_bool=False, experiment_data=None, prefix = "exp_", res_type="experiment" ):
-        self.type=res_type
+    def run_experiment(self, methods=[], redo_bool=False, experiment_data=None, prefix="exp_", res_type="experiment"):
+        self.type = res_type
         self.prefix = prefix
         if experiment_data is None:
             return
@@ -736,7 +736,7 @@ class TwoAgentSystem():
             print("-----------------------------------")
 
     def reset_agents_w_exp_data(self):
-        self.parameters={}
+        self.parameters = {}
         self.agents = {}
         for drone_name in self.experiment_data["drones"]:
             T_vicon = self.experiment_data["drones"][drone_name]["T_real"]
@@ -747,7 +747,6 @@ class TwoAgentSystem():
             drone.from_experimental_data(T_vicon, DT_vio, Q_vio, self.experiment_data["sample_freq"])
             self.agents[drone_name] = {"drone": drone}
         self.d0 = self.experiment_data["uwb"][0]
-
 
     def run_exp(self, test_name):
         self.los_state = []
@@ -784,11 +783,12 @@ class TwoAgentSystem():
         eval("self.end_" + self.method + "_test()")
 
     # ---- Test functions.
-    def run_simulations(self, methods=[], nlos_function=None, redo_bool=False, sim_list=None, prefix = "sim_", res_type="simulation"):
+    def run_simulations(self, methods=[], nlos_function=None, redo_bool=False, sim_list=None, prefix="sim_",
+                        res_type="simulation"):
         self.prefix = prefix
         self.type = res_type
-        if nlos_function == None:
-            nlos_function = self.nlos_man.los
+        # if nlos_function == None:
+        #     nlos_function = self.nlos_man.los
 
         self.total_sims = len(os.listdir(self.trajectory_folder))
         self.sims = 1
@@ -859,7 +859,7 @@ class TwoAgentSystem():
             parameter = parsing_test_name[i].split("=")
             parameters[parameter[0]] = float(parameter[1])
         self.parameters = self.generate_general_parameters(parameters)
-        eval("self.init_"+parsing_test_name[0]+"_test(self.parameters)")
+        eval("self.init_" + parsing_test_name[0] + "_test(self.parameters)")
 
     def run_simulation(self, test_name, nlos_function=None):
         self.d0 = self.sim.get_uwb_measurements("drone_0", "drone_1")[0]
@@ -869,7 +869,7 @@ class TwoAgentSystem():
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
         distances = self.sim.get_uwb_measurements("drone_0", "drone_1")
-        self.factor = int(1.0/self.frequency / self.sim.parameters["simulation_time_step"])
+        self.factor = int(1.0 / self.frequency / self.sim.parameters["simulation_time_step"])
         for i in range(1, self.sim.parameters["simulation_time_steps"]):
             if self.plot_bool:
                 self.sim.plot_trajectories_evolution(i, 50)
@@ -886,7 +886,8 @@ class TwoAgentSystem():
                 dx_1, q_1 = drone1.reset_integration()
 
                 uwb_measurement = distances[i]
-                uwb_measurement, los_state = nlos_function(int(i / self.factor), uwb_measurement)
+                los_state = True
+                # uwb_measurement, los_state = nlos_function(int(i / self.factor), uwb_measurement)
                 self.los_state.append(los_state)
 
                 eval("self.run_" + self.method + "_simulation" + "(dx_0, q_0, dx_1, q_1, uwb_measurement, i)")
@@ -897,16 +898,16 @@ class TwoAgentSystem():
 
     # --- UPF functions
 
-    def init_upf_test(self, parameters = {}):
+    def init_upf_test(self, parameters={}):
         self.init_gen_upf_test(NLOS_bool=True, drift_bool=True, parameters=parameters)
 
-    def init_losupf_test(self,  parameters = {}):
+    def init_losupf_test(self, parameters={}):
         self.init_gen_upf_test(NLOS_bool=False, drift_bool=True, parameters=parameters)
 
-    def init_nodriftupf_test(self,  parameters = {}):
+    def init_nodriftupf_test(self, parameters={}):
         self.init_gen_upf_test(NLOS_bool=False, drift_bool=False, parameters=parameters)
 
-    def init_upfnaive_test(self,  parameters = {}):
+    def init_upfnaive_test(self, parameters={}):
         self.init_gen_upf_test(NLOS_bool=True, drift_bool=True, naive_sampling_bool=True, parameters=parameters)
 
     def generate_upf_parameters(self):
@@ -949,8 +950,6 @@ class TwoAgentSystem():
         else:
             self.sigma_uwb_factor = self.parameters["sigma_uwb_factor"]
 
-
-
     def init_gen_upf_test(self, NLOS_bool=True, drift_bool=True, naive_sampling_bool=False, logger=True, parameters={}):
         self.generate_upf_parameters()
         self.method = "upf"
@@ -960,14 +959,29 @@ class TwoAgentSystem():
         # self.d0 = init_distance
         # init drone0
         x_ha_0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
-        upf0 = UPFConnectedAgent(id="drone_1", x_ha_0=x_ha_0, drift_correction_bool=drift_bool)
+
+        lop = ListOfUKFLOSTargetTrackingParticles()
+        lop.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
+        if "multi_particles" in parameters and parameters["multi_particles"] ==0 :
+            # TODO: add code to find the intial transform and convert ti
+            t_S0_S1 = self.find_initial_t()
+            s_S0_S1 = np.concatenate((cartesianToSpherical(t_S0_S1[:3]), np.array([t_S0_S1[-1]])))
+            particle = lop.create_particle(x_ha_0, s_S0_S1, np.array([self.sigma_uwb, 0.000001,0.000001,0.000001]), s_S0_S1[0],self.sigma_uwb)
+            lop.particles.append(particle)
+        else:
+            lop.split_sphere_in_equal_areas(t_i= x_ha_0, d_ij= self.d0, sigma_uwb = self.sigma_uwb,
+                                        n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
+
+        upf0 = UPFConnectedAgent(lop.particles, x_ha_0=x_ha_0, drift_correction_bool=drift_bool,
+                                 sigma_uwb=self.sigma_uwb, id="drone_1")
         upf0.resample_factor = self.resample_factor
         upf0.sigma_uwb_factor = self.sigma_uwb_factor
-        upf0.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
-        upf0.split_sphere_in_equal_areas(r=self.d0, sigma_uwb= self.sigma_uwb,
-                                         n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
+        # upf0.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
+        # upf0.split_sphere_in_equal_areas(r=self.d0, sigma_uwb=self.sigma_uwb,
+        #                                  n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
 
-        dl0 = UPFConnectedAgentDataLogger(drone0, drone1, upf0)
+        dl0 = UPFConnectedAgentDataLogger(drone0, drone1, upf0, UKFTargetTrackingParticle_DataLogger)
+        dl0.log_data(0)
 
         # upf0.set_logging(dl0)
         self.agents["drone_0"][self.test_name] = upf0
@@ -975,13 +989,26 @@ class TwoAgentSystem():
 
         # init drone1
         x_ha_1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
-        upf1 = UPFConnectedAgent(id="drone_0", x_ha_0=x_ha_1, drift_correction_bool=drift_bool)
+
+        lop = ListOfUKFLOSTargetTrackingParticles()
+        lop.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
+        if "multi_particles" in parameters and parameters["multi_particles"] ==0 :
+            t_S1_S0 = get_states_of_transform(inv_transformation_matrix(t_S0_S1))
+            s_S1_S0 = np.concatenate((cartesianToSpherical(t_S1_S0[:3]), np.array([t_S1_S0[-1]])))
+            particle = lop.create_particle(x_ha_1, s_S1_S0, np.array([self.sigma_uwb, 0.00001,0.00001,0.000001 ]), s_S1_S0[0],self.sigma_uwb)
+            lop.particles.append(particle)
+        else:
+            lop.split_sphere_in_equal_areas(t_i= x_ha_1, d_ij= self.d0, sigma_uwb = self.sigma_uwb,
+                                        n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
+
+        upf1 = UPFConnectedAgent(lop.particles, x_ha_0=x_ha_1, drift_correction_bool=drift_bool,
+                                 sigma_uwb=self.sigma_uwb, id="drone_0")
         upf1.resample_factor = self.resample_factor
         upf1.sigma_uwb_factor = self.sigma_uwb_factor
-        upf1.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
-        upf1.split_sphere_in_equal_areas(r=self.d0, sigma_uwb= self.sigma_uwb,
-                                         n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
-        dl1 = UPFConnectedAgentDataLogger(drone1, drone0, upf1)
+
+        dl1 = UPFConnectedAgentDataLogger(drone1, drone0, upf1, UKFTargetTrackingParticle_DataLogger)
+        dl1.log_data(0)
+
         # upf1.set_logging(dl1)
         self.agents["drone_1"][self.test_name] = upf1
         self.agents["drone_1"]["log"] = dl1
@@ -1008,7 +1035,7 @@ class TwoAgentSystem():
         upf0.ha.update(x_ha_0, q_0)
         # Timing the execution of the algorihtm
         t1 = time.time()
-        upf0.run_model(dx_1, uwb_measurement, q_ca=q_1, time_i=i)
+        upf0.run_model(dt_j = dx_1, q_j=q_1, dt_i = np.zeros(4), q_i = np.zeros((4, 4)), d_ij = uwb_measurement, time_i=i)
         t2 = time.time()
         # Logging
         upf0log.log_data(i, t2 - t1)
@@ -1020,7 +1047,7 @@ class TwoAgentSystem():
         upf1.ha.update(x_ha_1, q_1)
         # Timing the execution of the algorihtm
         t3 = time.time()
-        upf1.run_model(dx_0, uwb_measurement, q_ca=q_0, time_i=i)
+        upf1.run_model(dt_j = dx_0, q_j=q_0, dt_i = np.zeros(4), q_i = np.zeros((4, 4)), d_ij= uwb_measurement, time_i=i)
         t4 = time.time()
         # Logging
         upf1log.log_data(i, t4 - t3)
@@ -1174,8 +1201,13 @@ class TwoAgentSystem():
     def init_NLS_test(self, parameters={}):
         self.method = "NLS"
         agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
-        self.agents["drone_0"][self.test_name] = NLS(agents, horizon = int(self.horizon), sigma_uwb=self.sigma_uwb)
-        # best_guess = self.find_best_initial_guess()
+        self.agents["drone_0"][self.test_name] = NLS(agents, horizon=int(self.horizon), sigma_uwb=self.sigma_uwb)
+        if "perfect_guess" in parameters:
+            if parameters["perfect_guess"] == 0:
+                best_guess = self.find_best_initial_guess()
+                self.agents["drone_0"][self.test_name].set_best_guess({"drone_1": best_guess})
+            # self.agents["drone_0"][self.test_name].set_best_guess(parameters["perfect_guess"])
+        #
         # initial_t = self.find_initial_t()
         # self.agents["drone_0"][self.test_name].set_best_guess({"drone_1": initial_t})
         self.agents["drone_0"][self.test_name].init_logging(NLSDataLogger(self.agents["drone_0"][self.test_name]))
@@ -1183,7 +1215,7 @@ class TwoAgentSystem():
     def init_NLS_p_test(self):
         self.method = "NLS"
         agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
-        self.agents["drone_0"][self.test_name] = NLS(agents, 10, self.sigma_uwb)
+        self.agents["drone_0"][self.test_name] = NLS(agents, horizon=int(self.horizon), sigma_uwb=self.sigma_uwb)
         best_guess = self.find_best_initial_guess()
         #initial_t = self.find_initial_t()
         # self.agents["drone_0"]["NLS"].set_best_guess({"drone_1": best_guess})
@@ -1214,7 +1246,7 @@ class TwoAgentSystem():
         h_start_guess = 0
 
         x_ha_0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
-        upf0 = UPFConnectedAgent(id="drone_0", x_ha_0=x_ha_0)
+        upf0 = UPFConnectedAgent([], x_ha_0=x_ha_0, id="drone_0")
         upf0.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
         upf0.split_sphere_in_equal_areas(r=start_distance, sigma_uwb=self.sigma_uwb,
                                          n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
@@ -1240,7 +1272,7 @@ class TwoAgentSystem():
         t1 = time.time()
         self.agents["drone_0"][self.test_name].update(d, dx, q_odom)
         t2 = time.time()
-        self.agents["drone_0"][self.test_name].nls_logger.log(i, t2 - t1)
+        self.agents["drone_0"][self.test_name].nls_logger.log_data(i, t2 - t1)
 
         if self.debug_bool:
             print("NLS time 0 + 1: ", t2 - t1)
@@ -1268,11 +1300,15 @@ class TwoAgentSystem():
         # agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
         # ---- Drone 0
         self.agents["drone_0"][self.test_name] = QCQP(horizon=int(self.horizon), sigma_uwb=self.sigma_uwb)
-        self.agents["drone_0"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_0"][self.test_name], self.agents["drone_0"]["drone"], self.agents["drone_1"]["drone"])
+        self.agents["drone_0"][self.test_name + "_log"] = QCQP_Log(self.agents["drone_0"][self.test_name],
+                                                                   self.agents["drone_0"]["drone"],
+                                                                   self.agents["drone_1"]["drone"])
         # self.agents["drone_0"][self.test_name].horizon = int(self.horizon)
         # ---- Drone 1
         self.agents["drone_1"][self.test_name] = QCQP(horizon=int(self.horizon), sigma_uwb=self.sigma_uwb)
-        self.agents["drone_1"][self.test_name+"_log"] = QCQP_Log(self.agents["drone_1"][self.test_name], self.agents["drone_1"]["drone"], self.agents["drone_0"]["drone"])
+        self.agents["drone_1"][self.test_name + "_log"] = QCQP_Log(self.agents["drone_1"][self.test_name],
+                                                                   self.agents["drone_1"]["drone"],
+                                                                   self.agents["drone_0"]["drone"])
         # self.agents["drone_1"][self.test_name].horizon = int(self.horizon)
 
     def run_QCQP_simulation(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
@@ -1280,7 +1316,7 @@ class TwoAgentSystem():
         t1 = time.time()
         self.agents["drone_0"][self.test_name].update(dx_0, dx_1, uwb_measurement)
         t2 = time.time()
-        self.agents["drone_0"][self.test_name+"_log"].log(i, t2 - t1)
+        self.agents["drone_0"][self.test_name + "_log"].log(i, t2 - t1)
         t3 = time.time()
         self.agents["drone_1"][self.test_name].update(dx_0, dx_1, uwb_measurement)
         t4 = time.time()
@@ -1289,12 +1325,11 @@ class TwoAgentSystem():
         if self.debug_bool:
             print("QCQP time 0 + 1: ", t2 - t1 + t4 - t3)
 
-
     def end_QCQP_test(self):
         self.data[self.current_sim_name][self.test_name] = {}
         for drone_id in self.agents:
             self.data[self.current_sim_name][self.test_name][drone_id] = \
-                self.agents[drone_id][self.test_name+"_log"].results["QCQP"]
+                self.agents[drone_id][self.test_name + "_log"].results["QCQP"]
         if os.path.isfile(self.result_file):
             os.remove(self.result_file)
         with open(self.result_file, "wb") as f:
@@ -1303,10 +1338,52 @@ class TwoAgentSystem():
                 with open(
                         self.save_folder + "/" + self.current_sim_name + "/" + drone_id + "_" + self.test_name + ".pkl",
                         'wb') as file:
-                    qcqp_log = self.agents[drone_id][self.test_name+"_log"]
+                    qcqp_log = self.agents[drone_id][self.test_name + "_log"]
                     qcqp_log.qcqp = None
                     pkl.dump(qcqp_log, file)
                 file.close()
 
 
+class EvaluationMethod():
+    def __init__(self, test_name, parameters={}):
+        self.test_name = test_name
+        self.parameters = parameters
 
+        # def generate_general_parameters(self, parameters):
+        for par in self.parameters:
+            if par in parameters:
+                setattr(self, par, parameters[par])
+            else:
+                parameters[par] = getattr(self, par)
+        self.agents = {}
+
+    def run_evaluation(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
+       pass
+
+    def end_evaluation(self):
+        pass
+
+
+class QCPQMethod(EvaluationMethod):
+    def __init__(self, parameters={}):
+        self.horizon = 100
+        super().__init__("QCQP", parameters)
+        # ---- Drone 0
+        self.agents["drone_0"][self.test_name] = QCQP(horizon=int(self.horizon), sigma_uwb=self.sigma_uwb)
+        self.agents["drone_0"][self.test_name + "_log"] = QCQP_Log(self.agents["drone_0"][self.test_name],
+                                                                   self.agents["drone_0"]["drone"],
+                                                                   self.agents["drone_1"]["drone"])
+
+        # ---- Drone 1
+        self.agents["drone_1"][self.test_name] = QCQP(horizon=int(self.horizon), sigma_uwb=self.sigma_uwb)
+        self.agents["drone_1"][self.test_name + "_log"] = QCQP_Log(self.agents["drone_1"][self.test_name],
+                                                                   self.agents["drone_1"]["drone"],
+                                                                   self.agents["drone_0"]["drone"])
+    def run_evaluation(self, dx_0, q_0, dx_1, q_1, uwb_measurement, i):
+        pass
+        # self.method = "QCQP"
+
+        # agents = {"drone_0": self.agents["drone_0"]["drone"], "drone_1": self.agents["drone_1"]["drone"]}
+        # ---- Drone 0
+
+        # self.agents["drone_1"][self.test_name].horizon = int(self.horizon)

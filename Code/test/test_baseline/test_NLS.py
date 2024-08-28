@@ -1,13 +1,18 @@
 import unittest
 import os
+
+from Code.ParticleFilter.TargetTrackingParticle import NLSLOSTargetTrackingParticle
+
 os.environ["OPENBLAS_NUM_THREADS"]= "2"
 
 import matplotlib.pyplot as plt
 import numpy as np
-from Code.BaseLines.NLS import NLS, NLSDataLogger
+from Code.BaseLines.NLS import NLS
+from Code.DataLoggers.NLS_DataLogger import NLSDataLogger
 from Code.Simulation.BiRobotMovement import run_simulation, drone_flight, random_movements_host_random_movements_connected
 from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix, inv_transformation_matrix, transform_matrix, \
     get_states_of_transform
+from Code.DataLoggers.TargetTrackingParticle_DataLogger import NLSTargetTrackingParticle_DataLogger
 
 
 class MyTestCase(unittest.TestCase):
@@ -54,25 +59,28 @@ class MyTestCase(unittest.TestCase):
             if j % self.factor == 0:
                 dx = np.vstack([dx_ha.reshape(1, *dx_ha.shape), dx_ca.reshape(1, *dx_ca.shape)])
                 q_odom = np.vstack([q_ha.reshape(1, *q_ha.shape), q_ca.reshape(1, *q_ca.shape)])
-                d = np.linalg.norm(self.drone.x_real[j] - self.host.x_real[j]) + np.random.randn(1)[0] * self.sigma_uwb
+                d_ij = np.linalg.norm(self.drone.x_real[j] - self.host.x_real[j]) + np.random.randn(1)[0] * self.sigma_uwb
                 # if j > 100:
                 #     d = np.array([[0, d+2], [0, 0]])
                 # else:
                 #     d = np.array([[0, d], [0, 0]])
-                d = np.array([[0, d], [0, 0]])
-                self.NLS.update(d, dx, q_odom)
+                d = np.array([[0, d_ij], [0, 0]])
+                # self.NLS.update(d, dx, q_odom)
+                self.NLS_particle.run_model(dt_i=dx_ha, q_i=q_ha, t_i=np.zeros(4), P_i=np.zeros((4, 4)),
+                                            dt_j=dx_ca, q_j=q_ca, d_ij=d_ij, sig_uwb=self.sigma_uwb, time_i=j)
                 # self.NLS.calculate_mesurement_error(self.NLS.x_origin)
 
                 # self.alg_solver.get_update(d=d, dx_ha=dx_ha, dx_ca=dx_ca, q_ha=q_ha, q_ca=q_ca)
 
-                self.nls_logger.log(j)
+                # self.nls_logger.log_data(j)
+                self.nls_particle_logger.log_data(j)
 
                 dx_ca = np.zeros(4)
                 q_ca = np.zeros((4, 4))
                 dx_ha = np.zeros(4)
                 q_ha = np.zeros((4, 4))
 
-        self.nls_logger.plot_self()
+        self.nls_particle_logger.plot_self()
 
     # ---- TEST CASES ----
     def test_move_randomly_los(self):
@@ -82,50 +90,21 @@ class MyTestCase(unittest.TestCase):
                        random_movements_host_random_movements_connected)
 
         agents = {"drone_0": self.host, "drone_1": self.drone}
-        # self.best_guess = x.copy()
         self.NLS = NLS(agents, 10, self.sigma_uwb)
+        self.NLS_particle = NLSLOSTargetTrackingParticle(self.NLS)
 
-        drone0 = agents["drone_0"]
-        drone1 = agents["drone_1"]
-        # t_O_S0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
-        # t_O_S1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
-        #
-        # T_S0_O = inv_transformation_matrix(t_O_S0)
-        # T_O_S1 = transform_matrix(t_O_S1)
-        #
-        # T_S0_S1 = T_S0_O @ T_O_S1
-        # t_S0_S1 = get_states_of_transform(T_S0_S1)
-        # self.NLS.set_best_guess({"drone_1": t_S0_S1})
-
-
-        self.nls_logger = NLSDataLogger(self.NLS)
-        # alg_log.
+        self.nls_particle_logger = NLSTargetTrackingParticle_DataLogger(self.host, self.drone, self.NLS_particle)
 
         self.run_test(name="Move Randomly LOS")
 
-
-
-        # self.NLS = NLS(agents, 20, self.sigma_uwb)
-        # self.nls_logger = NLSDataLogger(self.NLS)
-        # self.run_test(name="Move Randomly LOS 20")
-        #
-        # self.NLS = NLS(agents, 5, self.sigma_uwb)
-        # self.nls_logger = NLSDataLogger(self.NLS)
-        # self.run_test(name="Move Randomly LOS 5")
-
-        # _, ax = plt.subplots(2, 1)
-        # # self.alg_solver.logger.plot_self(ax)
-        print(self.nls_logger.results)
-
-
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        self.NLS.agents[0].set_plotting_settings(color="tab:blue")
-        self.NLS.agents[0].plot_real_position(ax)
-        self.NLS.agents[1].set_plotting_settings(color="tab:orange")
-        self.NLS.agents[1].plot_real_position(ax)
-        self.nls_logger.plot_corrected_estimated_trajectory(ax, color="tab:blue")
-        self.nls_logger.plot_corrected_estimated_trajectory(ax, agent =1 , color="tab:orange")
+        self.NLS.agents_list[0].set_plotting_settings(color="tab:blue")
+        self.NLS.agents_list[0].plot_real_position(ax)
+        self.NLS.agents_list[1].set_plotting_settings(color="tab:orange")
+        self.NLS.agents_list[1].plot_real_position(ax)
+        self.nls_particle_logger.rpea_datalogger.plot_corrected_estimated_trajectory(ax, color="tab:blue", linestyle="--")
+        self.nls_particle_logger.rpea_datalogger.plot_corrected_estimated_trajectory(ax, agent=1, color="tab:orange", linestyle="--")
 
         plt.show()
 
