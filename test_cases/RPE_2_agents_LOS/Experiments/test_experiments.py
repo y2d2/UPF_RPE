@@ -358,7 +358,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_new_robot_population(self):
         # self.set_test_case()
-        sampled_pkl = "./Experiments/LOS_exp/Measurements/exp1_sec1_los_sampled.pkl"
+        sampled_pkl = "./Measurements_correction/exp2_los_sampled.pkl"
         measurement = Measurement()
         measurement.load_sampled_data(sampled_pkl)
         sample_freq=measurement.sample_frequency
@@ -390,6 +390,11 @@ class MyTestCase(unittest.TestCase):
         tb3.plot_real_position(ax)
         tb3.plot_slam_position(ax, linestyle=":", alpha=0.6)
         plt.legend()
+        ax = tb3.plot_slam_error(annotation="TB1", color ="blue")
+        ax = tb2.plot_slam_error(annotation="TB2", ax=ax, color="red")
+        for axs in ax:
+            axs.legend()
+            axs.grid()
         plt.show()
         return tb2, tb3
 
@@ -478,12 +483,13 @@ class MyTestCase(unittest.TestCase):
         sig_uwb = 0.25
 
         main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/test_refactoring"
+        results_folder = main_folder + "Results/UPF_perfect_guess"
         data_folder = "Measurements_correction"
 
         experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
 
-        methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+        methods = [
+                   "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
         #            "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
         #            "algebraic|frequency=1.0|horizon=10",
         #            "algebraic|frequency=10.0|horizon=100",
@@ -511,7 +517,7 @@ class MyTestCase(unittest.TestCase):
         # ]
 
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
-        tas.debug_bool = True
+        tas.debug_bool = False
         tas.plot_bool = False
         tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data)
         plt.show()

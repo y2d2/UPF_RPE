@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
+from matplotlib.lines import Line2D, lineStyles
 
 import time
 
@@ -296,12 +296,13 @@ class TwoAgentAnalysis:
                 if "Style" in method_param:
                     styles[name] = method_param["Style"]
                 else:
-                    styles[name] =  ""
+                    styles[name] = (0, (1, 1))
             for df_i in self.dfs:
                 # df_j = df_i.loc[(df_i["Method"] == method_param["Method"])]
                 df_j = df_i.loc[(df_i["Method"] == method_param["Method"])]
                 for key in method_param["Variables"]:
                     df_j = df_j.loc[(df_j[key].isin(method_param["Variables"][key]))]
+                df_j.Time = df_j.Time / df_j.Frequency
                 df_j = df_j.assign(Name=name)
                 dfs.append(df_j)
         df = pd.concat(dfs)
@@ -486,7 +487,7 @@ class TwoAgentAnalysis:
                        bbox_to_anchor=(0.5, 0.92))
             plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
-    def lineplot(self, df, methods_names, methods_colors =None, methods_styles=None, variables=["error_x_relative", "error_h_relative"]):
+    def lineplot(self, df, methods_names, methods_colors =None, methods_styles=None, methods_legends=None, variables=["error_x_relative", "error_h_relative"]):
         fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 3))
         for i, variable in enumerate(variables):
             var_df = df.loc[(df["Variable"] == variable)]
@@ -506,16 +507,29 @@ class TwoAgentAnalysis:
             avg_time_df = pd.DataFrame({"Time": time_points})
             for method_mean in method_means:
                 avg_time_df[method_mean["Method"]] = method_mean["TimeValues"]
-            avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Method", value_name="MeanValue")
+            avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Name", value_name="MeanValue")
 
             plt.sca(axes[i])
-
-            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method" ,linewidth=2.5, legend=False,
-                              palette=methods_colors, style = "Method", linestyle = methods_styles)
+            # use custom linestyle: methods_styles in the sns.lineplot:
+            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Name" ,linewidth=2.5, legend=False,
+                          palette=methods_colors, hue_order=methods_names) # markers=True)
             axes[i].set_xlabel("time [s]", fontsize=12)
             axes[i].set_ylabel(self.y_label[variable], fontsize=12)
             if variable == "error_x_relative":
                 axes[i].set_yscale("log")
+
+            axes[i].set_xlabel("time [s]", fontsize=12)
+            axes[i].set_ylabel(self.y_label[variable], fontsize=12)
+            if variable == "error_x_relative":
+                axes[i].set_yscale("log")
+                axes[i].set_ylim([0.1, 50])
+
+            legend_handles = [Line2D([0], [0], color=methods_colors[method], linewidth=2.5) for method in methods_names]
+            legend_labels = [methods_legends[method] for method in methods_names]
+            # fig.suptitle("Average error evolution of the experiments")
+            fig.legend(handles=legend_handles, labels=legend_labels, ncol=3, fontsize=12, loc="upper center",
+                       bbox_to_anchor=(0.5, 0.92))
+            plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
         # g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
         #                  palette=methods_color, hue_order=methods_order, linewidth=2.5, legend=False)

@@ -15,6 +15,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib
 
+from Code.DataLoggers.TargetTrackingParticle_DataLogger import UKFTargetTrackingParticle_DataLogger
 # import Experiments.RealRobot
 from Code.UtilityCode.utility_fuctions import sphericalToCartesian, limit_angle, transform_matrix, \
     inv_transformation_matrix, get_states_of_transform, cartesianToSpherical
@@ -22,7 +23,7 @@ from Code.Simulation.BiRobotMovement import run_multi_drone_simulation, drone_fl
 from Code.Simulation.RobotClass import load_trajectory_from_dict, NewRobot
 # from NLOS_RPE_Code.Simulations.NLOS_Manager import NLOS_Manager
 from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
-from Code.ParticleFilter.TargetTrackingParticle import ListOfUKFLOSTargetTrackingParticles
+from Code.ParticleFilter.TargetTrackingParticle import ListOfUKFLOSTargetTrackingParticles, UKFLOSTargetTrackingParticle
 from Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogger
 from Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 from Code.BaseLines.AlgebraicMethod4DoF import AlgebraicMethod4DoF, Algebraic4DoF_Logger
@@ -786,8 +787,8 @@ class TwoAgentSystem():
                         res_type="simulation"):
         self.prefix = prefix
         self.type = res_type
-        if nlos_function == None:
-            nlos_function = self.nlos_man.los
+        # if nlos_function == None:
+        #     nlos_function = self.nlos_man.los
 
         self.total_sims = len(os.listdir(self.trajectory_folder))
         self.sims = 1
@@ -964,10 +965,11 @@ class TwoAgentSystem():
         if "multi_particles" in parameters and parameters["multi_particles"] ==0 :
             # TODO: add code to find the intial transform and convert ti
             t_S0_S1 = self.find_initial_t()
-            s_SO_S1 = np.concatenate((cartesianToSpherical(t_S0_S1[:3]), np.array([t_S0_S1[-1]])))
-            lop.create_particle(x_ha_0)
-
-        lop.split_sphere_in_equal_areas(t_i= x_ha_0, d_ij= self.d0, sigma_uwb = self.sigma_uwb,
+            s_S0_S1 = np.concatenate((cartesianToSpherical(t_S0_S1[:3]), np.array([t_S0_S1[-1]])))
+            particle = lop.create_particle(x_ha_0, s_S0_S1, np.array([self.sigma_uwb, 0.000001,0.000001,0.000001]), s_S0_S1[0],self.sigma_uwb)
+            lop.particles.append(particle)
+        else:
+            lop.split_sphere_in_equal_areas(t_i= x_ha_0, d_ij= self.d0, sigma_uwb = self.sigma_uwb,
                                         n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
 
         upf0 = UPFConnectedAgent(lop.particles, x_ha_0=x_ha_0, drift_correction_bool=drift_bool,
@@ -978,7 +980,8 @@ class TwoAgentSystem():
         # upf0.split_sphere_in_equal_areas(r=self.d0, sigma_uwb=self.sigma_uwb,
         #                                  n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
 
-        dl0 = UPFConnectedAgentDataLogger(drone0, drone1, upf0)
+        dl0 = UPFConnectedAgentDataLogger(drone0, drone1, upf0, UKFTargetTrackingParticle_DataLogger)
+        dl0.log_data(0)
 
         # upf0.set_logging(dl0)
         self.agents["drone_0"][self.test_name] = upf0
@@ -989,7 +992,13 @@ class TwoAgentSystem():
 
         lop = ListOfUKFLOSTargetTrackingParticles()
         lop.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
-        lop.split_sphere_in_equal_areas(t_i= x_ha_1, d_ij= self.d0, sigma_uwb = self.sigma_uwb,
+        if "multi_particles" in parameters and parameters["multi_particles"] ==0 :
+            t_S1_S0 = get_states_of_transform(inv_transformation_matrix(t_S0_S1))
+            s_S1_S0 = np.concatenate((cartesianToSpherical(t_S1_S0[:3]), np.array([t_S1_S0[-1]])))
+            particle = lop.create_particle(x_ha_1, s_S1_S0, np.array([self.sigma_uwb, 0.00001,0.00001,0.000001 ]), s_S1_S0[0],self.sigma_uwb)
+            lop.particles.append(particle)
+        else:
+            lop.split_sphere_in_equal_areas(t_i= x_ha_1, d_ij= self.d0, sigma_uwb = self.sigma_uwb,
                                         n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
 
         upf1 = UPFConnectedAgent(lop.particles, x_ha_0=x_ha_1, drift_correction_bool=drift_bool,
@@ -997,7 +1006,9 @@ class TwoAgentSystem():
         upf1.resample_factor = self.resample_factor
         upf1.sigma_uwb_factor = self.sigma_uwb_factor
 
-        dl1 = UPFConnectedAgentDataLogger(drone1, drone0, upf1)
+        dl1 = UPFConnectedAgentDataLogger(drone1, drone0, upf1, UKFTargetTrackingParticle_DataLogger)
+        dl1.log_data(0)
+
         # upf1.set_logging(dl1)
         self.agents["drone_1"][self.test_name] = upf1
         self.agents["drone_1"]["log"] = dl1
@@ -1024,7 +1035,7 @@ class TwoAgentSystem():
         upf0.ha.update(x_ha_0, q_0)
         # Timing the execution of the algorihtm
         t1 = time.time()
-        upf0.run_model(dx_1, uwb_measurement, q_i=q_1, time_i=i)
+        upf0.run_model(dt_j = dx_1, q_j=q_1, dt_i = np.zeros(4), q_i = np.zeros((4, 4)), d_ij = uwb_measurement, time_i=i)
         t2 = time.time()
         # Logging
         upf0log.log_data(i, t2 - t1)
@@ -1036,7 +1047,7 @@ class TwoAgentSystem():
         upf1.ha.update(x_ha_1, q_1)
         # Timing the execution of the algorihtm
         t3 = time.time()
-        upf1.run_model(dx_0, uwb_measurement, q_i=q_0, time_i=i)
+        upf1.run_model(dt_j = dx_0, q_j=q_0, dt_i = np.zeros(4), q_i = np.zeros((4, 4)), d_ij= uwb_measurement, time_i=i)
         t4 = time.time()
         # Logging
         upf1log.log_data(i, t4 - t3)

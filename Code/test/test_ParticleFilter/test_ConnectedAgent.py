@@ -18,7 +18,7 @@ from Code.DataLoggers.ConnectedAgent_DataLogger import UPFConnectedAgentDataLogg
 
 from Code.Simulation.BiRobotMovement import random_movements_host_random_movements_connected, \
     drone_flight, run_simulation, fix_host_fix_connected
-from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
+from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix, cartesianToSpherical, inv_transformation_matrix, transform_matrix, get_states_of_transform
 from Code.Simulation.MultiRobotClass import MultiRobotSingleSimulation
 from Code.Simulation.RobotClass import NewRobot
 from NLOS_RPE_Code.Simulations.NLOS_Manager import NLOS_Manager
@@ -29,7 +29,7 @@ class TestConnectedAgent(unittest.TestCase):
     def init_test(self, sigma_v=0.1, sigma_w=0.1, sigma_uwb=0.1, drifting_host=False):
         # Paper = Relative Transformation Estimation Based on Fusion of Odometry and UWB.py Ranging Data
 
-        self.uwb_time_steps = 300  # (120 // 0.03)          # Paper simulation time = 120s
+        self.uwb_time_steps = 3000  # (120 // 0.03)          # Paper simulation time = 120s
         self.odom_time_step = 0.1
         self.uwb_time_step = 0.1 # Paper experiments UWB.py frequency = 37 Hz
         self.factor = int(self.uwb_time_step / self.odom_time_step)
@@ -110,7 +110,7 @@ class TestConnectedAgent(unittest.TestCase):
         # Length of NLOS  is proportional to error on odom?
         # TODO: There is an interplay between sigma_v and sigma_uwb:
         #  More specifically if sigma_dx = sigma_dv* dt > sigma_uwb/10 it seems the UPF becomes over confident.
-        self.init_test(sigma_v=0.001, sigma_w=0.001, sigma_uwb=0.1,
+        self.init_test(sigma_v=0.1, sigma_w=0.1, sigma_uwb=0.1,
                        drifting_host=True)
         self.init_drones(np.array([15., 15., 0]), 0, max_range=25)
         # self.init_drones(np.array([22,0,0]), 0, max_range=40)
@@ -121,8 +121,24 @@ class TestConnectedAgent(unittest.TestCase):
         lop = ListOfUKFLOSTargetTrackingParticles()
         lop.set_ukf_parameters(kappa=-1, alpha=1, beta=2)
         t_i = np.concatenate((self.host.x_start, [self.host.h_start]))
-        lop.split_sphere_in_equal_areas(t_i= t_i, d_ij= self.startMeasurement[0], sigma_uwb= self.sigma_uwb,
-                                        n_altitude=3, n_azimuth=4, n_heading=4 )
+
+        # lop.split_sphere_in_equal_areas(t_i= t_i, d_ij= self.startMeasurement[0], sigma_uwb= self.sigma_uwb,
+        #                                 n_altitude=3, n_azimuth=4, n_heading=4 )
+        ## Create a particle with known start pose:
+        drone0 = self.host
+        drone1 = self.drone
+        t_O_S0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
+        t_O_S1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
+
+        T_S0_O = inv_transformation_matrix(t_O_S0)
+        T_O_S1 = transform_matrix(t_O_S1)
+
+        T_S0_S1 = T_S0_O @ T_O_S1
+        t_S0_S1 = get_states_of_transform(T_S0_S1)
+        s_S0_S1 = np.concatenate((cartesianToSpherical(t_S0_S1[:3]), np.array([t_S0_S1[-1]])))
+        particle = lop.create_particle(t_i, s_S0_S1, np.array([self.sigma_uwb, 0.0001, 0.0001, 0.0001]), s_S0_S1[0],
+                                       self.sigma_uwb)
+        lop.particles.append(particle)
 
         self.ca = UPFConnectedAgent(lop.particles, x_ha_0=np.concatenate((self.host.x_start, [self.host.h_start])),
                                     sigma_uwb=self.sigma_uwb, sigma_uwb_factor=1., resample_factor=0.1, id="0x000")
