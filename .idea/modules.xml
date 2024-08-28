@@ -2,9 +2,13 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+<<<<<<< HEAD
       <module fileurl="file://$PROJECT_DIR$/../NLOS_RPE/.idea/NLOS_RPE.iml" filepath="$PROJECT_DIR$/../NLOS_RPE/.idea/NLOS_RPE.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/UPF_RPE.iml" filepath="$PROJECT_DIR$/.idea/UPF_RPE.iml" />
       <module fileurl="file://$PROJECT_DIR$/../NLOS_RPE/pythonProject/.idea/pythonProject.iml" filepath="$PROJECT_DIR$/../NLOS_RPE/pythonProject/.idea/pythonProject.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/UPF_RPE.iml" filepath="$PROJECT_DIR$/.idea/UPF_RPE.iml" />
+>>>>>>> 0ef1fe55f239b5cc9f3097db26d8036308978bae
     </modules>
   </component>
 </project>
