@@ -150,3 +150,7 @@ dmypy.json
 /test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp4_los_sampled.pkl
 /test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp5_los_sampled.pkl
 /TODO.md
+/test_cases/RPE_2_agents_LOS/Experiments/Measurements_old/
+/test_cases/RPE_2_agents_LOS/Experiments/Measurements/
+/test_cases/RPE_2_agents_LOS/Experiments/Experiments/
+/test_cases/RPE_2_agents_LOS/simulations/Results/
