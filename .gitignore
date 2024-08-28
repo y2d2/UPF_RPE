@@ -144,3 +144,9 @@ dmypy.json
 /Data/small_trajectories/
 /Code/test/test_Analysis/save_data/
 /Code/test/test_Analysis/save_data_test/
+/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp1_los_sampled.pkl
+/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp2_los_sampled.pkl
+/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp3_los_sampled.pkl
+/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp4_los_sampled.pkl
+/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp5_los_sampled.pkl
+/TODO.md
