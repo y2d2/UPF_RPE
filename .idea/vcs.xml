@@ -2,10 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-<<<<<<< HEAD
-    <mapping directory="$PROJECT_DIR$/../NLOS_RPE" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
-=======
->>>>>>> 0ef1fe55f239b5cc9f3097db26d8036308978bae
   </component>
 </project>

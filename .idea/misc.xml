@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
-<<<<<<< HEAD
-    <option name="sdkName" value="Python 3.10 (UPF_RPE)" />
-  </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10 (.venv)" project-jdk-type="Python SDK" />
-=======
     <option name="sdkName" value="Python 3.8 (UPF_RPE)" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10 (UPF_RPE)" project-jdk-type="Python SDK" />
->>>>>>> 0ef1fe55f239b5cc9f3097db26d8036308978bae
 </project>
