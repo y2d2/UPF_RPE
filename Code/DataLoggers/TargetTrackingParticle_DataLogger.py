@@ -22,7 +22,7 @@ class TargetTrackingParticle_DataLogger:
         self.weight.append(self.particle.weight)
         self.likelihood.append(self.particle.likelihood)
 
-    def plot_self(self, particle_ax : plt.Axes | None = None, los = None):
+    def plot_self(self, particle_ax = None, los = None):
         if particle_ax is None:
             particle_ax = plt.figure().subplots(1, 1)
         particle_ax.plot(self.likelihood, label="Likelihood")
