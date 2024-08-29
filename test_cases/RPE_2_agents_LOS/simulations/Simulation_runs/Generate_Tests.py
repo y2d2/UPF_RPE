@@ -25,13 +25,13 @@ if __name__ == "__main__":
                 # "NLS|frequency=1.0|horizon=100",
                 # "NLS|frequency=10.0|horizon=100",
                 # "NLS|frequency=10.0|horizon=1000"
-                # "algebraic|frequency=10.0|horizon=100",
+                "algebraic|frequency=10.0|horizon=100",
                 # "algebraic|frequency=1.0|horizon=10",
                 # "algebraic|frequency=10.0|horizon=1000",
                 # "algebraic|frequency=1.0|horizon=100"
                 # "QCQP|frequency=10.0|horizon=100",
                 # "QCQP|frequency=1.0|horizon=10",
-                "QCQP|frequency=10.0|horizon=1000",
+                "QCQP|frequency=10.0|horizon=100",
                 # "QCQP|frequency=1.0|horizon=100"
                 ]
     dvs = [0.1, 0.01]
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     file_content_start += "\t\t\tTAS.set_ukf_properties(alpha = alpha, beta =  beta, kappa = kappa,\n"
     file_content_start += "\t\t\t                       n_azimuth = n_azimuth, n_altitude=n_altitude, n_heading=n_heading)\n"
 
-    parallel_processes = 20
+    parallel_processes = 50
     total_simulations = len(os.listdir(trajectory_folder))
     number_of_sim_per_process = int(math.ceil(total_simulations / parallel_processes))
 
