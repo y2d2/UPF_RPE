@@ -58,7 +58,82 @@ windows:
             - python3 -m generated_tests.Test_RPE_2_agents_18
          - 19:
             - python3 -m generated_tests.Test_RPE_2_agents_19
-
+   - Simulation_runs_21-24:
+      panes:
+         - 21:
+            - python3 -m generated_tests.Test_RPE_2_agents_21
+         - 22:
+            - python3 -m generated_tests.Test_RPE_2_agents_22
+         - 23:
+            - python3 -m generated_tests.Test_RPE_2_agents_23
+         - 24:
+            - python3 -m generated_tests.Test_RPE_2_agents_24
+   - Simulation_runs_25-28:
+        panes:
+           - 25:
+                - python3 -m generated_tests.Test_RPE_2_agents_25
+           - 26:
+                - python3 -m generated_tests.Test_RPE_2_agents_26
+           - 27:
+                - python3 -m generated_tests.Test_RPE_2_agents_27
+           - 28:
+                - python3 -m generated_tests.Test_RPE_2_agents_28
+   - Simulation_runs_29-32:
+        panes:
+           - 29:
+                - python3 -m generated_tests.Test_RPE_2_agents_29
+           - 30:
+                - python3 -m generated_tests.Test_RPE_2_agents_30
+           - 31:
+                - python3 -m generated_tests.Test_RPE_2_agents_31
+           - 32:
+                - python3 -m generated_tests.Test_RPE_2_agents_32
+   - Simulation_runs_33-36:
+        panes:
+           - 33:
+                - python3 -m generated_tests.Test_RPE_2_agents_33
+           - 34:
+                - python3 -m generated_tests.Test_RPE_2_agents_34
+           - 35:
+                - python3 -m generated_tests.Test_RPE_2_agents_35
+           - 36:
+                - python3 -m generated_tests.Test_RPE_2_agents_36
+   - Simulation_runs_37-40:
+        panes:
+           - 37:
+                - python3 -m generated_tests.Test_RPE_2_agents_37
+           - 38:
+                - python3 -m generated_tests.Test_RPE_2_agents_38
+           - 39:
+                - python3 -m generated_tests.Test_RPE_2_agents_39
+           - 40:
+                - python3 -m generated_tests.Test_RPE_2_agents_40
+   - Simulation_runs_41-44:
+        panes:
+           - 41:
+                - python3 -m generated_tests.Test_RPE_2_agents_41
+           - 42:
+                - python3 -m generated_tests.Test_RPE_2_agents_42
+           - 43:
+                - python3 -m generated_tests.Test_RPE_2_agents_43
+           - 44:
+                - python3 -m generated_tests.Test_RPE_2_agents_44
+   - Simulation_runs_45-48:
+        panes:
+           - 45:
+                - python3 -m generated_tests.Test_RPE_2_agents_45
+           - 46:
+                - python3 -m generated_tests.Test_RPE_2_agents_46
+           - 47:
+                - python3 -m generated_tests.Test_RPE_2_agents_47
+           - 48:
+                - python3 -m generated_tests.Test_RPE_2_agents_48
+   - Simulation_runs_49-50:
+        panes:
+           - 49:
+                - python3 -m generated_tests.Test_RPE_2_agents_49
+           - 50:
+                - python3 -m generated_tests.Test_RPE_2_agents_50
 
    - Monitor:
       panes:
