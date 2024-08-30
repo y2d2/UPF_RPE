@@ -268,7 +268,8 @@ class TwoAgentAnalysis:
     def print_statistics(self, methods_name, variables, df):
         for variable in variables:
             for method in methods_name:
-                print(method, variable, df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean(), " pm ",
+                print(method, variable)
+                print(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean(), " pm ",
                       df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].std(), "; median: ",
                       df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].median())
 
@@ -303,6 +304,7 @@ class TwoAgentAnalysis:
                 for key in method_param["Variables"]:
                     df_j = df_j.loc[(df_j[key].isin(method_param["Variables"][key]))]
                 df_j.Time = df_j.Time / df_j.Frequency
+                df_j = df_j.loc[(df_j["Time"] > 1.)]
                 df_j = df_j.assign(Name=name)
                 dfs.append(df_j)
         df = pd.concat(dfs)
@@ -415,7 +417,7 @@ class TwoAgentAnalysis:
                       variables=["error_x_relative", "error_h_relative"], sigma_bound = False,
                       save_fig=False, save_name="time_plot"):
         if sigma_bound:
-            methods_order.insert(1, "Sigma")
+            methods_order.insert(-2, "Sigma")
             legend_col = 3
         else:
             legend_col = 5
@@ -439,7 +441,7 @@ class TwoAgentAnalysis:
             if sigma_bound:
                 if variable == "error_x_relative":
                     method_time_values = []
-                    df_unc = method_df.loc[(method_df["Variable"] == "sigma_x_relative") & (method_df["Method"] == methods_order[0])]
+                    df_unc = method_df.loc[(method_df["Variable"] == "sigma_x_relative") & (method_df["Method"] == methods_order[-1])]
                     for time_point in time_points:
                         mean_value = df_unc[(df_unc["Time"] == time_point)]["value"].mean()
                         method_time_values.append(mean_value)
@@ -448,7 +450,7 @@ class TwoAgentAnalysis:
                           method_time_values)
                 if variable == "error_h_relative":
                     method_time_values = []
-                    df_unc = method_df.loc[(method_df["Variable"] == "sigma_h_relative") & (method_df["Method"] == methods_order[0])]
+                    df_unc = method_df.loc[(method_df["Variable"] == "sigma_h_relative") & (method_df["Method"] == methods_order[-1])]
                     for time_point in time_points:
                         mean_value = df_unc[(df_unc["Time"] == time_point)]["value"].mean()
                         method_time_values.append(mean_value)
@@ -478,14 +480,16 @@ class TwoAgentAnalysis:
             axes[i].set_xlabel("time [s]", fontsize=12)
             axes[i].set_ylabel(self.y_label[variable], fontsize=12)
             if variable == "error_x_relative":
+                axes[i].set_ylim([0.5, 10])
                 axes[i].set_yscale("log")
-
-            legend_handles = [Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]
-            legend_labels = [methods_legend[method] for method in methods_order]
-            # fig.suptitle("Average error evolution of the experiments")
-            fig.legend(handles=legend_handles, labels=legend_labels, ncol=legend_col, fontsize=12, loc="upper center",
-                       bbox_to_anchor=(0.5, 0.92))
-            plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
+            # Bring the latest value in the methods_order to the front
+        methods_order = methods_order[-1:] + methods_order[:-1]
+        legend_handles = [Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]
+        legend_labels = [methods_legend[method] for method in methods_order]
+        # fig.suptitle("Average error evolution of the experiments")
+        fig.legend(handles=legend_handles, labels=legend_labels, ncol=legend_col, fontsize=12, loc="upper center",
+                   bbox_to_anchor=(0.5, 0.99))
+        plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
     def lineplot(self, df, methods_names, methods_colors =None, methods_styles=None, methods_legends=None, variables=["error_x_relative", "error_h_relative"]):
         fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 3))

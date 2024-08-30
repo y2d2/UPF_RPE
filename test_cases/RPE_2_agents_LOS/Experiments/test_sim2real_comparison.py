@@ -28,10 +28,10 @@ class MyTestCase(unittest.TestCase):
                    # "algebraic|frequency=1.0|horizon=10",
                    # "algebraic|frequency=10.0|horizon=100",
                    # "algebraic|frequency=1.0|horizon=10",
-                   "algebraic|frequency=10.0|horizon=1000",
+                   "algebraic|frequency=10.0|horizon=100",
                    # "QCQP|frequency=10.0|horizon=100",
                    # "QCQP|frequency=1.0|horizon=10"
-                   "QCQP|frequency=10.0|horizon=1000"
+                   "QCQP|frequency=10.0|horizon=100"
                    ]
 
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)

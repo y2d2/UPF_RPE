@@ -41,12 +41,16 @@ class MyTestCase(unittest.TestCase):
         nodriftupf_exp = self.create_result_dict("nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0", variables=variables,
                                                     sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=frequencies,
                                                  legend="Ours, without drift correction", color="tab:red")
-        alg_exp = self.create_result_dict("algebraic|frequency=10.0|horizon=1000", variables=variables,
+        alg_exp = self.create_result_dict("algebraic|frequency=10.0|horizon=100", variables=variables,
                                             sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=frequencies,
                                           legend="Algebraic", color="tab:orange")
-        qcqp_exp = self.create_result_dict("QCQP|frequency=10.0|horizon=1000", variables=variables,
+        qcqp_exp_10 = self.create_result_dict("QCQP|frequency=10.0|horizon=100", variables=variables,
                                             sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=frequencies,
                                            legend="QCQP", color="tab:blue")
+        # qcqp_exp_100 = self.create_result_dict("QCQP|frequency=10.0|horizon=1000", variables=variables,
+        #                                    sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"],
+        #                                    frequencies=frequencies,
+        #                                    legend="QCQP", color="k")
         nls_exp = self.create_result_dict("NLS|frequency=1.0|horizon=10", variables=variables,
                                             sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=[1.0],
                                             legend="NLS", color="tab:purple")
@@ -54,7 +58,8 @@ class MyTestCase(unittest.TestCase):
         methods_order = [upf_exp,
                          nodriftupf_exp,
                          alg_exp,
-                         qcqp_exp,
+                         qcqp_exp_10,
+                         # qcqp_exp_100,
                          nls_exp,
                          ]
         return methods_order
@@ -158,7 +163,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_print_statistics(self):
         result_folder = "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper"
-        result_folder = "../../../Data/Results/Sim_LOS_06_2024/1_sim"
+        # result_folder = "../../../Data/Results/Sim_LOS_06_2024/1_sim"
         # result_folder = ("../../../Data/Results/test_files")
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         variables = ["error_x_relative", "error_h_relative", "calculation_time"]
@@ -171,8 +176,10 @@ class MyTestCase(unittest.TestCase):
         taa.print_statistics(methods_names, variables, df)
 
     def test_sim_analysis(self):
-        result_folder = "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper"
-        result_folder = "../../../Data/Results/Sim_LOS_06_2024/1_sim"
+        result_folder = [
+                            # "../../../Data/Results/Sim_LOS_QCQP_new",
+                          "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper",
+                          ]
 
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
         variables = ["error_x_relative", "error_h_relative"]

@@ -454,7 +454,7 @@ class MyTestCase(unittest.TestCase):
     #                            n_heading=n_heading)
     #     tas.set_uncertainties(sig_v, sig_w, sig_uwb)
     #     return tas
-
+    @DeprecationWarning
     def test_single_exp(self):
         sig_v = 0.10
         sig_w = 0.03
@@ -477,8 +477,7 @@ class MyTestCase(unittest.TestCase):
         # plt.show()
 
     def test_run_LOS_exp(self):
-        #TODO: rerun the QCQP analysis.
-        # From the data sig_v =0.1, sig_w=0.1 and sig_uwb = 0.35 (dependable on the set... ) are the best values.
+        #TODO: recheck the folder.
         sig_v = 0.08
         sig_w = 0.12
         sig_uwb = 0.25
@@ -494,9 +493,9 @@ class MyTestCase(unittest.TestCase):
         #            "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
         #            "algebraic|frequency=1.0|horizon=10",
         #            "algebraic|frequency=10.0|horizon=100",
-        #            "algebraic|frequency=10.0|horizon=1000",
-        #            "QCQP|frequency=10.0|horizon=100",
-                   "QCQP|frequency=10.0|horizon=1000"
+                   "algebraic|frequency=10.0|horizon=100",
+        #             "QCQP|frequency=10.0|horizon=100",
+        #            "QCQP|frequency=10.0|horizon=1000"
                    ]
         # methods = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
         #                    "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
@@ -614,6 +613,7 @@ class MyTestCase(unittest.TestCase):
         result_folders = [
                 "./Experiments/LOS_exp/Results/experiments_paper/Experiments",
                 "./Experiments/LOS_exp/Results/experiments_paper/Sim",
+                "./Experiments/LOS_exp/Results/new_QCQP",
                           ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         upf_sim = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
@@ -626,7 +626,7 @@ class MyTestCase(unittest.TestCase):
                              "Frequency": [10.0],
                          },
                            "Color": "lightgreen",
-                           "Legend": "Ours (s)",
+                           "Legend": "Ours (sim)",
                            }
         nodriftupf_sim = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "Variables": {
@@ -638,9 +638,9 @@ class MyTestCase(unittest.TestCase):
                              "Frequency": [10.0],
                          },
                          "Color": "salmon",
-                         "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state (s)",
+                         "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state (sim)",
                          }
-        alg_sim = {"Method": "algebraic|frequency=10.0|horizon=1000",
+        alg_sim = {"Method": "algebraic|frequency=10.0|horizon=100",
                          "Variables": {
                              "Type": ["simulation"],
                              "Variable": ["error_x_relative", "error_h_relative"],
@@ -650,9 +650,9 @@ class MyTestCase(unittest.TestCase):
                              "Frequency": [10.0],
                          },
                          "Color": "bisque",
-                         "Legend": "Algebraic (s)",
+                         "Legend": "Algebraic (sim)",
                          }
-        qcqp_sim = {"Method":"QCQP|frequency=10.0|horizon=1000",
+        qcqp_sim = {"Method":"QCQP|frequency=10.0|horizon=100",
                          "Variables": {
                              "Type": ["simulation"],
                              "Variable": ["error_x_relative", "error_h_relative"],
@@ -662,7 +662,7 @@ class MyTestCase(unittest.TestCase):
                              "Frequency": [10.0],
                          },
                          "Color": "cornflowerblue",
-                         "Legend": "QCQP (s)",
+                         "Legend": "QCQP (sim)",
                          }
         nls_sim = {"Method": "NLS|frequency=1.0|horizon=10",
                          "Variables": {
@@ -674,7 +674,7 @@ class MyTestCase(unittest.TestCase):
                              "Frequency": [1.0],
                          },
                          "Color": "thistle",
-                         "Legend": "NLS (s)",
+                         "Legend": "NLS (sim)",
                          }
 
         upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
@@ -701,7 +701,7 @@ class MyTestCase(unittest.TestCase):
                           "Color": "tab:red",
                           "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state",
                           }
-        alg_exp = {"Method": "algebraic|frequency=10.0|horizon=1000",
+        alg_exp = {"Method": "algebraic|frequency=10.0|horizon=100",
                    "Variables": {
                        "Type": ["experiment"],
                        "Variable": ["error_x_relative", "error_h_relative"],
@@ -713,7 +713,7 @@ class MyTestCase(unittest.TestCase):
                    "Color": "tab:orange",
                    "Legend": "Algebraic",
                    }
-        qcqp_exp = {"Method": "QCQP|frequency=10.0|horizon=1000",
+        qcqp_exp = {"Method": "QCQP|frequency=10.0|horizon=100",
                     "Variables": {
                         "Type": ["experiment"],
                         "Variable": ["error_x_relative", "error_h_relative"],
@@ -861,27 +861,29 @@ class MyTestCase(unittest.TestCase):
     def test_exp_time_analysis(self):
         # result_folder = "./Experiments/LOS_exp/Results/new_nls_correct_init_test/"
         result_folders = [
-                            "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/10hz",
-                            # "./Experiments/LOS_exp/Results/experiments_paper/exp5"
+                            "./Experiments/LOS_exp/Results/new_QCQP",
+                            # "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/10hz",
+                            "./Experiments/LOS_exp/Results/experiments_paper/Experiments"
                             ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = [
                         #"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                         "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+
                         #  # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                         #  # "NLS|horizon=10",
                         #  # "algebraic|horizon=10",
                         #  # "algebraic|frequency=1.0|horizon=10",
                         #  # "algebraic|frequency=1.0|horizon=100",
-                         "algebraic|frequency=10.0|horizon=1000",
+                         "algebraic|frequency=10.0|horizon=100",
                         #  # "QCQP|horizon=10",
                         #  # "QCQP|frequency=10.0|horizon=100",
-                        #  # "QCQP|frequency=1.0|horizon=100",
-                         "QCQP|frequency=10.0|horizon=1000",
+                         "QCQP|frequency=10.0|horizon=100",
+                         # "QCQP|frequency=10.0|horizon=1000",
                         # "NLS|frequency=1.0|horizon=10",
                         # "NLS|frequency=1.0|horizon=100",
                         "NLS|frequency=1.0|horizon=10",
+                        "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
         ]
 
         methods_color = {
@@ -891,10 +893,10 @@ class MyTestCase(unittest.TestCase):
                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "tab:red",
                          # "NLS|horizon=10": "tab:red",
                          # "algebraic|horizon=10": "tab:green",
-                         "algebraic|frequency=1.0|horizon=100": "tab:orange",
+                         "algebraic|frequency=10.0|horizon=100": "tab:orange",
                          "algebraic|frequency=10.0|horizon=1000": "tab:orange",
                          # "QCQP|horizon=10": "tab:purple",
-                         "QCQP|frequency=1.0|horizon=100": "tab:blue",
+                         "QCQP|frequency=10.0|horizon=100": "tab:blue",
                          "QCQP|frequency=10.0|horizon=1000": "tab:blue",
                         "NLS|frequency=1.0|horizon=100": "tab:purple",
                         "NLS|frequency=1.0|horizon=10": "tab:purple",
@@ -910,12 +912,12 @@ class MyTestCase(unittest.TestCase):
                           # "NLS|horizon=10": "NLS_10",
                           # "algebraic|horizon=10": "Algebraic_10",
                           "algebraic|frequency=1.0|horizon=10": "Algebraic 10s",
-                          "algebraic|frequency=1.0|horizon=100": "Algebraic",
+                          "algebraic|frequency=10.0|horizon=100": "Algebraic",
                           "algebraic|frequency=10.0|horizon=1000": "Algebraic",
                           # "QCQP|horizon=10": "QCQP_10",
-                          "QCQP|frequency=1.0|horizon=10": "QCQP",
+                          "QCQP|frequency=10.0|horizon=10": "QCQP",
                           "QCQP|frequency=10.0|horizon=1000": "QCQP",
-                          "QCQP|frequency=1.0|horizon=100": "QCQP",
+                          "QCQP|frequency=10.0|horizon=100": "QCQP",
                             "NLS|frequency=1.0|horizon=100": "NLS",
                             "NLS|frequency=1.0|horizon=10": "NLS",
                         "NLS|frequency=1.0|horizon=10|perfect_guess=0": "NLS",
