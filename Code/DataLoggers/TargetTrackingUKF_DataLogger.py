@@ -224,7 +224,8 @@ class UKFDatalogger():
         self.error_ca_heading_slam.append(np.abs(limit_angle(ca_h_real - ca_h_slam)))
 
     def log_nis_nees(self):
-        nis = self.ukf.kf.y @ self.ukf.kf.SI @ self.ukf.kf.y
+        e = np.array([self.error_spherical_relative_transformation_estimation[-1][0]])
+        nis = e @ self.ukf.kf.SI @ e
         self.NIS.append(nis)
 
 

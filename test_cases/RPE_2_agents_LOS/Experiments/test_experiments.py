@@ -3,6 +3,7 @@ import os
 import rosbags.rosbag2 as rb2
 import unittest
 from rosbags.serde import deserialize_cdr
+from scipy import stats
 
 import Code.Simulation.MultiRobotClass as MRC
 from Code.UtilityCode.turtlebot4 import Turtlebot4
@@ -20,481 +21,30 @@ import seaborn as sns
 
 class MyTestCase(unittest.TestCase):
 
-    def set_test_case(self):
-        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/Experiments/LOS_exp/"
-        self.rosbag = self.exp_folder+"exp4"
-        self.name = self.rosbag.split("/")[-1]
-        self.sampled_pkl = "LOS_exp1_sampled.pkl"
-
-        self.measurment_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/CodeBase/yd_MA_Inter_Robot_Range/tests/test_cases/RPE_2_agents/ros_tests/Measurements/"
-
-        self.uwb_topic = "/yd_uwb/dev_0x7603_0x683a"
-        self.tb2_topic = "/vicon/tb2/tb2"
-        self.tb3_topic = "/vicon/tb3/tb3"
-        self.tb2_odom_topic = "/tb2/odom"
-        self.tb3_odom_topic = "/tb3/odom"
-        self.tb2 = Turtlebot4("tb2")
-        self.tb3 = Turtlebot4("tb3")
-
-    def test_vio_sanity(self):
-        rosbag = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/Experiments/LOS_exp/Exp2/tb3_2023_10_05T15_18_21"
-        ns = "/tb3"
-        imu_topic = "/oakd/imu/data"
-        image_l_topic = "/oakd/left/image_rect/compressed"
-        image_r_topic = "/oakd/right/image_rect/compressed"
-
-        image_l_Dt = []
-        image_l_ts = []
-        image_r_Dt = []
-        image_r_ts = []
-        imu_Dt = []
-        imu_ts = []
-
-        prev_imu_t = None
-        prev_image_l_t = None
-        prev_image_r_t = None
-
-        with rb2.Reader(rosbag) as ros2_reader:
-            ros2_conns = [x for x in ros2_reader.connections]
-            ros2_messages = ros2_reader.messages(connections=ros2_conns)
-
-            for m, msg in enumerate(ros2_messages):
-                (connection, timestamp, rawdata) = msg
-                # print(timestamp, connection.topic)
-
-                if ns+imu_topic == connection.topic:
-
-
-                    data = deserialize_cdr(rawdata, connection.msgtype)
-                    imu_t = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
-                    if prev_imu_t is None:
-                        prev_imu_t = imu_t
-                    imu_Dt.append(imu_t - prev_imu_t)
-                    imu_ts.append(imu_t)
-                    prev_imu_t = imu_t
-
-                if ns+image_l_topic == connection.topic:
-                    data = deserialize_cdr(rawdata, connection.msgtype)
-                    image_l_t = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
-                    if prev_image_l_t is None:
-                        prev_image_l_t = image_l_t
-                    image_l_Dt.append(image_l_t - prev_image_l_t)
-                    prev_image_l_t = image_l_t
-                    image_l_ts.append(image_l_t)
-
-                if ns+image_r_topic == connection.topic:
-                    data = deserialize_cdr(rawdata, connection.msgtype)
-                    image_r_t = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
-                    if prev_image_r_t is None:
-                        prev_image_r_t = image_r_t
-                    image_r_Dt.append(image_r_t - prev_image_r_t)
-                    prev_image_r_t = image_r_t
-                    image_r_ts.append(image_r_t)
-
-        plt.figure()
-        plt.plot(imu_ts, imu_Dt, label="imu")
-        plt.plot(image_l_ts, image_l_Dt, label="image_l")
-        plt.plot(image_r_ts, image_r_Dt, label="image_r")
-        plt.legend()
-        plt.show()
-
-    def test_split_rosbag(self):
-        rosbag = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/Experiments/LOS_exp/Exp3/tb3_2023_10_05T16_35_24"
-        ns = "/tb3"
-        imu_topic = "/oakd/imu/data"
-        image_l_topic = "/oakd/left/image_rect/compressed"
-        image_r_topic = "/oakd/right/image_rect/compressed"
-
-        # writer = rb2.SequentialWriter()
-        # rb2.Writer.
-
-        image_l_Dt = []
-        image_r_Dt = []
-        imu_Dt = []
-
-        prev_imu_t = None
-        prev_image_l_t = None
-        prev_image_r_t = None
-
-        with rb2.Reader(rosbag) as ros2_reader:
-            ros2_conns = [x for x in ros2_reader.connections]
-            ros2_messages = ros2_reader.messages(connections=ros2_conns)
-
-            for m, msg in enumerate(ros2_messages):
-                (connection, timestamp, rawdata) = msg
-                # print(timestamp, connection.topic)
-
-                if ns + imu_topic == connection.topic:
-
-                    data = deserialize_cdr(rawdata, connection.msgtype)
-                    imu_t = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
-
-                if ns + image_l_topic == connection.topic:
-                    data = deserialize_cdr(rawdata, connection.msgtype)
-                    image_l_t = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
-
-
-                if ns + image_r_topic == connection.topic:
-                    data = deserialize_cdr(rawdata, connection.msgtype)
-                    image_r_t = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
-
-
-
-    def test_read_bag(self):
-        self.set_test_case()
-        measurement = Measurement(self.rosbag)
-        measurement.read_bag()
-        measurement.save_raw_data()
-        print(len(measurement.tb3.vio_frame.t))
-        print(len(measurement.tb2.vio_frame.t))
-        print(len(measurement.tb3.vicon_frame.t))
-        print(len(measurement.tb2.vicon_frame.t))
-        print(len(measurement.uwb.t))
-        plt.figure()
-        measurement.tb3.plot_trajectory(plt)
-        measurement.tb2.plot_trajectory(plt)
-        plt.show()
-
-    def test_read_raw_data_pkl(self):
-        self.set_test_case()
-        pikle_file = self.name + "_raw.pkl"
-        measurement = Measurement()
-        measurement.load_raw_data(pikle_file)
-        measurement.tb2.plot_trajectory(plt)
-        print(len(measurement.tb3.vio_frame.t))
-        print(len(measurement.tb2.vio_frame.t))
-        print(len(measurement.tb3.vicon_frame.t))
-        print(len(measurement.tb2.vicon_frame.t))
-        print(len(measurement.uwb.t))
-        plt.show()
-
-    def test_raw_data(self):
-        pickle_file = "../../RPE_2_agents/ros_tests/exp4_raw.pkl"
-        measurement = Measurement()
-        measurement.load_raw_data(pickle_file)
-        measurement.sample(10)
-        measurement.plot_sampled()
-        measurement.print_sampled_lengths()
-
-        measurement.get_VIO_error(plot=True)
-        measurement.tb2.plot_vio_error()
-        measurement.tb3.plot_vio_error()
-        measurement.get_uwb_distances()
-        measurement.uwb.plot_real()
-        measurement.uwb.plot_indices()
-        plt.show()
-        return measurement
-
-
-
-    def test_split_data_exp1(self):
-        # self.set_test_case()
-        name = "exp1"
-        pikle_file = name + "_raw.pkl"
-        measurement = Measurement()
-        measurement.load_raw_data(pikle_file)
-        measurement.sample(10)
-        mesList = measurement.split_data([4805, 4900, 4900+2200, 4825+2280, + 4825+2280+2200])
-        # mesList[0].name = "exp1_unobservable"
-        # mesList[0].save_sampled_data()
-        # mesList[2].name = "exp1_sec1_los"
-        # mesList[2].save_sampled_data()
-        # mesList[4].name = "exp1_sec2_los"
-        # mesList[4].save_sampled_data()
-
-        mesList = measurement.split_data([4900])
-        # mesList[1].name = "exp1_los"
-        # mesList[1].save_sampled_data()
-
-        mesList = measurement.split_data([900, 900+600])
-        mesList[1].name = "exp1_unobservable"
-        mesList[1].save_sampled_data()
-
-    def test_split_data_exp3(self):
-        name = "exp3"
-        pikle_file = name + "_raw.pkl"
-        measurement = Measurement()
-        measurement.load_raw_data(pikle_file)
-        measurement.sample(10)
-        mesList = measurement.split_data([2200])  # , 4900, 4900 + 2200, 4825 + 2280, + 4825 + 2280 + 2200])
-        mesList[0].name = "exp3_sec1_los"
-        mesList[0].save_sampled_data()
-        mesList = measurement.split_data([1200, 1200+2200])  # , 4900, 4900 + 2200, 4825 + 2280, + 4825 + 2280 + 2200])
-        mesList[1].name = "exp3_sec2_los"
-        mesList[1].save_sampled_data()
-        mesList = measurement.split_data([2400])
-        mesList[1].name = "exp3_nlos"
-        mesList[1].save_sampled_data()
-
-    def test_split_data_exp4(self):
-        name = "exp4"
-        pikle_file = name + "_raw.pkl"
-        measurement = Measurement()
-        measurement.load_raw_data(pikle_file)
-        measurement.sample(10)
-        mesList = measurement.split_data([500,500+2200]) #, 4900, 4900 + 2200, 4825 + 2280, + 4825 + 2280 + 2200])
-        mesList[1].name = "exp4_sec1_los"
-        # mesList[1].save_sampled_data()
-        mesList = measurement.split_data([2700-300, 2700-300+2400 ])
-        mesList[1].name = "exp4_nlos_b"
-        mesList[1].save_sampled_data()
-
-
-    def test_add_errors_to_exp4(self):
-        pikle_file = "../../RPE_2_agents/ros_tests/exp4_nlos_a_sampled.pkl"
-        measurement = Measurement()
-        measurement.load_sampled_data(pikle_file)
-        measurement.get_uwb_distances()
-        measurement.uwb.plot_real()
-        sigma_uwb = 0.25
-        measurement.uwb.change_data(1200, 10., sigma_uwb)
-        measurement.get_uwb_distances()
-        measurement.uwb.plot_real()
-        measurement.name = "exp4_nlos_a_changed_10"
-        measurement.save_sampled_data()
-        plt.show()
-
-
-    def test_check_sampling(self):
-        self.set_test_case()
-        sampled_pkl = "Measurements/exp2_los_sampled.pkl"
-
-        pikle_file = self.name + "_raw.pkl"
-        measurement = Measurement()
-        measurement.load_sampled_data(sampled_pkl)
-        # measurement.sample(10)
-        # measurement.save_sampled_data()
-        measurement.uwb.plot_sampled()
-        measurement.tb2.vio_frame.plot_sampled()
-        measurement.tb3.vio_frame.plot_sampled()
-        measurement.tb2.vicon_frame.plot_sampled()
-        measurement.tb3.vicon_frame.plot_sampled()
-        plt.show()
-
-    def test_uwb_optimisation_T(self):
-        self.set_test_case()
-        measurement = Measurement()
-        measurement.load_sampled_data(self.sampled_pkl)
-        measurement.get_uwb_distances()
-        measurement.uwb.plot_real()
-        measurement.uwb.plot_indices()
-        # measurement.optimise_uwb_T()
-        plt.show()
-
-    def test_uwb_Transforms(self):
-        # self.set_test_case()
-        for i in range(1, 6):
-            sampled_pkl = "Measurements/exp"+str(i)+"_los_sampled.pkl"
-            measurement = Measurement()
-            measurement.load_sampled_data(sampled_pkl)
-            measurement.get_uwb_distances()
-            # measurement.correct_orb_transformation()
-            # measurement.get_rpe_transformation()
-            measurement.uwb.plot_real()
-        plt.show()
-
-    def test_vio_rejection(self):
-        # TODO: make rejection strategy for VIO. (Maybe can help.)
-        self.set_test_case()
-        sampled_pkl = "Measurements/exp1_los_sampled.pkl"
-        measurement = Measurement()
-        measurement.load_sampled_data(sampled_pkl)
-        measurement.tb2.vio_frame.outlier_rejection()
-
-    def test_resave_the_sample_data(self):
-        self.set_test_case()
-        for i in range(1, 6):
-            sampled_pkl = "Measurements/exp"+str(i)+"_los_sampled.pkl"
-            measurement = Measurement()
-            measurement.load_sampled_data(sampled_pkl)
-            measurement.save_folder = "Meas_new/"
-            measurement.name = "exp"+str(i)+"_los"
-            measurement.save_sampled_data()
-        # sampled_pkl = "Measurements/exp4_los_sampled.pkl"
-        # measurement = Measurement()
-        # measurement.load_sampled_data(sampled_pkl)
-        # measurement.save_sampled_data()
-
-    def test_vio_error(self):
-        self.set_test_case()
-        for i in range(1, 6):
-            sampled_pkl = "Measurements/exp"+str(i)+"_los_sampled.pkl"
-            measurement = Measurement()
-            measurement.load_sampled_data(sampled_pkl)
-            measurement.tb2.vio_frame.outlier_rejection(max_a=0.5)
-            measurement.tb3.vio_frame.outlier_rejection(max_a = 0.5)
-            measurement.get_VIO_error(plot=True)
-            measurement.tb2.plot_vio_error()
-            measurement.tb3.plot_vio_error()
-        plt.show()
-        # sampled_pkl = "Measurements/exp1_los_sampled.pkl"
-        # # sampled_pkl = "Meas_new/exp1_sec1_los_sampled.pkl"
-        # measurement = Measurement()
-        # measurement.load_sampled_data(sampled_pkl)
-        # measurement.tb2.vio_frame.outlier_rejection(max_a = 0.5)
-        # measurement.tb3.vio_frame.outlier_rejection(max_a = 0.5)
-        #
-        # measurement.get_VIO_error(plot=True)
-        # measurement.tb2.plot_vio_error()
-        # measurement.tb3.plot_vio_error()
-        # plt.show()
-
-    def test_set_vio_correction(self):
-        self.set_test_case()
-        for i in range(1, 6):
-            sampled_pkl = "Measurements/exp" + str(i) + "_los_sampled.pkl"
-            measurement = Measurement()
-            measurement.load_sampled_data(sampled_pkl)
-            measurement.tb2.vio_frame.outlier_rejection(max_a=0.5)
-            measurement.tb3.vio_frame.outlier_rejection(max_a=0.5)
-            measurement.tb2.vio_frame.sampled_v = measurement.tb2.vio_frame.v_cor
-            measurement.tb3.vio_frame.sampled_v = measurement.tb3.vio_frame.v_cor
-            measurement.name = "exp" + str(i) + "_los"
-            measurement.save_folder = "Measurements_correction/"
-            measurement.save_sampled_data()
-
-
-
-
-    def test_new_robot_population(self):
-        # self.set_test_case()
-        sampled_pkl = "./Measurements_correction/exp2_los_sampled.pkl"
-        measurement = Measurement()
-        measurement.load_sampled_data(sampled_pkl)
-        sample_freq=measurement.sample_frequency
-
-        # measurement.correct_orb_transformation()
-
-        sig_v = 0.1
-        sig_w = 0.1
-        sig_uwb = 0.2
-        sig_d = sig_v / sample_freq
-        sig_phi = sig_w / sample_freq
-        Q_vio = np.diag([sig_d ** 2, sig_d ** 2, sig_d ** 2, sig_phi ** 2])
-
-        DT_vio_tb2 = measurement.tb2.vio_frame.get_relative_motion_in_T()
-        DT_vio_tb3 = measurement.tb3.vio_frame.get_relative_motion_in_T()
-        T_vicon_tb2 = measurement.tb2.vicon_frame.sampled_T
-        T_vicon_tb3 = measurement.tb3.vicon_frame.sampled_T
-
-        tb2 = NewRobot()
-        tb2.from_experimental_data(T_vicon_tb2, DT_vio_tb2, Q_vio, sample_freq)
-        tb3 = NewRobot()
-        tb3.from_experimental_data(T_vicon_tb3, DT_vio_tb3, Q_vio, sample_freq)
-
-        ax = plt.axes(projection="3d")
-        tb2.set_plotting_settings(color="r")
-        tb2.plot_real_position(ax)
-        tb2.plot_slam_position(ax,  linestyle=":", alpha=0.6 )
-        tb3.set_plotting_settings(color="b")
-        tb3.plot_real_position(ax)
-        tb3.plot_slam_position(ax, linestyle=":", alpha=0.6)
-        plt.legend()
-        ax = tb3.plot_slam_error(annotation="TB1", color ="blue")
-        ax = tb2.plot_slam_error(annotation="TB2", ax=ax, color="red")
-        for axs in ax:
-            axs.legend()
-            axs.grid()
-        plt.show()
-        return tb2, tb3
-
-    # @DeprecationWarning
-    # def create_experimental_data(self, data_folder, sig_v, sig_w, sig_uwb):
-    #     experiments=[]
-    #     measurements = []
-    #     # check wether data_folder is a file or a folder
-    #
-    #     if os.path.isfile(data_folder):
-    #         list_of_files = [data_folder]
-    #     else:
-    #         list_of_files = os.listdir(data_folder)
-    #     for sampled_data in list_of_files:
-    #         name = sampled_data.split(".")[-2].split("/")[-1]
-    #         measurement = Measurement()
-    #         measurement.load_sampled_data(sampled_data)
-    #         sample_freq = measurement.sample_frequency
-    #
-    #         #
-    #         sig_d = sig_v / sample_freq
-    #         sig_phi = sig_w / sample_freq
-    #         Q_vio = np.diag([sig_d ** 2, sig_d ** 2, sig_d ** 2, sig_phi ** 2])
-    #
-    #         # measurement.get_uwb_distances()
-    #         uwb = measurement.uwb.sampled_d
-    #         uwb_los = measurement.get_uwb_LOS(sig_uwb)
-    #         DT_vio_tb2 = measurement.tb2.vio_frame.get_relative_motion_in_T()
-    #         DT_vio_tb3 = measurement.tb3.vio_frame.get_relative_motion_in_T()
-    #         T_vicon_tb2 = measurement.tb2.vicon_frame.sampled_T
-    #         T_vicon_tb3 = measurement.tb3.vicon_frame.sampled_T
-    #
-    #         experiment_data = {}
-    #         experiment_data["name"] = name
-    #         experiment_data["sample_freq"] = sample_freq
-    #         experiment_data["drones"] = {}
-    #         experiment_data["drones"]["drone_0"] = {"DT_slam": DT_vio_tb2, "T_real": T_vicon_tb2, "Q_slam": Q_vio}
-    #         experiment_data["drones"]["drone_1"] = {"DT_slam": DT_vio_tb3, "T_real": T_vicon_tb3, "Q_slam": Q_vio}
-    #         experiment_data["uwb"] = uwb
-    #         experiment_data["los_state"] = uwb_los
-    #
-    #
-    #         measurements.append(measurement)
-    #         # experiment_data["eps_d"] = np.abs(measurement.uwb.real_d - measurement.uwb.sampled_d)
-    #
-    #         experiments.append(experiment_data)
-    #     return experiments, measurements
-
-    # @DeprecationWarning
-    # def create_experiment(self, results_folder, sig_v, sig_w, sig_uwb, alpha = 1., kappa = -1., beta = 2. , n_azimuth = 4, n_altitude = 3, n_heading = 4):
-    #
-    #
-    #     tas = MRC.TwoAgentSystem(trajectory_folder="./", result_folder=results_folder)
-    #     tas.debug_bool = True
-    #     tas.plot_bool = True
-    #     tas.set_ukf_properties(kappa=kappa, alpha=alpha, beta=beta, n_azimuth=n_azimuth, n_altitude=n_altitude,
-    #                            n_heading=n_heading)
-    #     tas.set_uncertainties(sig_v, sig_w, sig_uwb)
-    #     return tas
-    @DeprecationWarning
-    def test_single_exp(self):
-        sig_v = 0.10
-        sig_w = 0.03
-        sig_uwb = 0.25
-
-
-        result_folder = "Real_Exp_test"
-        data_file = "Experiments/Exp3_SemiNLOS/Measurements/exp3_sec1_los_sampled.pkl"
-        experiment_data, _ = create_experimental_data(data_file, sig_v, sig_w, sig_uwb)
-        tas = create_experiment(result_folder, sig_v, sig_w, sig_uwb)
-        # tas.run_experiment(methods=[ "upf"], redo_bool=True, experiment_data=experiment_data)
-
-        tas.run_experiment(methods=[ "NLS", "algebraic", "upf", "losupf", "nodriftupf", "upfnaive"], redo_bool=False, experiment_data=experiment_data)
-
-        return tas
-        # taa = TAA.TwoAgentAnalysis(result_folder=result_folder)
-        # taa.delete_data()
-        # taa.create_panda_dataframe()
-        # taa.single_settings_boxplot(save_fig=False)
-        # plt.show()
-
     def test_run_LOS_exp(self):
         #TODO: recheck the folder.
-        sig_v = 0.08
-        sig_w = 0.12
+        sig_v = 0.06
+        sig_w = 0.07
         sig_uwb = 0.25
-
-        main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/new_QCQP"
+        folder_name = "sig_v_"+ str(sig_v)+ "_sig_w_" + str(sig_w) + "_sig_uwb_" + str(sig_uwb)
+        folder_name = folder_name.replace(".", "c")
+        main_folder = "./Experiments/LOS_exp/New_analysis/"
+        results_folder = main_folder + folder_name
+        if not os.path.exists(results_folder):
+            os.mkdir(results_folder)
         data_folder = "Measurements_correction"
 
         experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
 
         methods = [
-        #           "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
-        #            "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                  "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                  # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+                   "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
         #            "algebraic|frequency=1.0|horizon=10",
         #            "algebraic|frequency=10.0|horizon=100",
-                   "algebraic|frequency=10.0|horizon=100",
+        #            "algebraic|frequency=10.0|horizon=100",
         #             "QCQP|frequency=10.0|horizon=100",
+                "NLS|frequency=1.0|horizon=10",
         #            "QCQP|frequency=10.0|horizon=1000"
                    ]
         # methods = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
@@ -515,8 +65,11 @@ class MyTestCase(unittest.TestCase):
         #             "QCQP|frequency=10.0|horizon=100",
         #             "QCQP|frequency=10.0|horizon=1000"
         # ]
-
+        # for method in methods:
+        #     if not os.path.exists(results_folder + "/" + method):
+        #         os.mkdir(results_folder + "/" + method)
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
+        tas.set_ukf_properties(kappa=-1., alpha=1., beta=2., n_azimuth=4, n_altitude=3, n_heading=4)
         tas.debug_bool = True
         tas.plot_bool = False
         tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
@@ -611,19 +164,32 @@ class MyTestCase(unittest.TestCase):
 
     def test_exp_analysis(self):
         result_folders = [
-                "./Experiments/LOS_exp/Results/experiments_paper/Experiments",
-                "./Experiments/LOS_exp/Results/experiments_paper/Sim",
-                "./Experiments/LOS_exp/Results/new_QCQP",
-                          ]
+                "./Experiments/LOS_exp/New_analysis/sig_v_0c04_sig_w_0c08_sig_uwb_0c1",
+                # "./Experiments/LOS_exp/New_analysis/sig_v_0c04_sig_w_0c08_sig_uwb_0c15",
+                "./Experiments/LOS_exp/New_analysis/sig_v_0c06_sig_w_0c07_sig_uwb_0c15",
+                "./Experiments/LOS_exp/New_analysis/sig_v_0c06_sig_w_0c07_sig_uwb_0c25",
+                # "./Experiments/LOS_exp/Results/experiments_paper/Experiments",
+                # "./Experiments/LOS_exp/Results/final_results_question",
+                # "./Experiments/LOS_exp/Results/experiments_paper/Sim",
+                # "./Experiments/LOS_exp/Results/sim2",
+                # "./Experiments/LOS_exp/Results/new_QCQP",
+                # "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/10hz"
+        ]
+
+        variables = ["error_x_relative", "error_h_relative"]
+        sigma_dv_sim = [0.04]
+        sigma_uwb_sim = [0.25]
+        sigma_dv_exp = [0.04]
+        sigma_uwb_exp = [0.10]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         upf_sim = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                          "Variables": {
                             "Type": ["simulation"],
-                             "Variable":["error_x_relative", "error_h_relative"],
-                             "Sigma_dv": [0.08],
-                             "Sigma_uwb": [0.25],
+                             "Variable":variables,
+                             # "Sigma_dv": sigma_dv_sim,
+                             # "Sigma_uwb": sigma_uwb_sim,
                              # "Sigma_dw": [],
-                             "Frequency": [10.0],
+                             # "Frequency": [10.0],
                          },
                            "Color": "lightgreen",
                            "Legend": "Ours (sim)",
@@ -632,10 +198,10 @@ class MyTestCase(unittest.TestCase):
                          "Variables": {
                              "Type": ["simulation"],
                              "Variable": ["error_x_relative", "error_h_relative"],
-                             "Sigma_dv": [0.08],
-                             "Sigma_uwb": [0.25],
+                             # "Sigma_dv": sigma_dv_sim,
+                             # "Sigma_uwb":sigma_uwb_sim,
                              # "Sigma_dw": [],
-                             "Frequency": [10.0],
+                             # "Frequency": [10.0],
                          },
                          "Color": "salmon",
                          "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state (sim)",
@@ -644,10 +210,10 @@ class MyTestCase(unittest.TestCase):
                          "Variables": {
                              "Type": ["simulation"],
                              "Variable": ["error_x_relative", "error_h_relative"],
-                             "Sigma_dv": [0.08],
-                             "Sigma_uwb": [0.25],
+                             # "Sigma_dv": sigma_dv_sim,
+                             # "Sigma_uwb": sigma_uwb_sim,
                              # "Sigma_dw": [],
-                             "Frequency": [10.0],
+                             # "Frequency": [10.0],
                          },
                          "Color": "bisque",
                          "Legend": "Algebraic (sim)",
@@ -656,10 +222,10 @@ class MyTestCase(unittest.TestCase):
                          "Variables": {
                              "Type": ["simulation"],
                              "Variable": ["error_x_relative", "error_h_relative"],
-                             "Sigma_dv": [0.08],
-                             "Sigma_uwb": [0.25],
+                             # "Sigma_dv": sigma_dv_sim,
+                             # "Sigma_uwb": sigma_uwb_sim,
                              # "Sigma_dw": [],
-                             "Frequency": [10.0],
+                             # "Frequency": [10.0],
                          },
                          "Color": "cornflowerblue",
                          "Legend": "QCQP (sim)",
@@ -668,10 +234,10 @@ class MyTestCase(unittest.TestCase):
                          "Variables": {
                              "Type": ["simulation"],
                              "Variable": ["error_x_relative", "error_h_relative"],
-                             "Sigma_dv": [0.08],
-                             "Sigma_uwb": [0.25],
-                             "Sigma_dw": [0.05],
-                             "Frequency": [1.0],
+                             # "Sigma_dv": sigma_dv_sim,
+                             # "Sigma_uwb": sigma_uwb_sim,
+                             # "Sigma_dw": [0.05],
+                             # "Frequency": [1.0],
                          },
                          "Color": "thistle",
                          "Legend": "NLS (sim)",
@@ -681,8 +247,8 @@ class MyTestCase(unittest.TestCase):
                    "Variables": {
                        "Type": ["experiment"],
                        "Variable": ["error_x_relative", "error_h_relative"],
-                       "Sigma_dv": [0.08],
-                       "Sigma_uwb": [0.25],
+                       "Sigma_dv": sigma_dv_exp,
+                       "Sigma_uwb": sigma_uwb_exp,
                        # "Sigma_dw": [],
                        "Frequency": [10.0],
                    },
@@ -693,12 +259,36 @@ class MyTestCase(unittest.TestCase):
                           "Variables": {
                               "Type": ["experiment"],
                               "Variable": ["error_x_relative", "error_h_relative"],
-                              "Sigma_dv": [0.08],
-                              "Sigma_uwb": [0.25],
+                              "Sigma_dv": sigma_dv_exp,
+                              "Sigma_uwb": sigma_uwb_exp,
                               # "Sigma_dw": [],
                               "Frequency": [10.0],
                           },
                           "Color": "tab:red",
+                          "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state",
+                          }
+        upf_exp15 = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.06],
+                       "Sigma_uwb": [0.15],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "limegreen",
+                   "Legend": "Ours",
+                   }
+        nodriftupf_exp15 = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                          "Variables": {
+                              "Type": ["experiment"],
+                              "Variable": ["error_x_relative", "error_h_relative"],
+                              "Sigma_dv": [0.06],
+                              "Sigma_uwb": [0.15],
+                              # "Sigma_dw": [],
+                              "Frequency": [10.0],
+                          },
+                          "Color": "salmon",
                           "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state",
                           }
         alg_exp = {"Method": "algebraic|frequency=10.0|horizon=100",
@@ -725,25 +315,41 @@ class MyTestCase(unittest.TestCase):
                     "Color": "tab:blue",
                     "Legend": "QCQP",
                     }
-        nls_exp = {"Method": "NLS|frequency=1.0|horizon=10",
+        nls_exp = {
+                    # "Method": "NLS|frequency=1.0|horizon=10",
+                    "Method": "NLS|frequency=1.0|horizon=10",
                    "Variables": {
                        "Type": ["experiment"],
                        "Variable": ["error_x_relative", "error_h_relative"],
-                       "Sigma_dv": [0.08],
-                       "Sigma_uwb": [0.35],
-                       "Sigma_dw": [0.05],
+                       "Sigma_dv": [0.06],
+                       "Sigma_uwb": [0.15],
+                       # "Sigma_dw": [0.05],
                        "Frequency": [1.0],
                    },
                    "Color": "tab:purple",
                    "Legend": "NLS",
                    }
+        nls_exp_15 = {
+                    # "Method": "NLS|frequency=1.0|horizon=10",
+                    "Method": "NLS|frequency=1.0|horizon=10",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["error_x_relative", "error_h_relative"],
+                       "Sigma_dv": [0.06],
+                       "Sigma_uwb": [0.25],
+                       # "Sigma_dw": [0.05],
+                       "Frequency": [1.0],
+                   },
+                   "Color": "thistle",
+                   "Legend": "NLS",
+                   }
 
         methods_order = [
-                        upf_exp, upf_sim,
-                          nodriftupf_exp, nodriftupf_sim,
-                         alg_exp, alg_sim,
-                          qcqp_exp, qcqp_sim,
-                          nls_exp, nls_sim,
+                        upf_exp, upf_exp15, #upf_sim,
+                          nodriftupf_exp, nodriftupf_exp15,#nodriftupf_sim,
+                         # alg_exp, alg_sim,
+                         #  qcqp_exp, qcqp_sim,
+                          nls_exp, nls_exp_15,#nls_sim,
                         ]
 
         df, methods_names, methods_colors, methods_styles, methods_legends = taa.filter_methods_new(methods_order)
@@ -752,7 +358,7 @@ class MyTestCase(unittest.TestCase):
                         hue_variable="Name", hue_order=methods_names,
                         col_variable="Variable",
                         row_variable=None,
-                        x_variable="Sigma_dv", 
+                        x_variable="Type",
                         )
 
         g.axes_dict["error_x_relative"].set_yscale("log")
@@ -861,9 +467,11 @@ class MyTestCase(unittest.TestCase):
     def test_exp_time_analysis(self):
         # result_folder = "./Experiments/LOS_exp/Results/new_nls_correct_init_test/"
         result_folders = [
-                            "./Experiments/LOS_exp/Results/new_QCQP",
+                            # "./Experiments/LOS_exp/Results/new_QCQP",
                             # "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/10hz",
-                            "./Experiments/LOS_exp/Results/experiments_paper/Experiments"
+                            # "./Experiments/LOS_exp/Results/experiments_paper/Experiments",
+                            "./Experiments/LOS_exp/Results/final_results_question",
+                            ""
                             ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = [
@@ -925,7 +533,7 @@ class MyTestCase(unittest.TestCase):
             "Sigma": r" Ours, $1 \sigma$-bound"}
         # taa.delete_data()
         taa.create_panda_dataframe()
-        taa.time_analysis(sigma_uwbs=[0.25, 0.35], sigma_vs=[0.08], frequencies = [1.0,10.0], start_time=0.,
+        taa.time_analysis(sigma_uwbs=[0.1, 0.25, 0.35], sigma_vs=[0.08, 0.04], frequencies = [1.0,10.0], start_time=0.,
                           methods_order=methods_order, methods_color=methods_color, methods_legend=methods_legend,
                           sigma_bound=True, save_fig=False)
         # taa.boxplot_LOS_comp_time(save_fig=False)
@@ -933,7 +541,93 @@ class MyTestCase(unittest.TestCase):
         plt.show()
 
 
+    def test_NIS_analysis(self):
+        result_folders = [
+            # "./Experiments/LOS_exp/Results/NIS_Analysis/new_sig",
+            "./Experiments/LOS_exp/Results/NIS_Analysis/alpha_1",
+            "./Experiments/LOS_exp/Results/NIS_Analysis/alpha_1_low_un",
+            "./Experiments/LOS_exp/Results/NIS_Analysis/sig_v_0c04_sig_w_0c08_sig_uwb_0c25",
+            # "./Experiments/LOS_exp/Results/NIS_Analysis",
+            # "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/10hz",
+            # "./Experiments/LOS_exp/Results/experiments_paper/Experiments"
+        ]
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
 
+        upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["NIS", "error_x_relative"],
+                       "Sigma_dv": [0.08],
+                       "Sigma_uwb": [0.25],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:green",
+                   "Legend": "NIS",
+                   }
+        upf_sim = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+               "Variables": {
+                   "Type": ["simulation"],
+                   "Variable": ["NIS"],
+                   "Sigma_dv": [0.05],
+                   "Sigma_uwb": [0.15],
+                   # "Sigma_dw": [],
+                   "Frequency": [10.0],
+               },
+               "Color": "limegreen",
+               "Legend": "NIS (sim)",
+               }
+        upf_exp1 = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["NIS", "error_x_relative"],
+                       "Sigma_dv": [0.04],
+                       "Sigma_uwb": [0.10],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:red",
+                   "Legend": "NIS2",
+                   }
+        upf_exp2 = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "Variables": {
+                       "Type": ["experiment"],
+                       "Variable": ["NIS", "error_x_relative"],
+                       "Sigma_dv": [0.04],
+                       "Sigma_uwb": [0.25],
+                       # "Sigma_dw": [],
+                       "Frequency": [10.0],
+                   },
+                   "Color": "tab:blue",
+                   "Legend": "NIS2",
+                   }
+        # no_drift_upf_sim = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        #        "Variables": {
+        #            "Type": ["experiment"],
+        #            "Variable": ["NIS", "error_x_relative"],
+        #            "Sigma_dv": [0.04],
+        #            "Sigma_uwb": [0.10],
+        #            # "Sigma_dw": [],
+        #            "Frequency": [10.0],
+        #        },
+        #        "Color": "salmon",
+        #        "Legend": "NIS (sim)",
+        #        }
+
+        methods_order = [upf_exp, upf_exp1, upf_exp2]
+        df, methods_names, methods_colors, methods_styles, methods_legends = taa.filter_methods_new(methods_order)
+        taa.print_statistics(methods_names, ["error_x_relative", "NIS"], df)
+        axes = taa.lineplot(df, methods_names, methods_colors, methods_styles=methods_styles, methods_legends=methods_legends, variables=["NIS", "error_x_relative"])
+        # plt.legend(loc="upper left")
+
+        alpha = 0.05  # 95% confidence interval, so alpha is 0.05
+        df = 1  # Degrees of freedom for the chi-squared distribution
+
+        lower_bound = stats.chi2.ppf(alpha / 2, df)
+        upper_bound = stats.chi2.ppf(1 - alpha / 2, df)
+        axes[0].axhline(y=lower_bound, color='red', linestyle='--', label=f'Lower 95% CI ({lower_bound:.2f})')
+        axes[0].axhline(y=upper_bound, color='green', linestyle='--', label=f'Upper 95% CI ({upper_bound:.2f})')
+        plt.show()
     def test_run_NLOS_exp(self):
         sig_v = 0.15 # issue with VIO being disturbed by the closets initial had to increase this to make it work.
         sig_w = 0.05

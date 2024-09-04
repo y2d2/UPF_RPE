@@ -6,13 +6,15 @@ Additionally, the repository also provides  measurement and simulation data as w
 
 ## Paper 
 The paper is currently under revision. 
-
+```bash
+pip install -r requirements.txt
+```
 ## Usage of the UPF: 
 To use the UPF use the following code: 
 
 #### Import the UPF
 Import the UPF: 
-```
+```python
 from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent
 ```
 
@@ -22,12 +24,12 @@ Initialize the UPF with:
 agent_id: the id of the agent the relative pose is being estimated.
 
 x_odom:  represents the pose of the estimating agent in its own odometry frame.
-```
+```python
 upf = UPFConnectedAgent(agent_id, x_odom)
 ```
 
 Set the parameters of the UKF: kappa, alfa, and beta.
-```
+```python
 upf.set_ukf_parameters(kappa, alpha, beta)
 ```
 
@@ -52,7 +54,7 @@ Finally each communication step, update the pose of the estimating agent:
 x_ha: the pose of the estimating agent expressed in its odometry frame
 
 q_ha: the covariance of the VIO from the previous communication step until the current of the estimating agent.
-```
+```python
 upf.ha.update(x_ha, q_ha)
 ```
 
@@ -66,7 +68,7 @@ q_ca: covariance of the VIO from the previous communication step until the curre
 
 time_i: is important for logging the data, but is not needed to use the algorithm.
 
-```
+```python
 upf.run_model(dx_ca, measurement, q_ca, time_i=None)
 ```
 

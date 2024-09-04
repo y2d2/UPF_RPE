@@ -414,12 +414,15 @@ class Turtlebot4:
         std_w_error = np.std(self.vio_w_error, axis=0)
 
 
-        self.vio_v_cor_error = self.vio_frame.v_cor - vicon_v
-        mean_v_cor_error = np.mean(self.vio_v_cor_error, axis=0)
-        std_v_cor_error = np.std(self.vio_v_cor_error, axis=0)
+        try:
+            self.vio_v_cor_error = self.vio_frame.v_cor - vicon_v
+            mean_v_cor_error = np.mean(self.vio_v_cor_error, axis=0)
+            std_v_cor_error = np.std(self.vio_v_cor_error, axis=0)
+            print("Mean v_cor error: ", mean_v_cor_error, " Std v_cor error: ", std_v_cor_error)
+        except:
+            print("no self.vio_frame.v_cor")
 
         print("Mean v error: ", mean_v_error, " Std v error: ", std_v_error)
-        print("Mean v_cor error: ", mean_v_cor_error, " Std v_cor error: ", std_v_cor_error)
         print("Mean w error: ", mean_w_error, " Std w error: ", std_w_error)
 
         if plot:
@@ -428,7 +431,10 @@ class Turtlebot4:
             for i in range(3):
                 ax[i, 0].plot(vio_v[:, i], label="vio_v " + labels[i])
                 ax[i, 0].plot(vicon_v[:, i], label="vicon_v " + labels[i])
-                ax[i, 0].plot(self.vio_frame.v_cor[:,i], label="vio_v_cor " + labels[i])
+                try:
+                    ax[i, 0].plot(self.vio_frame.v_cor[:,i], label="vio_v_cor " + labels[i])
+                except:
+                    print("no self.vio_frame.v_cor")
                 ax[i, 1].plot(vio_w[:, i], label="vio_w " + labels[i])
                 ax[i, 1].plot(vicon_w[:, i], label="vicon_w " + labels[i])
                 ax[i, 0].legend()
@@ -476,7 +482,10 @@ class Turtlebot4:
         for i in range(3):
             ax[i, 0].plot(self.vio_v_error[:, i], label="vio_v_error "+labels[i])
             ax[i, 1].plot(self.vio_w_error[:, i], label="vio_w_error "+labels[i])
-            ax[i, 0].plot(self.vio_v_cor_error[:, i], label="vio_v_cor_error "+labels[i])
+            try:
+                ax[i, 0].plot(self.vio_v_cor_error[:, i], label="vio_v_cor_error "+labels[i])
+            except AttributeError:
+                print("no self.vio_v_cor_error")
             ax[i, 0].legend()
             ax[i, 1].legend()
 

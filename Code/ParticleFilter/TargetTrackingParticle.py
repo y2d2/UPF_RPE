@@ -143,13 +143,14 @@ class ListOfTargetTrackingParticles:
 
 
 class ListOfUKFLOSTargetTrackingParticles(ListOfTargetTrackingParticles):
-    def __init__(self):
+    def __init__(self, drift_correction_bool=True):
         super().__init__()
         self.alpha = 1
         self.beta = 2
         self.kappa = -1
         self.t_sj_uwb = np.zeros(4)
         self.t_si_uwb = np.zeros(4)
+        self.drift_correction_bool = drift_correction_bool
 
     def set_uwb_extrinsicity(self, t_si_uwb, t_sj_uwb):
         self.t_si_uwb = t_si_uwb
@@ -162,7 +163,7 @@ class ListOfUKFLOSTargetTrackingParticles(ListOfTargetTrackingParticles):
 
     def create_particle(self, t_i, t_j_0, sig_t_j_0, d_ij, sig_d) -> UKFLOSTargetTrackingParticle:
         # weight = 1. / self.n_azimuth / self.n_altitude / self.n_heading
-        rpea: TargetTrackingUKF = TargetTrackingUKF(x_ha_0=t_i)
+        rpea: TargetTrackingUKF = TargetTrackingUKF(x_ha_0=t_i, drift_correction_bool=self.drift_correction_bool)
         rpea.set_uwb_extrinsicity(self.t_si_uwb, self.t_sj_uwb)
         rpea.set_ukf_properties(self.kappa, self.alpha, self.beta)
         rpea.set_initial_state(t_j_0, sig_t_j_0)

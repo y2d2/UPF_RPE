@@ -960,7 +960,7 @@ class TwoAgentSystem():
         # init drone0
         x_ha_0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
 
-        lop = ListOfUKFLOSTargetTrackingParticles()
+        lop = ListOfUKFLOSTargetTrackingParticles(drift_correction_bool=drift_bool)
         lop.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
         if "multi_particles" in parameters and parameters["multi_particles"] ==0 :
             # TODO: add code to find the intial transform and convert ti
@@ -990,7 +990,7 @@ class TwoAgentSystem():
         # init drone1
         x_ha_1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
 
-        lop = ListOfUKFLOSTargetTrackingParticles()
+        lop = ListOfUKFLOSTargetTrackingParticles(drift_correction_bool=drift_bool)
         lop.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
         if "multi_particles" in parameters and parameters["multi_particles"] ==0 :
             t_S1_S0 = get_states_of_transform(inv_transformation_matrix(t_S0_S1))

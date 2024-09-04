@@ -92,7 +92,14 @@ class Measurement:
         with rb2.Reader(self.rosbag) as ros2_reader:
             ros2_conns = [x for x in ros2_reader.connections]
             ros2_messages = ros2_reader.messages(connections=ros2_conns)
+
+            connections = ros2_reader.connections
+            # Access the counts of messages directly from the metadata
+            m_tot = sum(connection.msgcount for connection in connections)
+
+
             for m, msg in enumerate(ros2_messages):
+                print(m/m_tot*100 , "%")
                 (connection, timestamp, rawdata) = msg
                 if self.tb2_topic == connection.topic:
                     data = deserialize_cdr(rawdata, connection.msgtype)
