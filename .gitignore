@@ -155,3 +155,6 @@ dmypy.json
 /test_cases/RPE_2_agents_LOS/Experiments/Measurements/
 /test_cases/RPE_2_agents_LOS/Experiments/Experiments/
 /test_cases/RPE_2_agents_LOS/simulations/Results/
+/Data/Measurements_correction/
+/Results/
+/test_cases/RPE_2_agents_LOS/Experiments/New_measurements/
