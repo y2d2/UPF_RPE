@@ -22,7 +22,7 @@ class MyTestCase(unittest.TestCase):
 
     def set_test_case(self):
         self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/"
-        self.rosbag = self.exp_folder+"exp1"
+        self.rosbag = self.exp_folder+"exp4"
         self.name = self.rosbag.split("/")[-1]
         self.sampled_pkl = "LOS_exp1_sampled.pkl"
 
@@ -169,16 +169,15 @@ class MyTestCase(unittest.TestCase):
         plt.show()
 
     def test_raw_data(self):
-        pickle_file = "./exp1_raw.pkl"
+        pickle_file = ("./exp1_raw.pkl")
         measurement = Measurement()
         measurement.load_raw_data(pickle_file)
         measurement.sample(10)
         measurement.plot_sampled()
         measurement.print_sampled_lengths()
-
         measurement.get_VIO_error(plot=True)
-        measurement.tb2.plot_vio_error()
-        measurement.tb3.plot_vio_error()
+        # measurement.tb2.plot_vio_error()
+        # measurement.tb3.plot_vio_error()
         measurement.get_uwb_distances()
         measurement.uwb.plot_real()
         measurement.uwb.plot_indices()
@@ -194,21 +193,74 @@ class MyTestCase(unittest.TestCase):
         measurement = Measurement()
         measurement.load_raw_data(pikle_file)
         measurement.sample(10)
-        mesList = measurement.split_data([4805, 4900, 4900+2200, 4825+2280, + 4825+2280+2200])
-        # mesList[0].name = "exp1_unobservable"
-        # mesList[0].save_sampled_data()
-        # mesList[2].name = "exp1_sec1_los"
-        # mesList[2].save_sampled_data()
-        # mesList[4].name = "exp1_sec2_los"
-        # mesList[4].save_sampled_data()
+        # mesList = measurement.split_data([4805, 4900, 4900+2200, 4825+2280, + 4825+2280+2200])
+        mesList = measurement.split_data([900, 900+600,5060, 5060 + 3000])
+        for mes in mesList:
+            mes.plot_sampled()
+            # mes.get_VIO_error(plot=True)
+            # mes.get_uwb_distances()
 
-        mesList = measurement.split_data([4900])
-        # mesList[1].name = "exp1_los"
+
+
+        mesList[0].name = "exp1_unobservable"
+        mesList[0].save_folder = "New_measurements/"
+        mesList[0].save_sampled_data()
+        mesList[1].name = "exp2_unobservable"
+        mesList[1].save_folder = "New_measurements/"
+        mesList[1].save_sampled_data()
+
+        mesList[3].name = "exp1_los_sampled.pkl"
+        mesList[3].save_folder = "New_measurements/LOS/"
+        mesList[3].save_sampled_data()
+
+    def test_new_measurments(self):
+        name = "exp1"
+        pikle_file = name + "_raw.pkl"
+        measurement = Measurement()
+        measurement.load_raw_data(pikle_file)
+        measurement.sample(10)
+        mesList = measurement.split_data([ 5060, 8060])
+
+        mesList[1].name = "exp1_los"
+        mesList[1].save_folder = "New_measurements/LOS/"
         # mesList[1].save_sampled_data()
 
-        mesList = measurement.split_data([900, 900+600])
-        mesList[1].name = "exp1_unobservable"
+        mesList = measurement.split_data([9558-3000, 9558])
+        mesList[1].name = "exp5_los"
+        mesList[1].save_folder = "New_measurements/LOS/"
         mesList[1].save_sampled_data()
+
+
+        name = "exp3"
+        pikle_file = name + "_raw.pkl"
+        measurement = Measurement()
+        measurement.load_raw_data(pikle_file)
+        measurement.sample(10)
+        mesList = measurement.split_data([3000,6000])
+
+        mesList[0].name = "exp2_los"
+        mesList[0].save_folder = "New_measurements/LOS/"
+        # mesList[0].save_sampled_data()
+
+        mesList[1].name = "exp3_los"
+        mesList[1].save_folder = "New_measurements/LOS/"
+        # mesList[1].save_sampled_data()
+
+        name = "exp4"
+        pikle_file = name + "_raw.pkl"
+        measurement = Measurement()
+        measurement.load_raw_data(pikle_file)
+        measurement.sample(10)
+        mesList = measurement.split_data([3000, 3500, 6500])
+
+        mesList[0].name = "exp4_los"
+        mesList[0].save_folder = "New_measurements/LOS/"
+        # mesList[0].save_sampled_data()
+
+        mesList[2].name = "exp5_los"
+        mesList[2].save_folder = "New_measurements/LOS/"
+        # mesList[2].save_sampled_data()
+
 
     def test_split_data_exp3(self):
         name = "exp3"
@@ -283,14 +335,20 @@ class MyTestCase(unittest.TestCase):
 
     def test_uwb_Transforms(self):
         # self.set_test_case()
+        fig, ax = plt.subplots(5, 1)
         for i in range(1, 6):
-            sampled_pkl = "Measurements/exp"+str(i)+"_los_sampled.pkl"
+            sampled_pkl = "New_measurements/LOS/exp"+str(i)+"_los_sampled.pkl"
             measurement = Measurement()
             measurement.load_sampled_data(sampled_pkl)
             measurement.get_uwb_distances()
             # measurement.correct_orb_transformation()
             # measurement.get_rpe_transformation()
-            measurement.uwb.plot_real()
+            measurement.uwb.plot_real(ax=ax[i-1])
+            ax[i-1].set_title("exp"+str(i))
+            ax[i-1].set_ylabel("Distance [m]")
+        ax[-1].set_xlabel("Time [s]")
+        ax[0].legend()
+
         plt.show()
 
     def test_vio_rejection(self):
@@ -316,33 +374,43 @@ class MyTestCase(unittest.TestCase):
         # measurement.save_sampled_data()
 
     def test_vio_error(self):
-        self.set_test_case()
+        w_errors = np.empty((0,3))
+        v_errors = np.empty((0,3))
+        v_cor_errors = np.empty((0,3))
         for i in range(1, 6):
-            sampled_pkl = "Measurements/exp"+str(i)+"_los_sampled.pkl"
+            sampled_pkl = "New_measurements/LOS/exp"+str(i)+"_los_sampled.pkl"
             measurement = Measurement()
             measurement.load_sampled_data(sampled_pkl)
             measurement.tb2.vio_frame.outlier_rejection(max_a=0.5)
             measurement.tb3.vio_frame.outlier_rejection(max_a = 0.5)
             measurement.get_VIO_error(plot=True)
-            measurement.tb2.plot_vio_error()
-            measurement.tb3.plot_vio_error()
+            w_errors = np.concatenate((w_errors, measurement.tb2.vio_w_error))
+            v_errors = np.concatenate((v_errors, measurement.tb2.vio_v_error))
+            v_cor_errors = np.concatenate((v_cor_errors, measurement.tb2.vio_v_cor_error))
+            w_errors = np.concatenate((w_errors, measurement.tb3.vio_w_error))
+            v_errors = np.concatenate((v_errors, measurement.tb3.vio_v_error))
+            v_cor_errors = np.concatenate((v_cor_errors, measurement.tb3.vio_v_cor_error))
+
+
+        # Make np.array(w_erros) 1 dimentional
+
+        w_mean = np.mean(w_errors, axis=0)
+        w_std = np.std(w_errors, axis=0)
+        v_mean = np.mean(v_errors, axis=0)
+        v_std = np.std(v_errors, axis=0)
+        v_cor_mean = np.mean(v_cor_errors, axis=0)
+        v_cor_std = np.std(v_cor_errors, axis=0)
+        print("W error mean: ", w_mean, " std: ", w_std)
+        print("V error mean: ", v_mean, " std: ", v_std)
+        print("V cor error mean: ", v_cor_mean, " std: ", v_cor_std)
+
         plt.show()
-        # sampled_pkl = "Measurements/exp1_los_sampled.pkl"
-        # # sampled_pkl = "Meas_new/exp1_sec1_los_sampled.pkl"
-        # measurement = Measurement()
-        # measurement.load_sampled_data(sampled_pkl)
-        # measurement.tb2.vio_frame.outlier_rejection(max_a = 0.5)
-        # measurement.tb3.vio_frame.outlier_rejection(max_a = 0.5)
-        #
-        # measurement.get_VIO_error(plot=True)
-        # measurement.tb2.plot_vio_error()
-        # measurement.tb3.plot_vio_error()
-        # plt.show()
+
 
     def test_set_vio_correction(self):
         self.set_test_case()
         for i in range(1, 6):
-            sampled_pkl = "Measurements/exp" + str(i) + "_los_sampled.pkl"
+            sampled_pkl = "New_measurements/LOS/exp" + str(i) + "_los_sampled.pkl"
             measurement = Measurement()
             measurement.load_sampled_data(sampled_pkl)
             measurement.tb2.vio_frame.outlier_rejection(max_a=0.5)
@@ -350,11 +418,8 @@ class MyTestCase(unittest.TestCase):
             measurement.tb2.vio_frame.sampled_v = measurement.tb2.vio_frame.v_cor
             measurement.tb3.vio_frame.sampled_v = measurement.tb3.vio_frame.v_cor
             measurement.name = "exp" + str(i) + "_los"
-            measurement.save_folder = "Measurements_correction/"
+            measurement.save_folder = "New_measurements/corrections2/"
             measurement.save_sampled_data()
-
-
-
 
     def test_new_robot_population(self):
         # self.set_test_case()

@@ -13,8 +13,8 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 class MyTestCase(unittest.TestCase):
     def test_create_sim_data_from_real(self):
-        sig_v = 0.04
-        sig_w = 0.08
+        sig_v = 0.08
+        sig_w = 0.12
         sig_uwb = 0.25
 
         main_folder = "./Experiments/LOS_exp/"

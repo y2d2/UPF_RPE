@@ -355,7 +355,7 @@ class TargetTrackingUKF:
         self.kf.P[-1, :] = np.zeros(self.kf_variables)
         self.kf.P[-1, -1] = 1e-20
         self.kf.x[-1] = 0
-        if bool_drift:
+        if self.drift_correction_bool:
             self.q_ca[:3, :3] = self.q_ca[:3, :3] + self.q_ha[:3, :3]
             self.kf.P[-1, -1] = self.kf.P[-1, -1] + self.q_ha[-1, -1]
             if np.sqrt(self.kf.P[-1, -1]) > np.pi:

@@ -239,6 +239,7 @@ class Measurement:
         self.tb2.get_vio_error(plot)
         self.tb3.get_vio_error(plot)
 
+
     def correct_orb_transformation(self):
         T_cor = np.array([[0,-1,0,0],
                           [0,0,-1,0],
@@ -314,8 +315,8 @@ class Measurement:
         print("uwb: ", len(self.uwb.sampled_t))
 
     def plot_sampled(self):
-        self.tb2.vio_frame.plot_sampled()
-        self.tb3.vio_frame.plot_sampled()
+        # self.tb2.vio_frame.plot_sampled()
+        # self.tb3.vio_frame.plot_sampled()
         self.tb2.vicon_frame.plot_sampled()
         self.tb3.vicon_frame.plot_sampled()
         self.uwb.plot_sampled()

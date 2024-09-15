@@ -420,6 +420,8 @@ class Turtlebot4:
             std_v_cor_error = np.std(self.vio_v_cor_error, axis=0)
             print("Mean v_cor error: ", mean_v_cor_error, " Std v_cor error: ", std_v_cor_error)
         except:
+            mean_v_cor_error = np.nan
+            std_v_cor_error = np.nan
             print("no self.vio_frame.v_cor")
 
         print("Mean v error: ", mean_v_error, " Std v error: ", std_v_error)
@@ -439,7 +441,7 @@ class Turtlebot4:
                 ax[i, 1].plot(vicon_w[:, i], label="vicon_w " + labels[i])
                 ax[i, 0].legend()
                 ax[i, 1].legend()
-
+        return mean_v_cor_error, std_v_cor_error, mean_v_error, std_v_error, mean_w_error, std_w_error
     #--------------
     # Plot methods
     #-------------

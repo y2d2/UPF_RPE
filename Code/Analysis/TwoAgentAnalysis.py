@@ -266,13 +266,17 @@ class TwoAgentAnalysis:
         g.add_legend(legend_data=new_legend_data)
 
     def print_statistics(self, methods_name, variables, df):
+        print('-----------------------------------------')
+        print("Statistacal Analysis")
+        print('-----------------------------------------')
         for variable in variables:
+            print(variable)
             for method in methods_name:
-                print(method, variable)
+                print(method)
                 print(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean(), " pm ",
                       df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].std(), "; median: ",
                       df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].median())
-
+            print('-----------------------------------------')
 
     def generate_name(self, method_param={}):
         name = method_param["Method"]
