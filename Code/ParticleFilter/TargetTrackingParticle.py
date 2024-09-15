@@ -6,6 +6,8 @@ from Code.ParticleFilter.TargetTrackingUKF import TargetTrackingUKF
 from Code.BaseLines.NLS import NLS
 from Code.UtilityCode.utility_fuctions import cartesianToSpherical, get_4d_rot_matrix
 
+#TODO: Check the implementation of the UFK particles,
+# since the switch to this structure the results have not been in line with the previous results.
 
 class TargetTrackingParticle:
     def __init__(self, weight, parent=None):
