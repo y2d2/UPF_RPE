@@ -1,11 +1,11 @@
 import unittest
 
 import pickle as pkl
-from RPE_Code.UtilityCode.Measurement import create_experiment, create_experimental_sim_data
+from Code.UtilityCode.Measurement import create_experiment, create_experimental_sim_data
 import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
-from RPE_Code.Analysis import TwoAgentAnalysis as TAA
+from Code.Analysis import TwoAgentAnalysis as TAA
 import seaborn as sns
 import os
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
@@ -15,23 +15,24 @@ class MyTestCase(unittest.TestCase):
     def test_create_sim_data_from_real(self):
         sig_v = 0.08
         sig_w = 0.12
-        sig_uwb = 0.25
+        sig_uwb = 0.15
 
         main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/sim2real_2/10hz"
-        data_folder = "./Measurements_correction/"
+        results_folder = main_folder + "Results/exp_cor_new6/sim"
+        data_folder = "./corrections3/"
 
         experiment_data, measurements = create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb)
         methods = [
-                    #"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                    "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    # "algebraic|frequency=1.0|horizon=10",
                    # "algebraic|frequency=10.0|horizon=100",
                    # "algebraic|frequency=1.0|horizon=10",
-                   "algebraic|frequency=10.0|horizon=1000",
+                   "algebraic|frequency=10.0|horizon=100",
                    # "QCQP|frequency=10.0|horizon=100",
                    # "QCQP|frequency=1.0|horizon=10"
-                   "QCQP|frequency=10.0|horizon=1000"
+                   "QCQP|frequency=10.0|horizon=100",
+                     "NLS|frequency=1.0|horizon=10"
                    ]
 
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)

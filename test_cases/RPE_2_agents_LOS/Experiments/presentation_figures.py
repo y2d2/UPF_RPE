@@ -1,16 +1,16 @@
 import unittest
 import os
-import RPE_Code.Simulation.MultiRobotClass
-from RPE_Code.BaseLines import NLS, NLSDataLogger
+import Code.Simulation.MultiRobotClass
+from Code.BaseLines import NLS, NLSDataLogger
 import numpy as np
 import pickle as pkl
 
-from RPE_Code.UtilityCode import Measurement
+from Code.UtilityCode import Measurement
 
-from RPE_Code.Simulation import NewRobot
+from Code.Simulation import NewRobot
 import matplotlib
 
-from RPE_Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
+from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
 
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
@@ -66,7 +66,7 @@ class MyTestCase(unittest.TestCase):
         n_altitude = 3
         n_heading = 4
 
-        tas = RPE_Code.Simulation.MultiRobotClass.TwoAgentSystem(trajectory_folder="./", result_folder=results_folder)
+        tas = Code.Simulation.MultiRobotClass.TwoAgentSystem(trajectory_folder="./", result_folder=results_folder)
         tas.debug_bool = True
         tas.plot_bool = True
         tas.set_ukf_properties(kappa=kappa, alpha=alpha, beta=beta, n_azimuth=n_azimuth, n_altitude=n_altitude,
@@ -163,7 +163,7 @@ class MyTestCase(unittest.TestCase):
             pkl.dump(nls_logger_10, file)
 
     def test_show_unob_uncertainty(self):
-        from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
+        from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
 
         upf0: UPFConnectedAgent = pkl.load(open("presentation/exp1_unobservable_sampled/drone_0_losupf.pkl", "rb"))
         upf0_logger: UPFConnectedAgentDataLogger = upf0.upf_connected_agent_logger
@@ -184,7 +184,7 @@ class MyTestCase(unittest.TestCase):
         plt.show()
 
     def test_show_trajectory_estimations(self):
-        from RPE_Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
+        from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
         plt.ion()
         upf0: UPFConnectedAgent = pkl.load(open("presentation/exp3_sec1_los_sampled/drone_0_losupf.pkl", "rb"))
         upf0_logger: UPFConnectedAgentDataLogger = upf0.upf_connected_agent_logger
