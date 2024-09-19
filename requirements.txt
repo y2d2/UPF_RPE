@@ -125,8 +125,8 @@ requests==2.31.0
 rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
 rich==13.7.1
-rosbags==0.9.19
-rosbags-image==0.9.1
+rosbags==0.10.4
+rosbags-image==0.10.0
 rpds-py==0.18.0
 ruamel.yaml==0.18.6
 ruamel.yaml.clib==0.2.8

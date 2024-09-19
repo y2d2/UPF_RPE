@@ -1,6 +1,7 @@
 import os
 import rosbags.rosbag2 as rb2
-
+from rosbags.rosbag2 import WriterError
+from rosbags.typesys import Stores, get_typestore
 from rosbags.serde import deserialize_cdr
 from Code.UtilityCode.turtlebot4 import Turtlebot4
 from Code.Simulation.MultiRobotClass import TwoAgentSystem
@@ -13,27 +14,52 @@ from Code.UtilityCode.Transformation_Matrix_Fucntions import inv_transformation_
 
 from pathlib import Path
 from rosbags.typesys import get_types_from_msg, register_types
+
 def load_custom_messages():
+    def guess_msgtype(path: Path) -> str:
+        """Guess message type name from path."""
+        name = path.relative_to(path.parents[2]).with_suffix('')
+        if 'msg' not in name.parts:
+            name = name.parent / 'msg' / name.name
+        return str(name)
+
+    typestore = get_typestore(Stores.ROS2_HUMBLE)
+    add_types = {}
+    folder = '../../../Data/Custom_ros_messages/'
+    for pathstr in ['yd_uwb_msgs/msg/UWBRange.msg',
+                    'yd_uwb_msgs/msg/UWBRangeStamp.msg',
+                    'vicon_receiver/msg/Position.msg',]:
+        msgpath = Path(folder + pathstr)
+        msgdef = msgpath.read_text(encoding='utf-8')
+        add_types.update(get_types_from_msg(msgdef, guess_msgtype(msgpath)))
+    return add_types
+
     #######################
     # CUSTOM MESSAGS
     ######################
-    custom_msg_path = Path(
-        '/home/yuri/Documents/PhD/ROS_WS/humble/src/yd_uwb/yd_uwb_msgs/msg/UWBRangeStamp.msg')
-    msg_def = custom_msg_path.read_text(encoding='utf-8')
-    register_types(get_types_from_msg(
-        msg_def, 'yd_uwb_msgs/msg/UWBRangeStamp'))
+    # custom_msg_path = Path('../../../Data/Custom_ros_messages/UWBRangeStamp.msg')
+    # msg_def = custom_msg_path.read_text(encoding='utf-8')
+    # register_types(get_types_from_msg(
+    #     msg_def, 'yd_uwb_msgs/msg/UWBRangeStamp'))
+    #
+    # custom_msg_path = Path(
+    #     '/home/yuri/Documents/PhD/ROS_WS/humble/src/yd_uwb/yd_uwb_msgs/msg/UWBRange.msg')
+    # msg_def = custom_msg_path.read_text(encoding='utf-8')
+    # register_types(get_types_from_msg(
+    #     msg_def, 'yd_uwb_msgs/msg/UWBRange'))
+    #
+    # custom_msg_path = Path(
+    #     '/home/yuri/Documents/PhD/ROS_WS/humble/src/ros2-vicon-receiver/vicon_receiver/msg/Position.msg')
+    # msg_def = custom_msg_path.read_text(encoding='utf-8')
+    # register_types(get_types_from_msg(
+    #     msg_def, 'vicon_receiver/msg/Position'))
+    #
+    # add_types.update(get_types_from_msg(msgdef, guess_msgtype(msgpath)))
+    #
+    # typestore.register(add_types)
+    #
+    # add_types.update(get_types_from_msg(msgdef, guess_msgtype(msgpath)))
 
-    custom_msg_path = Path(
-        '/home/yuri/Documents/PhD/ROS_WS/humble/src/yd_uwb/yd_uwb_msgs/msg/UWBRange.msg')
-    msg_def = custom_msg_path.read_text(encoding='utf-8')
-    register_types(get_types_from_msg(
-        msg_def, 'yd_uwb_msgs/msg/UWBRange'))
-
-    custom_msg_path = Path(
-        '/home/yuri/Documents/PhD/ROS_WS/humble/src/ros2-vicon-receiver/vicon_receiver/msg/Position.msg')
-    msg_def = custom_msg_path.read_text(encoding='utf-8')
-    register_types(get_types_from_msg(
-        msg_def, 'vicon_receiver/msg/Position'))
     #####################################################################################
 
 
@@ -86,7 +112,9 @@ class Measurement:
 
     def read_bag(self, VIO_source="orb"):
         # VIO_source = "orb" or "specVIO"
-        load_custom_messages()
+        typestore = get_typestore(Stores.ROS2_HUMBLE)
+        typestore.register(load_custom_messages())
+
         with rb2.Reader(self.rosbag) as ros2_reader:
             ros2_conns = [x for x in ros2_reader.connections]
             ros2_messages = ros2_reader.messages(connections=ros2_conns)
@@ -117,6 +145,41 @@ class Measurement:
                 if self.uwb_topic == connection.topic:
                     msg_data = deserialize_cdr(rawdata, connection.msgtype)
                     self.uwb.get_measuremend(msg_data)
+
+    def trim_bag(self, name, begin_time, end_time):
+        # VIO_source = "orb" or "specVIO"
+        typestore = get_typestore(Stores.ROS2_HUMBLE)
+        typestore.register(load_custom_messages())
+        t0 = None
+        with rb2.Writer(self.save_folder + "/" + name) as ros2_writer:
+            tb2_topic_con = ros2_writer.add_connection(self.tb2_topic, 'vicon_receiver/msg/Position', typestore=typestore)
+            tb2_odom_con = ros2_writer.add_connection(self.tb2_odom_topic, 'nav_msgs/msg/Odometry', typestore=typestore)
+            tb3_topic_con = ros2_writer.add_connection(self.tb3_topic, 'vicon_receiver/msg/Position', typestore=typestore)
+            tb3_odom_con = ros2_writer.add_connection(self.tb3_odom_topic, 'nav_msgs/msg/Odometry', typestore=typestore)
+            uwb_con = ros2_writer.add_connection(self.uwb_topic, 'yd_uwb_msgs/msg/UWBRange', typestore=typestore)
+
+            with rb2.Reader(self.rosbag) as ros2_reader:
+
+                ros2_conns = [x for x in ros2_reader.connections]
+                ros2_messages = ros2_reader.messages(connections=ros2_conns)
+                for m, msg in enumerate(ros2_messages):
+                    (connection, timestamp, rawdata) = msg
+                    if t0 is None:
+                        t0 = timestamp
+                        print(t0)
+                    if timestamp >= t0 + begin_time*1e9 and timestamp <= t0 + end_time*1e9:
+                        print(timestamp)
+                        if self.tb2_topic == connection.topic:
+                            ros2_writer.write(tb2_topic_con, timestamp, rawdata)
+                        if self.tb2_odom_topic == connection.topic:
+                            ros2_writer.write(tb2_odom_con, timestamp, rawdata)
+                        if self.tb3_topic == connection.topic:
+                            ros2_writer.write(tb3_topic_con, timestamp, rawdata)
+                        if self.tb3_odom_topic == connection.topic:
+                            ros2_writer.write(tb3_odom_con, timestamp, rawdata)
+                        if self.uwb_topic == connection.topic:
+                            ros2_writer.write(uwb_con, timestamp, rawdata)
+
 
     def get_raw_dict(self):
         meas_dict = {}

@@ -20,6 +20,8 @@ import seaborn as sns
 
 class MyTestCase(unittest.TestCase):
 
+
+
     def set_test_case(self):
         self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/"
         self.rosbag = self.exp_folder+"exp4"
@@ -35,6 +37,15 @@ class MyTestCase(unittest.TestCase):
         self.tb3_odom_topic = "/tb3/odom"
         self.tb2 = Turtlebot4("tb2")
         self.tb3 = Turtlebot4("tb3")
+
+    def test_trim_bags(self):
+        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/"
+        self.rosbag = self.exp_folder + "exp1"
+        measurement = Measurement(self.rosbag)
+        measurement.trim_bag("exp1", 506,  506 + 300)
+
+
+
 
     def test_vio_sanity(self):
         rosbag = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/exp1"
@@ -142,9 +153,10 @@ class MyTestCase(unittest.TestCase):
 
     def test_read_bag(self):
         self.set_test_case()
+        self.rosbag = "exp1"
         measurement = Measurement(self.rosbag)
         measurement.read_bag()
-        measurement.save_raw_data()
+        # measurement.save_raw_data()
         print(len(measurement.tb3.vio_frame.t))
         print(len(measurement.tb2.vio_frame.t))
         print(len(measurement.tb3.vicon_frame.t))

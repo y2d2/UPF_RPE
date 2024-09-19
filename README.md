@@ -1,7 +1,7 @@
 # UPF for Relative Pose estimation between two agents for unobservable motion
 
 This repository provides the code for an Unscented Particle Filter for estimating the relative pose between two agents equipped with one UWB device each and that share VIO measurements between them.
-The UPF is capable of tracking the complex solution space when the relative pose is unobservable due to the relative motion between the agents. Video of the algorithm is available on: https://youtu.be/HPpBy0R0jvI . 
+The UPF is capable of tracking the complex solution space when the relative pose is unobservable due to the relative motion between the agents. Video of the algorithm is available on: https://youtu.be/LZUHADsAmjo . 
 Additionally, the repository also provides  measurement and simulation data as well as the implementations of an NLS and algebraic method for comparison. 
 
 ## Paper 

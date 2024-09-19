@@ -412,7 +412,7 @@ class MyTestCase(unittest.TestCase):
         result_folders = [
                             # "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/10hz",
                             # "./Experiments/LOS_exp/Results/experiments_paper/exp5"
-                            "./Experiments/LOS_exp/Results/exp_cor_new6/exp"
+                            "./Experiments/LOS_exp/Results/exp_cor_new1/exp"
                             ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = [
