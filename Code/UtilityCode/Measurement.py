@@ -34,32 +34,26 @@ def load_custom_messages():
         add_types.update(get_types_from_msg(msgdef, guess_msgtype(msgpath)))
     return add_types
 
+def load_custom_messages2():
     #######################
     # CUSTOM MESSAGS
-    ######################
-    # custom_msg_path = Path('../../../Data/Custom_ros_messages/UWBRangeStamp.msg')
-    # msg_def = custom_msg_path.read_text(encoding='utf-8')
-    # register_types(get_types_from_msg(
-    #     msg_def, 'yd_uwb_msgs/msg/UWBRangeStamp'))
-    #
-    # custom_msg_path = Path(
-    #     '/home/yuri/Documents/PhD/ROS_WS/humble/src/yd_uwb/yd_uwb_msgs/msg/UWBRange.msg')
-    # msg_def = custom_msg_path.read_text(encoding='utf-8')
-    # register_types(get_types_from_msg(
-    #     msg_def, 'yd_uwb_msgs/msg/UWBRange'))
-    #
-    # custom_msg_path = Path(
-    #     '/home/yuri/Documents/PhD/ROS_WS/humble/src/ros2-vicon-receiver/vicon_receiver/msg/Position.msg')
-    # msg_def = custom_msg_path.read_text(encoding='utf-8')
-    # register_types(get_types_from_msg(
-    #     msg_def, 'vicon_receiver/msg/Position'))
-    #
-    # add_types.update(get_types_from_msg(msgdef, guess_msgtype(msgpath)))
-    #
-    # typestore.register(add_types)
-    #
-    # add_types.update(get_types_from_msg(msgdef, guess_msgtype(msgpath)))
+    #####################
+    custom_msg_path = Path('../../../Data/Custom_ros_messages/yd_uwb_msgs/msg/UWBRangeStamp.msg')
+    msg_def = custom_msg_path.read_text(encoding='utf-8')
+    register_types(get_types_from_msg(
+        msg_def, 'yd_uwb_msgs/msg/UWBRangeStamp'))
 
+    custom_msg_path = Path(
+        '../../../Data/Custom_ros_messages/yd_uwb_msgs/msg/UWBRange.msg')
+    msg_def = custom_msg_path.read_text(encoding='utf-8')
+    register_types(get_types_from_msg(
+        msg_def, 'yd_uwb_msgs/msg/UWBRange'))
+
+    custom_msg_path = Path(
+        '../../../Data/Custom_ros_messages/vicon_receiver/msg/Position.msg')
+    msg_def = custom_msg_path.read_text(encoding='utf-8')
+    register_types(get_types_from_msg(
+        msg_def, 'vicon_receiver/msg/Position'))
     #####################################################################################
 
 
@@ -110,40 +104,56 @@ class Measurement:
         self.tb3_odom_topic = tb3_vio
         self.uwb_topic = uwb
 
-    def read_bag(self, VIO_source="orb"):
+    def read_bag(self, VIO_source="orb", new_message_conf=False):
         # VIO_source = "orb" or "specVIO"
         typestore = get_typestore(Stores.ROS2_HUMBLE)
-        typestore.register(load_custom_messages())
+        if new_message_conf:
+            typestore.register(load_custom_messages())
+        else:
+            load_custom_messages2()
+
+        UWBRangeStamp = typestore.types['yd_uwb_msgs/msg/UWBRangeStamp'].__msgtype__
+        Position = typestore.types['vicon_receiver/msg/Position'].__msgtype__
+
+        print("Reading bag")
 
         with rb2.Reader(self.rosbag) as ros2_reader:
             ros2_conns = [x for x in ros2_reader.connections]
             ros2_messages = ros2_reader.messages(connections=ros2_conns)
+
+            connections = ros2_reader.connections
+            # Access the counts of messages directly from the metadata
+            m_tot = sum(connection.msgcount for connection in connections)
+
             for m, msg in enumerate(ros2_messages):
                 (connection, timestamp, rawdata) = msg
+                print(m/m_tot*100 , "%", connection, timestamp)
+
                 if self.tb2_topic == connection.topic:
-                    data = deserialize_cdr(rawdata, connection.msgtype)
+                    # print(connection.topic, connection.msgtype)
+                    data = typestore.deserialize_cdr(rawdata, Position)
                     self.tb2.update_vicon(data, timestamp)
 
                 if self.tb2_odom_topic == connection.topic:
-                    data = deserialize_cdr(rawdata, connection.msgtype)
+                    data = typestore.deserialize_cdr(rawdata, connection.msgtype)
                     if VIO_source == "specVIO":
                         self.tb2.update_specVIO(data)
                     if VIO_source == "orb":
                         self.tb2.update_orb(data)
 
                 if self.tb3_odom_topic == connection.topic:
-                    data = deserialize_cdr(rawdata, connection.msgtype)
+                    data = typestore.deserialize_cdr(rawdata, connection.msgtype)
                     if VIO_source == "specVIO":
                         self.tb3.update_specVIO(data)
                     if VIO_source == "orb":
                         self.tb3.update_orb(data)
 
                 if self.tb3_topic == connection.topic:
-                    data = deserialize_cdr(rawdata, connection.msgtype)
+                    data = typestore.deserialize_cdr(rawdata, Position)
                     self.tb3.update_vicon(data, timestamp)
 
                 if self.uwb_topic == connection.topic:
-                    msg_data = deserialize_cdr(rawdata, connection.msgtype)
+                    msg_data = typestore.deserialize_cdr(rawdata, UWBRangeStamp)
                     self.uwb.get_measuremend(msg_data)
 
     def trim_bag(self, name, begin_time, end_time):
@@ -151,6 +161,8 @@ class Measurement:
         typestore = get_typestore(Stores.ROS2_HUMBLE)
         typestore.register(load_custom_messages())
         t0 = None
+
+
         with rb2.Writer(self.save_folder + "/" + name) as ros2_writer:
             tb2_topic_con = ros2_writer.add_connection(self.tb2_topic, 'vicon_receiver/msg/Position', typestore=typestore)
             tb2_odom_con = ros2_writer.add_connection(self.tb2_odom_topic, 'nav_msgs/msg/Odometry', typestore=typestore)
@@ -159,25 +171,35 @@ class Measurement:
             uwb_con = ros2_writer.add_connection(self.uwb_topic, 'yd_uwb_msgs/msg/UWBRange', typestore=typestore)
 
             with rb2.Reader(self.rosbag) as ros2_reader:
-
                 ros2_conns = [x for x in ros2_reader.connections]
                 ros2_messages = ros2_reader.messages(connections=ros2_conns)
+
+                connections = ros2_reader.connections
+                # Access the counts of messages directly from the metadata
+                m_tot = sum(connection.msgcount for connection in connections)
+
                 for m, msg in enumerate(ros2_messages):
+                    print(m / m_tot * 100, "%")
                     (connection, timestamp, rawdata) = msg
                     if t0 is None:
                         t0 = timestamp
                         print(t0)
-                    if timestamp >= t0 + begin_time*1e9 and timestamp <= t0 + end_time*1e9:
+                    if timestamp >= begin_time*1e9 and timestamp <= end_time*1e9:
                         print(timestamp)
                         if self.tb2_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
                             ros2_writer.write(tb2_topic_con, timestamp, rawdata)
                         if self.tb2_odom_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
                             ros2_writer.write(tb2_odom_con, timestamp, rawdata)
                         if self.tb3_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
                             ros2_writer.write(tb3_topic_con, timestamp, rawdata)
                         if self.tb3_odom_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
                             ros2_writer.write(tb3_odom_con, timestamp, rawdata)
                         if self.uwb_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
                             ros2_writer.write(uwb_con, timestamp, rawdata)
 
 
@@ -250,6 +272,13 @@ class Measurement:
     #--------------------
     # Sampling and processing data
     #____________________
+    def find_beginning(self):
+        ts = np.array(
+            [self.tb2.vicon_frame.t[0], self.tb2.vio_frame.t[0], self.tb3.vicon_frame.t[0], self.tb3.vio_frame.t[0],
+             self.uwb.t[0]])
+        start_time = np.max(ts)
+        return start_time
+
     def sample(self, frequency, start_time=None, end_time=None):
         # Place holder to find start time
         self.sample_frequency = frequency

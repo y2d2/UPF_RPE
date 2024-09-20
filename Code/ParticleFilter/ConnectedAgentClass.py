@@ -239,6 +239,18 @@ class UPFConnectedAgent:
         self.particles.append(particle)
         self.set_best_particle(self.particles[0])
 
+    def create_single_particle(self, t, sigma_uwb):
+        self.n_altitude = 1
+        self.n_azimuth = 1
+        self.n_heading = 1
+        self.sigma_uwb = self.sigma_uwb_factor * sigma_uwb
+        s_S0_S1 = cartesianToSpherical(t[:3])
+        particle = self.create_particle()
+        particle.set_initial_state(s_S0_S1, np.array([self.sigma_uwb, 0.000001, 0.000001]),  t[-1], 0.000001,
+                                   self.sigma_uwb)
+        self.particles.append(particle)
+        self.set_best_particle(self.particles[0])
+
     def split_sphere_in_equal_areas(self, r: float, sigma_uwb: float, n_altitude: int, n_azimuth: int, n_heading: int):
         """
         Function to split the area of a sphere in almost equal areas (= weights)

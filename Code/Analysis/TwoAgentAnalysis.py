@@ -266,6 +266,9 @@ class TwoAgentAnalysis:
         g.add_legend(legend_data=new_legend_data)
 
     def print_statistics(self, methods_name, variables, df):
+        print('-----------------------------------------')
+        print("Statistacal Analysis")
+        print('-----------------------------------------')
         for variable in variables:
             print(variable)
             for method in methods_name:
@@ -273,7 +276,7 @@ class TwoAgentAnalysis:
                 print(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean(), " pm ",
                       df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].std(), "; median: ",
                       df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].median())
-
+            print('-----------------------------------------')
 
     def generate_name(self, method_param={}):
         name = method_param["Method"]
@@ -487,8 +490,49 @@ class TwoAgentAnalysis:
                    bbox_to_anchor=(0.5, 0.99))
         plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
-    def lineplot(self):
-        pass
+    def lineplot(self, df, methods_names, methods_colors =None, methods_styles=None, methods_legends=None, variables=["error_x_relative", "error_h_relative"]):
+        fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 3))
+        for i, variable in enumerate(variables):
+            var_df = df.loc[(df["Variable"] == variable)]
+            method_means = []
+            time_points = var_df["Time"].unique()
+            # methods = var_df["Method"].unique()
+            for method_name in methods_names:
+                method_time_values = []                  # to store values at each time point for a specific method
+                for time_point in time_points:
+                    mean_value = var_df[(var_df["Name"] == method_name) & (var_df["Time"] == time_point)]["value"].mean()
+                    method_time_values.append(mean_value)
+
+                method_means.append({"Method": method_name,  "TimeValues": method_time_values})
+                print("For Method:", method_name, variable, "Average over all conditions at each time point:",
+                      method_time_values)
+
+            avg_time_df = pd.DataFrame({"Time": time_points})
+            for method_mean in method_means:
+                avg_time_df[method_mean["Method"]] = method_mean["TimeValues"]
+            avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Name", value_name="MeanValue")
+
+            plt.sca(axes[i])
+            # use custom linestyle: methods_styles in the sns.lineplot:
+            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Name" ,linewidth=2.5, legend=False,
+                          palette=methods_colors, hue_order=methods_names) # markers=True)
+
+
+            axes[i].set_xlabel("time [s]", fontsize=12)
+            # axes[i].set_ylabel(self.y_label[variable], fontsize=12)
+            if variable == "error_x_relative":
+                axes[i].set_yscale("log")
+                axes[i].set_ylim([0.1, 50])
+
+        legend_handles = [Line2D([0], [0], color=methods_colors[method], linewidth=2.5) for method in methods_names]
+        legend_labels = [methods_legends[method] for method in methods_names]
+        # fig.suptitle("Average error evolution of the experiments")
+        fig.legend(handles=legend_handles, labels=legend_labels, ncol=3, fontsize=12, loc="upper center",
+                   bbox_to_anchor=(0.5, 0.92))
+        plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
+        return axes
+        # g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
+        #                  palette=methods_color, hue_order=methods_order, linewidth=2.5, legend=False)
 
 
 if __name__ == "__main__":

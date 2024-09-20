@@ -886,7 +886,8 @@ class TwoAgentSystem():
                 dx_1, q_1 = drone1.reset_integration()
 
                 uwb_measurement = distances[i]
-                uwb_measurement, los_state = nlos_function(int(i / self.factor), uwb_measurement)
+                los_state = True
+                # uwb_measurement, los_state = nlos_function(int(i / self.factor), uwb_measurement)
                 self.los_state.append(los_state)
 
                 eval("self.run_" + self.method + "_simulation" + "(dx_0, q_0, dx_1, q_1, uwb_measurement, i)")
@@ -897,16 +898,16 @@ class TwoAgentSystem():
 
     # --- UPF functions
 
-    def init_upf_test(self, parameters = {}):
+    def init_upf_test(self, parameters={}):
         self.init_gen_upf_test(NLOS_bool=True, drift_bool=True, parameters=parameters)
 
-    def init_losupf_test(self,  parameters = {}):
+    def init_losupf_test(self, parameters={}):
         self.init_gen_upf_test(NLOS_bool=False, drift_bool=True, parameters=parameters)
 
-    def init_nodriftupf_test(self,  parameters = {}):
+    def init_nodriftupf_test(self, parameters={}):
         self.init_gen_upf_test(NLOS_bool=False, drift_bool=False, parameters=parameters)
 
-    def init_upfnaive_test(self,  parameters = {}):
+    def init_upfnaive_test(self, parameters={}):
         self.init_gen_upf_test(NLOS_bool=True, drift_bool=True, naive_sampling_bool=True, parameters=parameters)
 
     def generate_upf_parameters(self):
@@ -949,8 +950,6 @@ class TwoAgentSystem():
         else:
             self.sigma_uwb_factor = self.parameters["sigma_uwb_factor"]
 
-
-
     def init_gen_upf_test(self, NLOS_bool=True, drift_bool=True, naive_sampling_bool=False, logger=True, parameters={}):
         self.generate_upf_parameters()
         self.method = "upf"
@@ -964,7 +963,12 @@ class TwoAgentSystem():
         upf0.resample_factor = self.resample_factor
         upf0.sigma_uwb_factor = self.sigma_uwb_factor
         upf0.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
-        upf0.split_sphere_in_equal_areas(r=self.d0, sigma_uwb= self.sigma_uwb,
+        if "multi_particles" in parameters and parameters["multi_particles"] ==0 :
+            # TODO: add code to find the intial transform and convert ti
+            t_S0_S1 = self.find_initial_t()
+            upf0.create_single_particle(t_S0_S1, self.sigma_uwb)
+        else:
+            upf0.split_sphere_in_equal_areas(r=self.d0, sigma_uwb= self.sigma_uwb,
                                          n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
 
         dl0 = UPFConnectedAgentDataLogger(drone0, drone1, upf0)
@@ -979,7 +983,11 @@ class TwoAgentSystem():
         upf1.resample_factor = self.resample_factor
         upf1.sigma_uwb_factor = self.sigma_uwb_factor
         upf1.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
-        upf1.split_sphere_in_equal_areas(r=self.d0, sigma_uwb= self.sigma_uwb,
+        if "multi_particles" in parameters and parameters["multi_particles"] == 0:
+            t_S1_S0 = get_states_of_transform(inv_transformation_matrix(t_S0_S1))
+            upf1.create_single_particle(t_S1_S0, self.sigma_uwb)
+        else:
+            upf1.split_sphere_in_equal_areas(r=self.d0, sigma_uwb= self.sigma_uwb,
                                          n_azimuth=self.n_azimuth, n_altitude=self.n_altitude, n_heading=self.n_heading)
         dl1 = UPFConnectedAgentDataLogger(drone1, drone0, upf1)
         # upf1.set_logging(dl1)
