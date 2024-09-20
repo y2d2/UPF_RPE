@@ -201,6 +201,8 @@ class Measurement:
                         if self.uwb_topic == connection.topic:
                             print(connection.topic, connection.msgtype)
                             ros2_writer.write(uwb_con, timestamp, rawdata)
+                    if timestamp > end_time*1e9:
+                        break
 
 
     def get_raw_dict(self):

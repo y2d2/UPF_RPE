@@ -40,12 +40,20 @@ class MyTestCase(unittest.TestCase):
 
     def test_trim_bags(self):
         self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/"
-        self.rosbag = self.exp_folder + "exp1"
-        measurement = Measurement(self.rosbag)
-        measurement.trim_bag("exp1", 506,  506 + 300)
-
-
-
+        self.rosbag = self.exp_folder + "exp4"
+        new_name = "./trimmed_rosbags/exp5"
+        if not os.path.exists(new_name):
+            measurement = Measurement(self.rosbag)
+            measurement.read_bag(new_message_conf=True)
+            start_time = measurement.find_beginning()
+            measurement.trim_bag(new_name, start_time,  start_time  + 300)
+            # new_name = "./trimmed_rosbags/exp4"
+            # measurement.trim_bag(new_name, start_time+ 300, start_time + 600)
+        for i in [5]:
+            measurement_new = Measurement("./trimmed_rosbags/exp"+str(i))
+            measurement_new.read_bag(new_message_conf=True)
+            measurement_new.save_folder = "./trimmed_rosbags/"
+            measurement_new.save_raw_data()
 
     def test_vio_sanity(self):
         rosbag = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/exp1"
@@ -156,7 +164,7 @@ class MyTestCase(unittest.TestCase):
         self.rosbag = "exp1"
         measurement = Measurement(self.rosbag)
         measurement.read_bag()
-        # measurement.save_raw_data()
+        measurement.save_raw_data()
         print(len(measurement.tb3.vio_frame.t))
         print(len(measurement.tb2.vio_frame.t))
         print(len(measurement.tb3.vicon_frame.t))
@@ -169,7 +177,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_read_raw_data_pkl(self):
         self.set_test_case()
-        pikle_file = self.name + "_raw.pkl"
+        pikle_file = "./trimmed_rosbags/exp1_raw.pkl"
         measurement = Measurement()
         measurement.load_raw_data(pikle_file)
         measurement.tb2.plot_trajectory(plt)
@@ -180,9 +188,20 @@ class MyTestCase(unittest.TestCase):
         print(len(measurement.uwb.t))
         plt.show()
 
+    def test_sample_raw_data_folder(self):
+        for i in range(1, 6):
+            pikle_file = "./trimmed_rosbags/exp"+str(i)+"_raw.pkl"
+            measurement = Measurement()
+            measurement.load_raw_data(pikle_file)
+            measurement.sample(10)
+            measurement.save_folder = "./trimmed_rosbags/"
+            measurement.name = "exp"+str(i) + "_los"
+            measurement.save_sampled_data()
+
     def test_raw_data(self):
-        pickle_file = ("./exp1_raw.pkl")
+        pickle_file = "./trimmed_rosbags/exp1_raw.pkl"
         measurement = Measurement()
+        measurement.save_folder ="./trimmed_rosbags/"
         measurement.load_raw_data(pickle_file)
         measurement.sample(10)
         measurement.plot_sampled()
@@ -388,7 +407,9 @@ class MyTestCase(unittest.TestCase):
         # self.set_test_case()
         fig, ax = plt.subplots(5, 1)
         for i in range(1, 6):
-            sampled_pkl = "../../../Data/Measurements/exp"+str(i)+"_los_sampled.pkl"
+            sampled_pkl = "../../../Data/Measurements_correction/exp"+str(i)+"_los_sampled.pkl"
+            # sampled_pkl = "./corrections3/exp"+str(i)+"_los_sampled.pkl"
+            # sampled_pkl = "./trimmed_rosbags/exp"+str(i)+"_sampled.pkl"
             measurement = Measurement()
             measurement.load_sampled_data(sampled_pkl)
             measurement.get_uwb_distances()
@@ -405,6 +426,7 @@ class MyTestCase(unittest.TestCase):
     def test_vio_rejection(self):
         # TODO: make rejection strategy for VIO. (Maybe can help.)
         self.set_test_case()
+
         sampled_pkl = "Measurements/exp1_los_sampled.pkl"
         measurement = Measurement()
         measurement.load_sampled_data(sampled_pkl)
