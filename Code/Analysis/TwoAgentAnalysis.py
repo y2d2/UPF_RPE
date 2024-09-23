@@ -504,8 +504,8 @@ class TwoAgentAnalysis:
                     method_time_values.append(mean_value)
 
                 method_means.append({"Method": method_name,  "TimeValues": method_time_values})
-                print("For Method:", method_name, variable, "Average over all conditions at each time point:",
-                      method_time_values)
+                # print("For Method:", method_name, variable, "Average over all conditions at each time point:",
+                #       method_time_values)
 
             avg_time_df = pd.DataFrame({"Time": time_points})
             for method_mean in method_means:

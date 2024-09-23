@@ -20,6 +20,16 @@ import seaborn as sns
 
 class MyTestCase(unittest.TestCase):
 
+    def test_trim_full_bags(self):
+        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/networkDrive/Experiments/RPE_UPF/Exp1_unob_LOS_Obs/"
+        self.rosbag = self.exp_folder + "exp1_full"
+        start_time = 1696516155806928994
+        end_time = 1696516155806928994 + 300 *1e9
+
+        measurement = Measurement(self.rosbag)
+        measurement.trim_full_bag(start_time, end_time, "./exp1_full")
+
+
 
 
     def set_test_case(self):
@@ -39,14 +49,14 @@ class MyTestCase(unittest.TestCase):
         self.tb3 = Turtlebot4("tb3")
 
     def test_trim_bags(self):
-        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/"
-        self.rosbag = self.exp_folder + "exp4"
+        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/networkDrive/Experiments/RPE_UPF/Exp1_unob_LOS_Obs"
+        self.rosbag = self.exp_folder + "exp1_full"
         new_name = "./trimmed_rosbags/exp5"
         if not os.path.exists(new_name):
             measurement = Measurement(self.rosbag)
             measurement.read_bag(new_message_conf=True)
             start_time = measurement.find_beginning()
-            measurement.trim_bag(new_name, start_time,  start_time  + 300)
+            measurement.trim_bag(new_name, start_time + 506,  start_time  + 506+300)
             # new_name = "./trimmed_rosbags/exp4"
             # measurement.trim_bag(new_name, start_time+ 300, start_time + 600)
         for i in [5]:

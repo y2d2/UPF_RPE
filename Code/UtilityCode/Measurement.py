@@ -156,6 +156,9 @@ class Measurement:
                     msg_data = typestore.deserialize_cdr(rawdata, UWBRangeStamp)
                     self.uwb.get_measuremend(msg_data)
 
+                    # self.tb3.update_left_image(data)
+
+
     def trim_bag(self, name, begin_time, end_time):
         # VIO_source = "orb" or "specVIO"
         typestore = get_typestore(Stores.ROS2_HUMBLE)
@@ -204,6 +207,79 @@ class Measurement:
                     if timestamp > end_time*1e9:
                         break
 
+    def trim_full_bag(self, begin_time, end_time, bag_file):
+        typestore = get_typestore(Stores.ROS2_HUMBLE)
+        typestore.register(load_custom_messages())
+        t0 = None
+
+        with rb2.Writer(bag_file) as ros2_writer:
+            tb2_topic_con = ros2_writer.add_connection(self.tb2_topic, 'vicon_receiver/msg/Position',
+                                                       typestore=typestore)
+            tb2_odom_con = ros2_writer.add_connection(self.tb2_odom_topic, 'nav_msgs/msg/Odometry', typestore=typestore)
+            tb3_topic_con = ros2_writer.add_connection(self.tb3_topic, 'vicon_receiver/msg/Position',
+                                                       typestore=typestore)
+            tb3_odom_con = ros2_writer.add_connection(self.tb3_odom_topic, 'nav_msgs/msg/Odometry', typestore=typestore)
+            uwb_con = ros2_writer.add_connection(self.uwb_topic, 'yd_uwb_msgs/msg/UWBRange', typestore=typestore)
+
+            tb3_right_camera_con = ros2_writer.add_connection("/tb3/oakd/right/image_rect/compressed", 'sensor_msgs/msg/CompressedImage', typestore=typestore)
+            tb3_left_camera_con = ros2_writer.add_connection("/tb3/oakd/left/image_rect/compressed", 'sensor_msgs/msg/CompressedImage', typestore=typestore)
+            tb2_right_camera_con = ros2_writer.add_connection("/tb2/oakd/right/image_rect/compressed", 'sensor_msgs/msg/CompressedImage', typestore=typestore)
+            tb2_left_camera_con = ros2_writer.add_connection("/tb2/oakd/left/image_rect/compressed", 'sensor_msgs/msg/CompressedImage', typestore=typestore)
+            tb2_imu_con = ros2_writer.add_connection("/tb2/oakd/imu/data", 'sensor_msgs/msg/Imu', typestore=typestore)
+            tb3_imu_con = ros2_writer.add_connection("/tb3/oakd/imu/data", 'sensor_msgs/msg/Imu', typestore=typestore)
+
+
+            with rb2.Reader(self.rosbag) as ros2_reader:
+                ros2_conns = [x for x in ros2_reader.connections]
+                ros2_messages = ros2_reader.messages(connections=ros2_conns)
+
+                connections = ros2_reader.connections
+                # Access the counts of messages directly from the metadata
+                m_tot = sum(connection.msgcount for connection in connections)
+
+                for m, msg in enumerate(ros2_messages):
+                    print(m / m_tot * 100, "%")
+                    (connection, timestamp, rawdata) = msg
+                    if t0 is None:
+                        t0 = timestamp
+                        print(t0)
+                    if timestamp >= begin_time and timestamp <= end_time:
+                        print(timestamp)
+                        if self.tb2_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb2_topic_con, timestamp, rawdata)
+                        if self.tb2_odom_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb2_odom_con, timestamp, rawdata)
+                        if self.tb3_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb3_topic_con, timestamp, rawdata)
+                        if self.tb3_odom_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb3_odom_con, timestamp, rawdata)
+                        if self.uwb_topic == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(uwb_con, timestamp, rawdata)
+                        if "/tb3/oakd/right/image_rect/compressed" == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb3_right_camera_con, timestamp, rawdata)
+                        if "/tb3/oakd/left/image_rect/compressed" == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb3_left_camera_con, timestamp, rawdata)
+                        if "/tb2/oakd/right/image_rect/compressed" == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb2_right_camera_con, timestamp, rawdata)
+                        if "/tb2/oakd/left/image_rect/compressed" == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb2_left_camera_con, timestamp, rawdata)
+                        if "/tb2/oakd/imu/data" == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb2_imu_con, timestamp, rawdata)
+                        if "/tb3/oakd/imu/data" == connection.topic:
+                            print(connection.topic, connection.msgtype)
+                            ros2_writer.write(tb3_imu_con, timestamp, rawdata)
+                    if timestamp > end_time:
+                        break
 
     def get_raw_dict(self):
         meas_dict = {}
