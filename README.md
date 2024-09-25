@@ -12,8 +12,6 @@ The paper is currently under revision.
 
 
 ## Current known issues
-- Not all graph have yet been added ot the Graphs.ipynb file. 
-- Not all data inspection methods have yet been added to the Graphs.ipynb file.
 - The graphs of quick_start.ipynb have to be uniformized, and a final analysis as well as example of ros implementation have to be added. 
 
 [//]: # (## Usage of the UPF: )

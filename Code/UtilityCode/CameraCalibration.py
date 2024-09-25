@@ -60,16 +60,16 @@ def make_imu_msg(msg, inverse_imu=False , redo_imu=False):
 
 
 if __name__=="__main__":
-    save = False
+    save = True
     redo_imu = True
     inverse_imu = True
-    show_left = True
-    show_right = True
+    show_left = False
+    show_right = False
     show_RGB = False
 
     rosbag_dir = "../../test_cases/RPE_2_agents_LOS/Experiments/"
     rosbag2_name = "exp1_full"
-    rosbag1_name = "tb3_cam_cal_1_folder/"
+    rosbag1_name = "exp1_full_ros1/"
 
     imu_topic = "/oak/imu/data"
     rgb_topic = "/tb3/oakd/rgb/image_rect/compressed"
