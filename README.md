@@ -120,7 +120,7 @@ The paper is currently under revision.
 ## Data
 In the Data folder, the measurements and simulation data can be found. 
 ### Measurements
-For the measurements, the rosbags with camera images are not uploaded here, however, can be made available upon request. 
+For the measurements, the rosbags with camera images are not uploaded here, however, can be made available upon request, by emailing to <yuri.durodie@vub.be>. 
 ### Simulations
 The simulations include the corrupted VIO and UWB measurements so that all algorithms have exactly the same input. 
 
