@@ -311,10 +311,11 @@ class NewRobot:
     # -------------------
     # Plotting functions
     # -------------------
-    def set_plotting_settings(self, color="k", mark="", linestyle="-"):
+    def set_plotting_settings(self, color="k", mark="", linestyle="-", label=""):
         self.color = color
         self.mark = mark
         self.linestyle = linestyle
+        self.label = label
 
     def plot_real_position(self, ax, annotation="", alpha=1, i=-1, history=None):
 
@@ -325,9 +326,8 @@ class NewRobot:
             if j < 0:
                 j = 0
 
-
         if annotation is None:
-            ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],
+            ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2], label=self.label + " " + "real position",
                       color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
         else:
             ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],

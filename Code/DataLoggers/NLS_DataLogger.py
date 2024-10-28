@@ -1,3 +1,5 @@
+from matplotlib.gridspec import GridSpec
+
 from Code.BaseLines.NLS import NLS
 import numpy as np
 import matplotlib.pyplot as plt
@@ -69,16 +71,19 @@ class NLSDataLogger:
 
         self.x_rel = np.append(self.x_rel, self.nls_solver.x_rel.reshape(1, *self.nls_solver.x_rel.shape), axis=0)
         self.calculate_pose(t)
+
     def plot_self(self, ax=None):
         if ax is None:
             _, ax = plt.subplots(2, 1)
         ax[0].plot(self.x_ca_r_error[:, 0, 1], label="Agent 1")
-        ax[0].plot(self.x_ca_r_error[:, 1, 0], label="Agent 2")
+        # ax[0].plot(self.x_ca_r_error[:, 1, 0], label="Agent 2")
         ax[0].legend()
+        ax[0].set_ylabel("Error [m]")
         ax[0].grid(True)
         ax[1].plot(self.x_ca_r_heading_error[:, 0, 1], label="Agent 1")
-        ax[1].plot(self.x_ca_r_heading_error[:, 1, 0], label="Agent 2")
+        # ax[1].plot(self.x_ca_r_heading_error[:, 1, 0], label="Agent 2")
         ax[1].legend()
+        ax[1].set_ylabel("Error [rad]")
         ax[1].grid(True)
 
     def calculate_pose(self, i):
@@ -133,6 +138,28 @@ class NLSDataLogger:
                                                  color=color, alpha=alpha, linestyle=linestyle, label=label,
                                                  history=history)
 
+    def plot_graphs(self, fig= None):
+        if fig is None:
+            fig = plt.figure(figsize=(18, 10))
+
+        fig.suptitle("NLS datalogger")
+        ax = []
+        gs = GridSpec(3, 4, figure=fig, height_ratios=[1, 1, 1], width_ratios=[1, 1, 1, 1])
+        ax_3d = fig.add_subplot(gs[:3, :3], projection="3d")
+        self.plot_corrected_estimated_trajectory(ax_3d, color="red", linestyle="--", label="NLS estimate")
+
+        self.nls_solver.agents[0].set_plotting_settings(color="green", label="Estimating Agent")
+        self.nls_solver.agents[0].plot_real_position(ax_3d)
+        self.nls_solver.agents[1].set_plotting_settings(color="black", label="Estimated Agent")
+        self.nls_solver.agents[1].plot_real_position(ax_3d)
+        ax_3d.legend()
+        ax_error =  [fig.add_subplot(gs[i, -1]) for i in range(2)]
+        self.plot_self(ax_error)
+
+
+
+
+            # , layout="constrained")
     def plot_estimated_pose(self,ax, id, i=-1):
 
         pass

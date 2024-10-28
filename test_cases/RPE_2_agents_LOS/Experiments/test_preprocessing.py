@@ -21,13 +21,13 @@ import seaborn as sns
 class MyTestCase(unittest.TestCase):
 
     def test_trim_full_bags(self):
-        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/networkDrive/Experiments/RPE_UPF/Exp1_unob_LOS_Obs/"
-        self.rosbag = self.exp_folder + "exp1_full"
-        start_time = 1696516155806928994
-        end_time = 1696516155806928994 + 300 *1e9
+        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/networkDrive/Experiments/RPE_UPF/Original_bags/Exp3_ON_OFF_LOS/"
+        self.rosbag = self.exp_folder + "exp3_full"
+        start_time = 1696524045991876864
+        end_time = start_time + 310 *1e9
 
         measurement = Measurement(self.rosbag)
-        measurement.trim_full_bag(start_time, end_time, "./exp1_full")
+        measurement.trim_full_bag(start_time, end_time, "./exp4_full")
 
 
 
