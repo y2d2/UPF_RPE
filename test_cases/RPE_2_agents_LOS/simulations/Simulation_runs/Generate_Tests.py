@@ -3,7 +3,7 @@ import os
 import shutil
 
 if __name__ == "__main__":
-    result_folder = "Data/Results/Sim_LOS_06_2024"
+    result_folder = "Data/Results/Sim_LOS_10_2024"
     trajectory_folder = "Data/Simulations"
     generated_tests_folder = "generated_tests"
     if generated_tests_folder not in os.listdir("./"):
@@ -15,12 +15,13 @@ if __name__ == "__main__":
     redo_bool = False
     methods = [
                 # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particels=0",
                 # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                 # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                 # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                 # "NLS|frequency=1.0|horizon=10",
                 # "NLS|frequency=1.0|horizon=10",
-                "NLS|frequency=1.0|horizon=100"
+                # "NLS|frequency=1.0|horizon=100"
                 # "NLS|frequency=1.0|horizon=100",
                 # "NLS|frequency=10.0|horizon=100",
                 # "NLS|frequency=10.0|horizon=1000"
