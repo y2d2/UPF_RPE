@@ -9,8 +9,9 @@ def test_run_LOS_exp(self):
     sig_w = 0.12
     sig_uwb = 0.15
 
-    results_folder =  "Results_exp"
-    data_folder = "corrections3/"
+    folder = "test_cases/RPE_2_agents_LOS/Experiments/"
+    results_folder =  folder + "Results_exp"
+    data_folder = folder + "corrections3/"
 
     os.mkdir(results_folder)
 
