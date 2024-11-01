@@ -19,7 +19,7 @@ def test_run_LOS_exp():
     experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
 
     methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particels=0",
+                "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
                "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                # "algebraic|frequency=1.0|horizon=10",
                "algebraic|frequency=10.0|horizon=100",
