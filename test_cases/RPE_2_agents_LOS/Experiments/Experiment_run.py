@@ -3,7 +3,7 @@ import os
 from Code.UtilityCode.Measurement import create_experiment, create_experimental_data
 
 
-def test_run_LOS_exp(self):
+def test_run_LOS_exp():
     # From the data sig_v =0.1, sig_w=0.1 and sig_uwb = 0.35 (dependable on the set... ) are the best values.
     sig_v = 0.08
     sig_w = 0.12

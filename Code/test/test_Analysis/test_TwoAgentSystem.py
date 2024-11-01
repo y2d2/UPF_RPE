@@ -226,7 +226,134 @@ class MyTestCase(unittest.TestCase):
         df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
         taa.print_statistics(methods_names, variables, df)
 
+
     def test_sim_analysis(self):
+        result_folders = [
+            "../../../Results/simulations",
+        ]
+
+        variables = ["error_x_relative", "error_h_relative"]
+        sigma_dv = [0.1, 0.01]
+        sigma_dw = [0.1, 0.01]
+        sigma_uwb = [1., 0.1]
+
+        taa_sim_ful = TAA.TwoAgentAnalysis(result_folders=result_folders)
+
+        upf_sim_full = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                        "Variables": {
+                            "Type": ["simulation"],
+                            "Variable": variables,
+                            "Sigma_dv": sigma_dv,
+                            "Sigma_dw": sigma_dw,
+                            "Sigma_uwb": sigma_uwb,
+                            "Frequency": [10.0],
+                        },
+                        "Color": "tab:green",
+                        "Legend": "Ours",
+                        }
+        upf_sim_full_per = {
+            "Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+            "Variables": {
+                "Type": ["simulation"],
+                "Variable": variables,
+                "Sigma_dv": sigma_dv,
+                "Sigma_dw": sigma_dw,
+                "Sigma_uwb": sigma_uwb,
+                "Frequency": [10.0],
+            },
+            "Color": "tab:orange",
+            "Legend": "Ours *",
+            }
+        nodriftupf_sim_full = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                               "Variables": {
+                                   "Type": ["simulation"],
+                                   "Variable": variables,
+                                   "Sigma_dv": sigma_dv,
+                                   "Sigma_dw": sigma_dw,
+                                   "Sigma_uwb": sigma_uwb,
+                                   "Frequency": [10.0],
+                               },
+                               "Color": "tab:red",
+                               "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state",
+                               }
+        alg_sim_full = {"Method": "algebraic|frequency=10.0|horizon=100",
+                        "Variables": {
+                            "Type": ["simulation"],
+                            "Variable": variables,
+                            "Sigma_dv": sigma_dv,
+                            "Sigma_dw": sigma_dw,
+                            "Sigma_uwb": sigma_uwb,
+                            "Frequency": [10.0],
+                        },
+                        "Color": "tab:orange",
+                        "Legend": "Algebraic",
+                        }
+        qcqp_sim_full = {"Method": "QCQP|frequency=10.0|horizon=100",
+                         "Variables": {
+                             "Type": ["simulation"],
+                             "Variable": variables,
+                             "Sigma_dv": sigma_dv,
+                             "Sigma_dw": sigma_dw,
+                             "Sigma_uwb": sigma_uwb,
+                             "Frequency": [10.0],
+                         },
+                         "Color": "tab:blue",
+                         "Legend": "QCQP",
+                         }
+        nls_sim_full = {
+            "Method": "NLS|frequency=1.0|horizon=10",
+            "Variables": {
+                "Type": ["simulation"],
+                "Variable": variables,
+                "Sigma_dv": sigma_dv,
+                "Sigma_dw": sigma_dw,
+                "Sigma_uwb": sigma_uwb,
+                "Frequency": [1.0],
+            },
+            "Color": "tab:purple",
+            "Legend": "NLS *",
+        }
+
+        methods_order_sim_full = [upf_sim_full,
+                                  nodriftupf_sim_full,
+                                  # alg_sim_full,
+                                  qcqp_sim_full,
+                                  upf_sim_full_per,
+                                  nls_sim_full,
+                                  ]
+
+        df_sim_full, methods_names_sim_full, methods_colors_sim_full, methods_legends_sim_full = taa_sim_ful.filter_methods_new(
+            methods_order_sim_full)
+
+        g = taa_sim_ful.boxplot_exp(df_sim_full, methods_color=methods_colors_sim_full,
+                                    methods_legend=methods_legends_sim_full,
+                                    hue_variable="Name", hue_order=methods_names_sim_full,
+                                    col_variable="Variable", col_order=["error_x_relative", "error_h_relative"],
+                                    row_variable="Sigma_dv", row_order=[0.01, 0.1],
+                                    x_variable="Sigma_uwb", x_order=[0.1, 1.],
+                                    )
+        g.fig.set_size_inches(8, 4)
+        for ax in g.axes_dict:
+            if "error_x_relative" in ax:
+                g.axes_dict[ax].set_yscale("log")
+                if 0.1 in ax:
+                    g.axes_dict[ax].set_ylabel(r"$\sigma_v = 0.1 \frac{m}{s}$")
+                if 0.01 in ax:
+                    g.axes_dict[ax].set_ylabel(r"$\sigma_v = 0.01 \frac{m}{s}$")
+            if 0.1 in ax:
+                g.axes_dict[ax].set_xlabel(r"$\sigma_{uwb} [m]$")
+            if 0.01 in ax:
+                if "error_h_relative" in ax:
+                    g.axes_dict[ax].set_title(taa_sim_ful.y_label["error_h_relative"])
+                if "error_x_relative" in ax:
+                    g.axes_dict[ax].set_title(taa_sim_ful.y_label["error_x_relative"])
+        # plt.figure(0).set_size_inches(10, 10)
+        sns.move_legend(g, loc="upper center", bbox_to_anchor=(0.5, 1.), ncol=5)
+        plt.subplots_adjust(top=0.8, bottom=0.12, left=0.12, right=0.99)
+        # plt.suptitle("Monte Carlo simulation")
+        plt.show()
+
+    def test_sim_analysis_old(self):
         result_folder = "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper"
         # result_folder = ("../../../Data/Results/test_files")
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
@@ -243,6 +370,8 @@ class MyTestCase(unittest.TestCase):
                    "Color": "tab:green",
                    "Legend": "Ours",
                    }
+
+
         nodriftupf_exp = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                           "Variables": {
                               "Type": ["simulation"],
