@@ -12,8 +12,8 @@ def test_run_LOS_exp():
     folder = "test_cases/RPE_2_agents_LOS/Experiments/"
     results_folder =  folder + "Results_exp"
     data_folder = folder + "corrections3/"
-
-    os.mkdir(results_folder)
+    if not os.path.exists(results_folder):
+        os.mkdir(results_folder)
 
 
     experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
