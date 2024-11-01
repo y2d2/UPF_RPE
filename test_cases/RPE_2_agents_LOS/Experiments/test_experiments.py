@@ -158,8 +158,8 @@ class MyTestCase(unittest.TestCase):
 
     def load_results(self, variables = ["error_x_relative", "error_h_relative"]):
         sigma_dv = [0.08]
-        sigma_dw = [0.12]
-        sigma_uwb = [0.15]
+        sigma_dw = [0.08]
+        sigma_uwb = [0.25]
 
         upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    "Variables": {
@@ -171,7 +171,7 @@ class MyTestCase(unittest.TestCase):
                        "Frequency": [10.0],
                    },
                    "Color": "tab:green",
-                   "Legend": "Ours",
+                   "Legend": "Ours (proposed)",
                    }
         upf_exp_per = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
                        "Variables": {
@@ -183,7 +183,7 @@ class MyTestCase(unittest.TestCase):
                            "Frequency": [10.0],
                        },
                        "Color": "tab:orange",
-                       "Legend": "Ours *",
+                       "Legend": "Ours*",
                        }
         nodriftupf_exp = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                           "Variables": {
@@ -232,7 +232,7 @@ class MyTestCase(unittest.TestCase):
                 "Frequency": [1.0],
             },
             "Color": "tab:purple",
-            "Legend": "NLS *",
+            "Legend": "NLS*",
         }
 
         upf_sim = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
@@ -245,7 +245,7 @@ class MyTestCase(unittest.TestCase):
                        "Frequency": [10.0],
                    },
                    "Color": "lightgreen",
-                   "Legend": "Ours (sim)",
+                   "Legend": "Ours (proposed) (sim)",
                    }
         upf_sim_per = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
                        "Variables": {
@@ -257,7 +257,7 @@ class MyTestCase(unittest.TestCase):
                            "Frequency": [10.0],
                        },
                        "Color": "bisque",
-                       "Legend": "Ours * (sim)",
+                       "Legend": "Ours* (sim)",
                        }
         nodriftupf_sim = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                           "Variables": {
@@ -306,7 +306,7 @@ class MyTestCase(unittest.TestCase):
                 "Frequency": [1.0],
             },
             "Color": "thistle",
-            "Legend": "NLS * (sim)",
+            "Legend": "NLS* (sim)",
         }
 
         methods_order = [
@@ -323,11 +323,11 @@ class MyTestCase(unittest.TestCase):
 
     def test_exp_analysis(self):
         result_folders = [
-            "../../../Results/server_exp",
-            # "../../../Results/experiments",
-            # "../../../Results/sim2real"
+            # "../../../Results/server_exp",
+            "../../../Results/experiments",
+            "../../../Results/sim2real"
         ]
-        variables = ["error_x_relative"]
+        variables = ["error_x_relative", "error_h_relative"]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = self.load_results(variables)
 

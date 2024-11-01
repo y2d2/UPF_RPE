@@ -97,7 +97,7 @@ class MyTestCase(unittest.TestCase):
                             "Frequency": [10.0],
                         },
                         "Color": "tab:green",
-                        "Legend": "Ours",
+                        "Legend": "Ours (proposed)",
                         }
         upf_sim_full_per = {
             "Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
@@ -110,7 +110,7 @@ class MyTestCase(unittest.TestCase):
                 "Frequency": [10.0],
             },
             "Color": "tab:orange",
-            "Legend": "Ours *",
+            "Legend": "Ours*",
             }
         nodriftupf_sim_full = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                                "Variables": {
@@ -159,7 +159,7 @@ class MyTestCase(unittest.TestCase):
                 "Frequency": [1.0],
             },
             "Color": "tab:purple",
-            "Legend": "NLS *",
+            "Legend": "NLS*",
         }
 
         methods_order_sim_full = [upf_sim_full,
