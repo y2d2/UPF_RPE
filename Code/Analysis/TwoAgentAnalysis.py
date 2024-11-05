@@ -302,7 +302,7 @@ class TwoAgentAnalysis:
                 for key in method_param["Variables"]:
                     df_j = df_j.loc[(df_j[key].isin(method_param["Variables"][key]))]
                 df_j.Time = df_j.Time / df_j.Frequency
-                df_j = df_j.loc[(df_j["Time"] > 1.)]
+                df_j = df_j.loc[(df_j["Time"] > 2.)]
                 df_j = df_j.assign(Name=name)
                 dfs.append(df_j)
         df = pd.concat(dfs)

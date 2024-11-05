@@ -317,7 +317,7 @@ class NewRobot:
         self.linestyle = linestyle
         self.label = label
 
-    def plot_real_position(self, ax, annotation="", alpha=1, i=-1, history=None):
+    def plot_real_position(self, ax, annotation="", alpha=1, i=-1, history=None, legend=True):
 
         if history is None or history > i:
             j=0
@@ -325,14 +325,20 @@ class NewRobot:
             j = i - history
             if j < 0:
                 j = 0
-
-        if annotation is None:
-            ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2], label=self.label + " " + "real position",
-                      color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+        if legend:
+            if annotation is None:
+                ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2], label=self.label + " " + "real position",
+                          color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+            else:
+                ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],
+                          color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha,
+                          label=annotation + " " + "real position")
         else:
+            ax.stem([self.x_real[0, 0]], [self.x_real[0, 1]], [self.x_real[0, 2]],
+                    basefmt="k^", linefmt="k:", bottom=0)
             ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],
-                      color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha,
-                      label=annotation + " " + "real position")
+                      color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+
         # ax.stem([self.x_real[j, 0]], [self.x_real[j, 1]], [self.x_real[j, 2]],
         #         markerfmt="o", linefmt="grey", bottom=0)
         ax.plot3D(self.x_real[j, 0], self.x_real[j, 1], self.x_real[j, 2],

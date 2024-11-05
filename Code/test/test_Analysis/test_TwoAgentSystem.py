@@ -97,7 +97,7 @@ class MyTestCase(unittest.TestCase):
                             "Frequency": [10.0],
                         },
                         "Color": "tab:green",
-                        "Legend": "Ours (proposed)",
+                        "Legend": "Ours, proposed",
                         }
         upf_sim_full_per = {
             "Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",

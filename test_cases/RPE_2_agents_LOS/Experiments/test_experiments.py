@@ -171,7 +171,7 @@ class MyTestCase(unittest.TestCase):
                        "Frequency": [10.0],
                    },
                    "Color": "tab:green",
-                   "Legend": "Ours (proposed)",
+                   "Legend": "Ours, proposed",
                    }
         upf_exp_per = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
                        "Variables": {
@@ -245,7 +245,7 @@ class MyTestCase(unittest.TestCase):
                        "Frequency": [10.0],
                    },
                    "Color": "lightgreen",
-                   "Legend": "Ours (proposed) (sim)",
+                   "Legend": "Ours, proposed (sim)",
                    }
         upf_sim_per = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
                        "Variables": {
@@ -341,8 +341,8 @@ class MyTestCase(unittest.TestCase):
                         )
 
         g.axes_dict["error_x_relative"].set_yscale("log")
-        g.axes_dict["error_h_relative"].set_ylabel(taa.y_label["error_h_relative"])
-        g.axes_dict["error_x_relative"].set_ylabel(taa.y_label["error_x_relative"])
+        g.axes_dict["error_h_relative"].set_ylabel(taa.y_label["error_h_relative"], fontsize=12)
+        g.axes_dict["error_x_relative"].set_ylabel(taa.y_label["error_x_relative"], fontsize=12)
         sns.move_legend(g, loc="upper center", bbox_to_anchor= (0.5, 0.98), ncol=5)
         plt.subplots_adjust(top=0.8, bottom=0.12, left=0.1, right=0.99)
         # plt.suptitle("Experiments")
@@ -497,7 +497,7 @@ class MyTestCase(unittest.TestCase):
 
         methods_legend = {
                             "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours",
-                            "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours (proposed)",
+                            "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, proposed",
                           "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": r"Ours, $\tilde{\text{w}}$ pseudo-state",
                           "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": r"Ours, $\tilde{\text{w}}$ pseudo-state",
                           # "NLS|horizon=10": "NLS_10",
@@ -509,10 +509,10 @@ class MyTestCase(unittest.TestCase):
                           "QCQP|frequency=1.0|horizon=10": "QCQP",
                           "QCQP|frequency=10.0|horizon=1000": "QCQP",
                           "QCQP|frequency=10.0|horizon=100": "QCQP",
-                            "NLS|frequency=1.0|horizon=100": "NLS *",
-                            "NLS|frequency=1.0|horizon=10": "NLS *",
-                        "NLS|frequency=1.0|horizon=10|perfect_guess=0": "NLS *",
-                        "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0": "Ours *",
+                            "NLS|frequency=1.0|horizon=100": "NLS*",
+                            "NLS|frequency=1.0|horizon=10": "NLS*",
+                        "NLS|frequency=1.0|horizon=10|perfect_guess=0": "NLS*",
+                        "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0": "Ours*",
                         "Sigma": r" Ours, $1 \sigma$-bound"}
         # taa.delete_data()
         taa.create_panda_dataframe()
@@ -704,20 +704,21 @@ class MyTestCase(unittest.TestCase):
         # slam_x_error = tas.data["exp1_unobservable_sampled"]["slam"]["drone_1"]["error_x_relative"]
         ax = plt.figure().add_subplot(projection='3d')
 
-        tas.agents["drone_0"]["log"].plot_poses(ax, color_ha="darkblue", color_ca="red", name_ha="$a_0$", name_ca="$a_1$")
+        tas.agents["drone_0"]["log"].plot_poses(ax, color_ha="darkblue", color_ca="red", color_killed="salmon",  name_ha="$a_0$", name_ca="$a_1$")
         # ax = plt.figure().add_subplot(projection='3d')
-        tas.agents["drone_1"]["log"].plot_poses(ax, color_ha="maroon", color_ca="dodgerblue",
+        tas.agents["drone_1"]["log"].plot_poses(ax, color_ha="maroon", color_ca="dodgerblue", color_killed="lightskyblue",
                                                                            name_ha="$a_1$", name_ca="$a_0$")
         ax.plot(10,10, color="darkblue", label="Real pose $i$" )
         ax.plot(10,10, color='red', alpha=1, linestyle="-", label="Active particles for $j$ by $i$")  # for estimation of "+ name)
         ax.plot(10,10, color='red', alpha=0.4, linestyle=":", label="Killed particles for $j$ by $i$")  # for estimation of "+ name)
         ax.plot(10,10, color="maroon", label="Real pose $j$")
         ax.plot(10,10, color='dodgerblue', alpha=1, linestyle="-", label="Active particles for $i$  by $j$")  # for estimation of "+ name)
-        ax.plot(10,10, color='dodgerblue', alpha=0.4, linestyle=":", label="Killed particles for $i$ by $j$")  # for estimation of "+ name)
+        ax.plot(10,10, color='lightskyblue', alpha=1, linestyle=":", label="Killed particles for $i$ by $j$")  # for estimation of "+ name)
         plt.plot(10, 10, color="black", linestyle="", marker="o", label="Start of a trajectory")
         plt.plot(10, 10, color="black", linestyle="", marker="x", label="End of a trajectory")
+        plt.plot(10, 10, color="black", linestyle=":", label="Height line")
 
-        ax.legend(fontsize=10, loc="upper left")
+        ax.legend(fontsize=8, loc="upper left", ncol=3)
         ax.set_xlabel("x [m]")
         ax.set_ylabel("y [m]")
         ax.set_zlabel("z [m]")

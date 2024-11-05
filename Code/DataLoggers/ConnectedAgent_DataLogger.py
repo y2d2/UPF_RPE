@@ -71,16 +71,16 @@ class UPFConnectedAgentDataLogger:
         self.dx_drift = np.concatenate((self.dx_drift, dx_ha.reshape(1, 4)), axis=0)
 
     # ---- Plot functions
-    def plot_poses(self, ax, color_ha, color_ca,  name_ha, name_ca):
-        self.plot_estimated_trajectory(ax, color=color_ca, name=name_ca)
+    def plot_poses(self, ax, color_ha, color_ca,  color_killed, name_ha, name_ca):
+        self.plot_estimated_trajectory(ax, color=color_ca, color_killed=color_killed, name=name_ca)
         self.host_agent.set_plotting_settings(color=color_ha)
-        self.host_agent.plot_real_position(ax, annotation=None)
+        self.host_agent.plot_real_position(ax, annotation=None, legend=False)
 
 
     def plot_start_poses(self, ax):
         # # plt.figure()
         # # ax = plt.axes(projection="3d")
-        self.plot_estimated_trajectory(ax, color ="r")
+        self.plot_estimated_trajectory(ax, color ="r", color_killed="salmon")
         # # self.plot_connected_agent_trajectory(ax)
         self.plot_best_particle(ax, color="gold", alpha=1)
         self.plot_connected_agent_trajectories(ax, color="k", i = self.i)
@@ -102,14 +102,14 @@ class UPFConnectedAgentDataLogger:
         self.connected_agent.plot_real_position(ax, annotation="Connected Agent", alpha=alpha, i=i, history=history)
         # self.connected_agent.plot_slam_position(ax, annotation="Connected Agent SLAM", alpha=alpha)
 
-    def plot_estimated_trajectory(self, ax, color="k", alpha=0.1, name = "connected agent"):
+    def plot_estimated_trajectory(self, ax, color="k", color_killed="grey", name = "connected agent"):
         for particle_log in self.particle_logs:
-            particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=0.3,linestyle=":", label=None)
+            particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color_killed, alpha=1,linestyle=":", label=None)
         for particle in self.upf_connected_agent.particles:
             particle_log = self.find_particle_log(particle)
             particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color,  alpha=1, linestyle="-", label=None)
-        ax.plot([0],[0],[0], color=color, alpha=0.3, linestyle=":", label="killed particles" )
-        ax.plot([0],[0],[0], color=color, alpha=1, linestyle="-", label="active particles" )
+        # ax.plot([0],[0],[0], color=color_killed, alpha=1, linestyle=":", label="killed particles" )
+        # ax.plot([0],[0],[0], color=color, alpha=1, linestyle="-", label="active particles" )
 
     def plot_graph(self, fig=None):
         if fig is None:

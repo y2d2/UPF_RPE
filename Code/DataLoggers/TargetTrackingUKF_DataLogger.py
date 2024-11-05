@@ -310,8 +310,8 @@ class UKFDatalogger():
                       marker=marker, alpha=alpha, linestyle=linestyle, label=label, color=color)
             # ax.stem(
             #     x, y, z, linefmt='grey', markerfmt='D', bottom=np.pi)
-            # ax.stem([data[0, 0]], [data[0, 1]], [data[0, 2]],
-            #           markerfmt="o",  linefmt="grey", bottom=0)
+            ax.stem([data[0, 0]], [data[0, 1]], [data[0, 2]],
+                      basefmt="k^", linefmt="k:", bottom=0)
             ax.plot3D(data[-1, 0], data[-1, 1], data[-1, 2],
                       marker="x", alpha=alpha, color=color)
             ax.plot3D(data[0, 0], data[0, 1], data[0, 2],
