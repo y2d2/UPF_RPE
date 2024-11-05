@@ -77,16 +77,16 @@ class UPFConnectedAgentDataLogger:
         self.dx_drift = np.concatenate((self.dx_drift, dx_ha.reshape(1, 4)), axis=0)
 
     # ---- Plot functions
-    def plot_poses(self, ax, color_ha, color_ca,  name_ha, name_ca):
-        self.plot_estimated_trajectory(ax, color=color_ca, name=name_ca)
+    def plot_poses(self, ax, color_ha, color_ca,  color_killed, name_ha, name_ca):
+        self.plot_estimated_trajectory(ax, color=color_ca, color_killed=color_killed, name=name_ca)
         self.host_agent.set_plotting_settings(color=color_ha)
-        self.host_agent.plot_real_position(ax, annotation=None)
+        self.host_agent.plot_real_position(ax, annotation=None, legend=False)
 
 
     def plot_start_poses(self, ax):
         # plt.figure()
         # ax = plt.axes(projection="3d")
-        self.plot_estimated_trajectory(ax, color ="r")
+        self.plot_estimated_trajectory(ax, color ="r", color_killed="salmon")
         # self.plot_connected_agent_trajectory(ax)
         self.plot_best_particle(ax, color="gold", alpha=1)
         self.plot_connected_agent_trajectories(ax, color="k", i = self.i)
@@ -101,19 +101,50 @@ class UPFConnectedAgentDataLogger:
     def plot_connected_agent_trajectories(self, ax, color="k", i=-1):
         # self.plot_estimated_trajectory(ax, color=color, alpha=0.1)
         self.plot_connected_agent_trajectory(ax, color=color, alpha=1, i=i)
-        self.plot_best_particle(ax, color=color, alpha=0.5)
+        # self.plot_best_particle(ax, color=color, alpha=0.5)
 
     def plot_connected_agent_trajectory(self, ax, color="black", alpha=1., i=-1, history=None):
         self.connected_agent.set_plotting_settings(color=color)
         self.connected_agent.plot_real_position(ax, annotation="Connected Agent", alpha=alpha, i=i, history=history)
         # self.connected_agent.plot_slam_position(ax, annotation="Connected Agent SLAM", alpha=alpha)
 
-    def plot_estimated_trajectory(self, ax, color="k", alpha=0.1, name = "connected agent"):
+    def plot_estimated_trajectory(self, ax, color="k", color_killed="grey", name = "connected agent"):
         for particle_log in self.particle_logs:
-            particle_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=0.1,linestyle=":", label=None)
+            particle_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color_killed, alpha=1,linestyle=":", label=None)
         for particle in self.upf_connected_agent.particles:
             particle_log = self.find_particle_log(particle)
-            particle_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color,  alpha=1, label=None)
+            particle_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color,  alpha=1, linestyle="-", label=None)
+
+    def plot_graph(self, fig=None):
+        if fig is None:
+            fig = plt.figure(figsize=(18, 10))  # , layout="constrained")
+        bp_dl: UKFDatalogger =self.find_particle_log(self.upf_connected_agent.best_particle)
+
+        fig.suptitle("UPF datalogger ")
+        ax = []
+        gs = GridSpec(3, 4, figure=fig, height_ratios=[1, 1, 1], width_ratios=[1, 1, 1, 1])
+        ax_3d = fig.add_subplot(gs[:3, :3], projection="3d")
+        self.plot_start_poses(ax_3d)
+        ax_best_particle = [fig.add_subplot(gs[i, -1]) for i in range(2)]
+        # ax_best_particle[0].set_title("Best Particle")
+        bp_dl.plot_ukf_drift(ax_best_particle)
+        ax_best_particle[0].legend(loc="upper left")
+
+        likelihood_ax = fig.add_subplot(gs[-1, -1])
+        likelihood_ax.plot(self.calulation_time, label="Calculation time")
+        likelihood_ax.set_title("Calculation time")
+        likelihood_ax.legend()
+
+        # ---- Likelihood Axis
+        # likelihood_ax = fig.add_subplot(gs[3, 1])
+        # plt.figure()
+        # likelihood_ax = plt
+        likelihood_ax.plot(bp_dl.likelihood, label="Likelihood")
+        likelihood_ax.plot(bp_dl.weight, label="Weigth")
+
+        likelihood_ax.legend()
+        likelihood_ax.grid(True)
+
 
     def plot_self(self, los=None, host_id="No host id"):
         bp_dl: TargetTrackingParticle_DataLogger =self.find_particle_log(self.upf_connected_agent.best_particle)
@@ -164,6 +195,18 @@ class UPFConnectedAgentDataLogger:
         particle_ax.grid(True)
 
         likelihood_ax = fig.add_subplot(gs[3, 1])
+        likelihood_ax.plot(self.calulation_time, label="Calculation time")
+        likelihood_ax.set_title("Calculation time")
+        likelihood_ax.legend()
+
+        # ---- Likelihood Axis
+        # likelihood_ax = fig.add_subplot(gs[3, 1])
+        # plt.figure()
+        # likelihood_ax = plt
+        likelihood_ax.plot(bp_dl.likelihood, label="Likelihood")
+        likelihood_ax.plot(bp_dl.weight, label="Weigth")
+        if los is not None:
+            likelihood_ax.plot(los, color="k", label="Real LOS State")
 
         bp_dl.plot_self(particle_ax=likelihood_ax, los=los)
 

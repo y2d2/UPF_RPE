@@ -7,9 +7,12 @@ Created on Tue May 2 13:28:51 2023
 """
 
 import numpy as np
+from matplotlib.gridspec import GridSpec
+
 from Code.Simulation.RobotClass import NewRobot
 from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix, limit_angle, sphericalToCartesian, cartesianToSpherical
 import matplotlib.pyplot as plt
+import Code.UtilityCode.Transformation_Matrix_Fucntions as TMF
 
 
 def update_quaternion(q, w, dt):
@@ -308,18 +311,22 @@ class Algebraic4DoF_Logger:
 
         self.calculation_time_alg = []
         self.calculation_time_wls = []
+        self.estimated_ca_position = np.empty((0, 3))
+        self.estimated_ca_heading = []
 
-        self.host_drone = host
-        self.connect_drone = connect
+        self.host = host
+        self.connected = connect
+        self.data_logged = False
 
     def log(self, i, calculation_time_alg=0, calculation_time_wls=0):
+        self.data_logged = True
         self.calculation_time_alg.append(calculation_time_alg)
         self.calculation_time_wls.append(calculation_time_wls)
 
-        ha_p_real = self.host_drone.x_real[i]
-        ca_p_real = self.connect_drone.x_real[i]
-        ha_h_real = self.host_drone.h_real[i]
-        ca_h_real = self.connect_drone.h_real[i]
+        ha_p_real = self.host.x_real[i]
+        ca_p_real = self.connected.x_real[i]
+        ha_h_real = self.host.h_real[i]
+        ca_h_real = self.connected.h_real[i]
 
         relative_transformation = (ca_p_real - ha_p_real)
         spherical_relative_transformation = cartesianToSpherical(relative_transformation)
@@ -336,15 +343,71 @@ class Algebraic4DoF_Logger:
         self.x_ca_r_WLS_heading_error.append(np.abs(limit_angle(self.alg_solver.x_ca_r[-1] - relative_heading)))
         self.x_ca_r_alg_heading_error.append(np.abs(limit_angle(self.alg_solver.x_ca_r_alg[-1] - relative_heading)))
 
+        self.calculate_estimated_trajectory(i)
+
+    def calculate_estimated_trajectory(self, time_step):
+        T_o_si = TMF.transformation_matrix_from_4D_t(np.append(self.host.x_real[time_step], np.array(self.host.h_real[time_step])))
+        t_si_sj = np.concatenate([sphericalToCartesian(self.alg_solver.x_ca_r_alg[:3]), np.array([self.alg_solver.x_ca_r_alg[-1]])])
+        T_si_sj = TMF.transformation_matrix_from_4D_t(t_si_sj)
+        T_o_sj = T_o_si @ T_si_sj
+        t_o_sj = TMF.get_4D_t_from_matrix(T_o_sj)
+
+        self.estimated_ca_position = np.append(self.estimated_ca_position, t_o_sj[:3].reshape(1, 3), axis=0)
+        self.estimated_ca_heading.append(t_o_sj[3])
+
+    def plot_trajectory(self, data, ax, color="k", alpha=1., linestyle="-", marker="", label=None):
+        if self.data_logged:
+            ax.plot3D(data[:, 0], data[:, 1], data[:, 2],
+                      marker=marker, alpha=alpha, linestyle=linestyle, label=label, color=color)
+            ax.plot3D(data[0, 0], data[0, 1], data[0, 2],
+                      marker="o", alpha=alpha, color=color)
+            ax.plot3D(data[-1, 0], data[-1, 1], data[-1, 2],
+                      marker="x", alpha=alpha, color=color)
+
+
+    def plot_corrected_estimated_trajectory(self, ax, color="k", alpha=1, linestyle="--", marker="", label=None,
+                                            i=-1, history=None):
+        try:
+            if history is None or history > i:
+                self.plot_trajectory(self.estimated_ca_position, ax, color, alpha, linestyle, marker, label)
+            else:
+                j = i - history
+                if j < 1:
+                    j = 1
+                self.plot_trajectory(self.estimated_ca_position, ax, color, alpha, linestyle, marker, label)
+        except IndexError:
+            print("index error")
+
+
+    def plot_graphs(self, fig= None):
+        if fig is None:
+            fig = plt.figure(figsize=(18, 10))
+
+        fig.suptitle("Algebraic datalogger")
+        ax = []
+        gs = GridSpec(3, 4, figure=fig, height_ratios=[1, 1, 1], width_ratios=[1, 1, 1, 1])
+        ax_3d = fig.add_subplot(gs[:3, :3], projection="3d")
+
+
+        self.plot_corrected_estimated_trajectory(ax_3d, color="red", linestyle=":", marker="", label="Algebraic estimate")
+
+        self.host.set_plotting_settings(color="green", label="Estimating Agent")
+        self.host.plot_real_position(ax_3d)
+        self.connected.set_plotting_settings(color="black", label="Estimated Agent")
+        self.connected.plot_real_position(ax_3d)
+        ax_3d.legend()
+        ax_error =  [fig.add_subplot(gs[i, -1]) for i in range(2)]
+        self.plot_self(ax_error)
+
     def plot_self(self, ax=None):
         if ax is None:
             _, ax = plt.subplots(2, 1)
         ax[0].plot(self.x_ca_r_alg_error, label="alg")
-        ax[0].plot(self.x_ca_r_WLS_error, label="WLS")
+        # ax[0].plot(self.x_ca_r_WLS_error, label="WLS")
         ax[0].legend()
         ax[0].grid(True)
         ax[1].plot(self.x_ca_r_alg_heading_error, label="alg")
-        ax[1].plot(self.x_ca_r_WLS_heading_error, label="WLS")
+        # ax[1].plot(self.x_ca_r_WLS_heading_error, label="WLS")
         ax[1].legend()
         ax[1].grid(True)
 

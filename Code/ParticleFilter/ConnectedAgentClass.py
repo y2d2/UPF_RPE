@@ -97,8 +97,6 @@ class KFHostAgent:
         return dx, q
 
 
-
-
 class UPFConnectedAgent:
     """
     Class that represents the individual particle filters per connected agent
@@ -106,7 +104,7 @@ class UPFConnectedAgent:
     """
 
     def __init__(self, list_of_particles = [], x_ha_0=np.zeros(4), drift_correction_bool=True,
-                 sigma_uwb = 0.1, sigma_uwb_factor=1.0, resample_factor=1.0, id="0x000"):
+                 sigma_uwb = 0.1, sigma_uwb_factor=1.0, resample_factor=0.1, id="0x000"):
 
         self.id = id
         # State variables:
@@ -250,6 +248,18 @@ class UPFConnectedAgent:
         # sigma_angle = sigma_x_ca / d
         # sigma_s = [sigma_x_ca, sigma_angle, sigma_angle]
         particle.set_initial_state(s, sigma_s)
+        self.particles.append(particle)
+        self.set_best_particle(self.particles[0])
+
+    def create_single_particle(self, t, sigma_uwb):
+        self.n_altitude = 1
+        self.n_azimuth = 1
+        self.n_heading = 1
+        self.sigma_uwb = self.sigma_uwb_factor * sigma_uwb
+        s_S0_S1 = cartesianToSpherical(t[:3])
+        particle = self.create_particle()
+        particle.set_initial_state(s_S0_S1, np.array([self.sigma_uwb, 0.000001, 0.000001]),  t[-1], 0.000001,
+                                   self.sigma_uwb)
         self.particles.append(particle)
         self.set_best_particle(self.particles[0])
 

@@ -142,12 +142,12 @@ class Frame():
 
         self.v_cor = np.vstack((self.v_cor, v_uncor[0]))
 
-        for i in range(len(v_uncor)-1):
-            a = np.linalg.norm(v_uncor[i+1] - v_uncor[i]) * self.sample_frequency
+        for i in range(1,len(v_uncor)):
+            a = np.linalg.norm(v_uncor[i] -   self.v_cor[i-1]) * self.sample_frequency
             if a > max_a:
-                v = self.v_cor[i]
+                v = self.v_cor[i-1]
             else:
-                v = v_uncor[i+1]
+                v = v_uncor[i]
             self.v_cor = np.vstack((self.v_cor, v))
 
 

@@ -1,0 +1,57 @@
+rosbag2_bagfile_information:
+  compression_format: ''
+  compression_mode: ''
+  custom_data: {}
+  duration:
+    nanoseconds: 299991137850
+  files:
+  - duration:
+      nanoseconds: 299991137850
+    message_count: 84917
+    path: exp1.db3
+    starting_time:
+      nanoseconds_since_epoch: 1696516155806928994
+  message_count: 84917
+  relative_file_paths:
+  - exp1.db3
+  ros_distro: rosbags
+  starting_time:
+    nanoseconds_since_epoch: 1696516155806928994
+  storage_identifier: sqlite3
+  topics_with_message_count:
+  - message_count: 29990
+    topic_metadata:
+      name: /vicon/tb2/tb2
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: vicon_receiver/msg/Position
+      type_description_hash: RIHS01_2a29278c6c33dc0b9112a2db680c595f1a0cac84a836079e11d4eb5d224bae98
+  - message_count: 8796
+    topic_metadata:
+      name: /tb2/odom
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: nav_msgs/msg/Odometry
+      type_description_hash: RIHS01_3cc97dc7fb7502f8714462c526d369e35b603cfc34d946e3f2eda2766dfec6e0
+  - message_count: 29990
+    topic_metadata:
+      name: /vicon/tb3/tb3
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: vicon_receiver/msg/Position
+      type_description_hash: RIHS01_2a29278c6c33dc0b9112a2db680c595f1a0cac84a836079e11d4eb5d224bae98
+  - message_count: 8834
+    topic_metadata:
+      name: /tb3/odom
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: nav_msgs/msg/Odometry
+      type_description_hash: RIHS01_3cc97dc7fb7502f8714462c526d369e35b603cfc34d946e3f2eda2766dfec6e0
+  - message_count: 7307
+    topic_metadata:
+      name: /yd_uwb/dev_0x7603_0x683a
+      offered_qos_profiles: ''
+      serialization_format: cdr
+      type: yd_uwb_msgs/msg/UWBRange
+      type_description_hash: RIHS01_b9f1e50857a45add276e2cb4fe79677be759951cde4d7d42d953de3fd1a7a0a5
+  version: 8

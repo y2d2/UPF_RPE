@@ -20,6 +20,18 @@ import seaborn as sns
 
 class MyTestCase(unittest.TestCase):
 
+    def test_trim_full_bags(self):
+        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/networkDrive/Experiments/RPE_UPF/Original_bags/Exp3_ON_OFF_LOS/"
+        self.rosbag = self.exp_folder + "exp3_full"
+        start_time = 1696524045991876864
+        end_time = start_time + 310 *1e9
+
+        measurement = Measurement(self.rosbag)
+        measurement.trim_full_bag(start_time, end_time, "./exp4_full")
+
+
+
+
     def set_test_case(self):
         self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/"
         self.rosbag = self.exp_folder+"exp4"
@@ -35,6 +47,23 @@ class MyTestCase(unittest.TestCase):
         self.tb3_odom_topic = "/tb3/odom"
         self.tb2 = Turtlebot4("tb2")
         self.tb3 = Turtlebot4("tb3")
+
+    def test_trim_bags(self):
+        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/networkDrive/Experiments/RPE_UPF/Exp1_unob_LOS_Obs"
+        self.rosbag = self.exp_folder + "exp1_full"
+        new_name = "./trimmed_rosbags/exp5"
+        if not os.path.exists(new_name):
+            measurement = Measurement(self.rosbag)
+            measurement.read_bag(new_message_conf=True)
+            start_time = measurement.find_beginning()
+            measurement.trim_bag(new_name, start_time + 506,  start_time  + 506+300)
+            # new_name = "./trimmed_rosbags/exp4"
+            # measurement.trim_bag(new_name, start_time+ 300, start_time + 600)
+        for i in [5]:
+            measurement_new = Measurement("./trimmed_rosbags/exp"+str(i))
+            measurement_new.read_bag(new_message_conf=True)
+            measurement_new.save_folder = "./trimmed_rosbags/"
+            measurement_new.save_raw_data()
 
     def test_vio_sanity(self):
         rosbag = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/exp1"
@@ -142,6 +171,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_read_bag(self):
         self.set_test_case()
+        self.rosbag = "exp1"
         measurement = Measurement(self.rosbag)
         measurement.read_bag()
         measurement.save_raw_data()
@@ -157,7 +187,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_read_raw_data_pkl(self):
         self.set_test_case()
-        pikle_file = self.name + "_raw.pkl"
+        pikle_file = "./trimmed_rosbags/exp1_raw.pkl"
         measurement = Measurement()
         measurement.load_raw_data(pikle_file)
         measurement.tb2.plot_trajectory(plt)
@@ -168,9 +198,20 @@ class MyTestCase(unittest.TestCase):
         print(len(measurement.uwb.t))
         plt.show()
 
+    def test_sample_raw_data_folder(self):
+        for i in range(1, 6):
+            pikle_file = "./trimmed_rosbags/exp"+str(i)+"_raw.pkl"
+            measurement = Measurement()
+            measurement.load_raw_data(pikle_file)
+            measurement.sample(10)
+            measurement.save_folder = "./trimmed_rosbags/"
+            measurement.name = "exp"+str(i) + "_los"
+            measurement.save_sampled_data()
+
     def test_raw_data(self):
-        pickle_file = ("./exp1_raw.pkl")
+        pickle_file = "./trimmed_rosbags/exp1_raw.pkl"
         measurement = Measurement()
+        measurement.save_folder ="./trimmed_rosbags/"
         measurement.load_raw_data(pickle_file)
         measurement.sample(10)
         measurement.plot_sampled()
@@ -261,6 +302,45 @@ class MyTestCase(unittest.TestCase):
         mesList[2].save_folder = "New_measurements/LOS/"
         # mesList[2].save_sampled_data()
 
+    def test_old_measurments(self):
+        name = "exp1"
+        pikle_file = name + "_raw.pkl"
+        measurement = Measurement()
+        measurement.load_raw_data(pikle_file)
+        measurement.sample(10)
+        mesList = measurement.split_data([ 5060, 8060])
+
+        mesList[1].name = "exp1_los"
+        mesList[1].save_folder = "New_measurements/LOS/"
+        # mesList[1].save_sampled_data()
+
+        mesList = measurement.split_data([9558-3000, 9558])
+        mesList[1].name = "exp5_los"
+        mesList[1].save_folder = "New_measurements/LOS/"
+        mesList[1].save_sampled_data()
+
+
+        name = "exp3"
+        pikle_file = name + "_raw.pkl"
+        measurement = Measurement()
+        measurement.load_raw_data(pikle_file)
+        measurement.sample(10)
+        mesList = measurement.split_data([3000,6000])
+
+        mesList[0].name = "exp2_los"
+        mesList[0].save_folder = "New_measurements/LOS/"
+        # mesList[0].save_sampled_data()
+
+        mesList[1].name = "exp3_los"
+        mesList[1].save_folder = "New_measurements/LOS/"
+        # mesList[1].save_sampled_data()
+
+        name = "exp4"
+        pikle_file = name + "_raw.pkl"
+        measurement = Measurement()
+        measurement.load_raw_data(pikle_file)
+        measurement.sample(10)
+        mesList = measurement.split_data([3000, 3500, 6500])
 
     def test_split_data_exp3(self):
         name = "exp3"
@@ -337,7 +417,9 @@ class MyTestCase(unittest.TestCase):
         # self.set_test_case()
         fig, ax = plt.subplots(5, 1)
         for i in range(1, 6):
-            sampled_pkl = "New_measurements/LOS/exp"+str(i)+"_los_sampled.pkl"
+            sampled_pkl = "../../../Data/Measurements_correction/exp"+str(i)+"_los_sampled.pkl"
+            # sampled_pkl = "./corrections3/exp"+str(i)+"_los_sampled.pkl"
+            # sampled_pkl = "./trimmed_rosbags/exp"+str(i)+"_sampled.pkl"
             measurement = Measurement()
             measurement.load_sampled_data(sampled_pkl)
             measurement.get_uwb_distances()
@@ -354,6 +436,7 @@ class MyTestCase(unittest.TestCase):
     def test_vio_rejection(self):
         # TODO: make rejection strategy for VIO. (Maybe can help.)
         self.set_test_case()
+
         sampled_pkl = "Measurements/exp1_los_sampled.pkl"
         measurement = Measurement()
         measurement.load_sampled_data(sampled_pkl)
@@ -373,16 +456,47 @@ class MyTestCase(unittest.TestCase):
         # measurement.load_sampled_data(sampled_pkl)
         # measurement.save_sampled_data()
 
+    def test_vio_error_unob(self):
+        w_errors = np.empty((0, 3))
+        v_errors = np.empty((0, 3))
+        v_cor_errors = np.empty((0, 3))
+
+        sampled_pkl = "./Experiments/Unob_exp/Measurements/exp2_unobservable_sampled.pkl"
+        measurement = Measurement()
+        measurement.load_sampled_data(sampled_pkl)
+        measurement.tb2.vio_frame.outlier_rejection(max_a=2.)
+        measurement.tb3.vio_frame.outlier_rejection(max_a=2.)
+        measurement.get_VIO_error(plot=True)
+        w_errors = np.concatenate((w_errors, measurement.tb2.vio_w_error))
+        v_errors = np.concatenate((v_errors, measurement.tb2.vio_v_error))
+        v_cor_errors = np.concatenate((v_cor_errors, measurement.tb2.vio_v_cor_error))
+        w_errors = np.concatenate((w_errors, measurement.tb3.vio_w_error))
+        v_errors = np.concatenate((v_errors, measurement.tb3.vio_v_error))
+        v_cor_errors = np.concatenate((v_cor_errors, measurement.tb3.vio_v_cor_error))
+
+        w_mean = np.mean(w_errors, axis=0)
+        w_std = np.std(w_errors, axis=0)
+        v_mean = np.mean(v_errors, axis=0)
+        v_std = np.std(v_errors, axis=0)
+        v_cor_mean = np.mean(v_cor_errors, axis=0)
+        v_cor_std = np.std(v_cor_errors, axis=0)
+        print("W error mean: ", w_mean, " std: ", w_std)
+        print("V error mean: ", v_mean, " std: ", v_std)
+        print("V cor error mean: ", v_cor_mean, " std: ", v_cor_std)
+
+        plt.show()
+
     def test_vio_error(self):
         w_errors = np.empty((0,3))
         v_errors = np.empty((0,3))
         v_cor_errors = np.empty((0,3))
         for i in range(1, 6):
-            sampled_pkl = "New_measurements/LOS/exp"+str(i)+"_los_sampled.pkl"
+            # sampled_pkl = "../../../Data/Measurements/exp"+str(i)+"_los_sampled.pkl"
+            sampled_pkl = "./corrections3/exp"+str(i)+"_los_sampled.pkl"
             measurement = Measurement()
             measurement.load_sampled_data(sampled_pkl)
-            measurement.tb2.vio_frame.outlier_rejection(max_a=0.5)
-            measurement.tb3.vio_frame.outlier_rejection(max_a = 0.5)
+            measurement.tb2.vio_frame.outlier_rejection(max_a=2.)
+            measurement.tb3.vio_frame.outlier_rejection(max_a = 2.)
             measurement.get_VIO_error(plot=True)
             w_errors = np.concatenate((w_errors, measurement.tb2.vio_w_error))
             v_errors = np.concatenate((v_errors, measurement.tb2.vio_v_error))
@@ -410,15 +524,16 @@ class MyTestCase(unittest.TestCase):
     def test_set_vio_correction(self):
         self.set_test_case()
         for i in range(1, 6):
-            sampled_pkl = "New_measurements/LOS/exp" + str(i) + "_los_sampled.pkl"
+            # sampled_pkl = "../../../Data/Measurements/exp"+str(i)+"_los_sampled.pkl"
+            sampled_pkl = "../../../Data/Measurements/exp"+str(i)+"_los_sampled.pkl"
             measurement = Measurement()
             measurement.load_sampled_data(sampled_pkl)
-            measurement.tb2.vio_frame.outlier_rejection(max_a=0.5)
-            measurement.tb3.vio_frame.outlier_rejection(max_a=0.5)
+            measurement.tb2.vio_frame.outlier_rejection(max_a=0.25)
+            measurement.tb3.vio_frame.outlier_rejection(max_a=0.25)
             measurement.tb2.vio_frame.sampled_v = measurement.tb2.vio_frame.v_cor
             measurement.tb3.vio_frame.sampled_v = measurement.tb3.vio_frame.v_cor
             measurement.name = "exp" + str(i) + "_los"
-            measurement.save_folder = "New_measurements/corrections2/"
+            measurement.save_folder = "./corrections4/"
             measurement.save_sampled_data()
 
     def test_new_robot_population(self):

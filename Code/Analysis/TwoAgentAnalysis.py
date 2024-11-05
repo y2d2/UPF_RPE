@@ -291,19 +291,13 @@ class TwoAgentAnalysis:
         names =[]
         colors = {}
         legends = {}
-        styles = {}
         for method_param in methods_param:
             name = self.generate_name(method_param)
             if name not in names:
                 names.append(name)
                 colors[name] = method_param["Color"]
                 legends[name] = method_param["Legend"]
-                if "Style" in method_param:
-                    styles[name] = method_param["Style"]
-                else:
-                    styles[name] = (0, (1, 1))
             for df_i in self.dfs:
-                # df_j = df_i.loc[(df_i["Method"] == method_param["Method"])]
                 df_j = df_i.loc[(df_i["Method"] == method_param["Method"])]
                 for key in method_param["Variables"]:
                     df_j = df_j.loc[(df_j[key].isin(method_param["Variables"][key]))]
@@ -313,7 +307,7 @@ class TwoAgentAnalysis:
                 dfs.append(df_j)
         df = pd.concat(dfs)
 
-        return df, names, colors, styles, legends
+        return df, names, colors, legends
 
     def filter_methods(self, methods, sigma_uwb, sigma_v, frequencies, start_time):
         self.create_panda_dataframe()
@@ -416,7 +410,7 @@ class TwoAgentAnalysis:
     # Time analysis
     #------------------------
 
-    def time_analysis(self, sigma_uwbs=[0.25], sigma_vs=[0.08], frequencies = [1.0, 10.0], start_time=0,
+    def time_analysis(self, sigma_uwbs=[0.25], sigma_vs=[0.08], frequencies = [1.0, 10.0], start_time=1.0,
                       methods_order=[], methods_color=None, methods_legend={},
                       variables=["error_x_relative", "error_h_relative"], sigma_bound = False,
                       save_fig=False, save_name="time_plot"):
@@ -486,10 +480,11 @@ class TwoAgentAnalysis:
             if variable == "error_x_relative":
                 axes[i].set_ylim([0.5, 10])
                 axes[i].set_yscale("log")
-            # Bring the latest value in the methods_order to the front
+
         methods_order = methods_order[-1:] + methods_order[:-1]
         legend_handles = [Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]
         legend_labels = [methods_legend[method] for method in methods_order]
+
         # fig.suptitle("Average error evolution of the experiments")
         fig.legend(handles=legend_handles, labels=legend_labels, ncol=legend_col, fontsize=12, loc="upper center",
                    bbox_to_anchor=(0.5, 0.99))
@@ -509,8 +504,8 @@ class TwoAgentAnalysis:
                     method_time_values.append(mean_value)
 
                 method_means.append({"Method": method_name,  "TimeValues": method_time_values})
-                print("For Method:", method_name, variable, "Average over all conditions at each time point:",
-                      method_time_values)
+                # print("For Method:", method_name, variable, "Average over all conditions at each time point:",
+                #       method_time_values)
 
             avg_time_df = pd.DataFrame({"Time": time_points})
             for method_mean in method_means:

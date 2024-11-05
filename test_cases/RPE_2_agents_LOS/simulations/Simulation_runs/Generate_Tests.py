@@ -3,9 +3,8 @@ import os
 import shutil
 
 if __name__ == "__main__":
-    result_folder = "Data/Results/Sim_LOS_QCQP_new"
+    result_folder = "Data/Results/Sim_1hz_2024"
     trajectory_folder = "Data/Simulations"
-    # trajectory_folder = "../robot_trajectories"
     generated_tests_folder = "generated_tests"
     if generated_tests_folder not in os.listdir("./"):
         os.mkdir("./"+generated_tests_folder)
@@ -15,23 +14,24 @@ if __name__ == "__main__":
 
     redo_bool = False
     methods = [
-                # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particels=0",
                 # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                 # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                # "NLS|frequency=1.0|horizon=10",
+                "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                "NLS|frequency=0.1|horizon=10",
                 # "NLS|frequency=1.0|horizon=10",
                 # "NLS|frequency=1.0|horizon=100"
                 # "NLS|frequency=1.0|horizon=100",
                 # "NLS|frequency=10.0|horizon=100",
                 # "NLS|frequency=10.0|horizon=1000"
-                "algebraic|frequency=10.0|horizon=100",
-                # "algebraic|frequency=1.0|horizon=10",
+                # "algebraic|frequency=10.0|horizon=100",
+                "algebraic|frequency=1.0|horizon=10",
                 # "algebraic|frequency=10.0|horizon=1000",
                 # "algebraic|frequency=1.0|horizon=100"
                 # "QCQP|frequency=10.0|horizon=100",
-                # "QCQP|frequency=1.0|horizon=10",
-                "QCQP|frequency=10.0|horizon=100",
+                "QCQP|frequency=1.0|horizon=10",
+                # "QCQP|frequency=10.0|horizon=1000",
                 # "QCQP|frequency=1.0|horizon=100"
                 ]
     dvs = [0.1, 0.01]

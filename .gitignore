@@ -1,4 +1,3 @@
-.idea/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -131,30 +130,12 @@ dmypy.json
 
 
 
-/Code/test/test_Analysis/robot_trajectories/
-/Code/test/test_Simulation/Simulations/
+/RPE_Code/test/test_Analysis/robot_trajectories/
+/RPE_Code/test/test_Simulation/Simulations/
 /test_cases/RPE_2_agents_LOS/simulations/robot_trajectories/
-/Code/test/test_Analysis/Results/
-/Code/test/test_Analysis/small_robot_trajectories/
+/RPE_Code/test/test_Analysis/Results/
+/RPE_Code/test/test_Analysis/small_robot_trajectories/
 /Data/Results/
 /generated_tests/
 /test_cases/RPE_2_agents_LOS/simulations/Simulation_runs/generated_tests/
 /test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/
-/test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/sim2real/
-/test_cases/RPE_2_agents_LOS/simulations/small_trajectories/
-/Data/small_trajectories/
-/Code/test/test_Analysis/save_data/
-/Code/test/test_Analysis/save_data_test/
-/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp1_los_sampled.pkl
-/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp2_los_sampled.pkl
-/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp3_los_sampled.pkl
-/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp4_los_sampled.pkl
-/test_cases/RPE_2_agents_LOS/Experiments/Measurements_correction/exp5_los_sampled.pkl
-/TODO.md
-/test_cases/RPE_2_agents_LOS/Experiments/Measurements_old/
-/test_cases/RPE_2_agents_LOS/Experiments/Measurements/
-/test_cases/RPE_2_agents_LOS/Experiments/Experiments/
-/test_cases/RPE_2_agents_LOS/simulations/Results/
-/Data/Measurements_correction/
-/Results/
-/test_cases/RPE_2_agents_LOS/Experiments/New_measurements/
