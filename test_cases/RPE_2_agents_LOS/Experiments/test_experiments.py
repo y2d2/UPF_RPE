@@ -339,7 +339,7 @@ class MyTestCase(unittest.TestCase):
                         x_variable="Sigma_dv",
                         )
 
-        g.axes_dict["error_x_relative"].set_yscale("log")
+        # g.axes_dict["error_x_relative"].set_yscale("log")
         g.axes_dict["error_h_relative"].set_ylabel(taa.y_label["error_h_relative"], fontsize=12)
         g.axes_dict["error_x_relative"].set_ylabel(taa.y_label["error_x_relative"], fontsize=12)
         sns.move_legend(g, loc="upper center", bbox_to_anchor= (0.5, 0.98), ncol=5)
@@ -487,7 +487,7 @@ class MyTestCase(unittest.TestCase):
                          "algebraic|frequency=10.0|horizon=100": "tab:orange",
                          # "QCQP|horizon=10": "tab:purple",
                          "QCQP|frequency=1.0|horizon=100": "tab:blue",
-                         "QCQP|frequency=10.0|horizon=100": "tab:blue",
+                         "QCQP|frequency=10.0|horizon=100": "lightblue",
                         "NLS|frequency=1.0|horizon=100": "tab:purple",
                         "NLS|frequency=1.0|horizon=10": "tab:purple",
                         "NLS|frequency=1.0|horizon=10|perfect_guess=0": "tab:purple",

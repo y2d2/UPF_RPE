@@ -43,7 +43,7 @@ class MyTestCase(unittest.TestCase):
         TAS.set_ukf_properties(alpha, beta, kappa, n_azimuth, n_altitude, n_heading)
         # TAS.run_simulations(methods=["losupf", "nodriftupf", "algebraic", "NLS", "QCQP"], redo_bool=True)
         methods = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
                    "algebraic|frequency=1.0|horizon=10",
                    "algebraic|frequency=10.0|horizon=100",
                    "QCQP|frequency=1.0|horizon=10",

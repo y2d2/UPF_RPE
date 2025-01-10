@@ -29,22 +29,24 @@ class MyTestCase(unittest.TestCase):
         measurement = Measurement(self.rosbag)
         measurement.trim_full_bag(start_time, end_time, "./exp4_full")
 
-
-
-
     def set_test_case(self):
-        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/"
-        self.rosbag = self.exp_folder+"exp4"
+        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/Experiments/NLOS_exp/"
+        self.rosbag = self.exp_folder+"Spec_VIO_onoff_NLOS_3/spec_vio_1_min_onoff_nlos_3"
         self.name = self.rosbag.split("/")[-1]
-        self.sampled_pkl = "LOS_exp1_sampled.pkl"
+        self.sampled_pkl = "exp4_sampled.pkl"
 
-        self.measurment_folder = "Experiments/Measurements/Unob_exp"
+        self.measurment_folder = "Experiments/Measurements/NLOS_exp"
 
         self.uwb_topic = "/yd_uwb/dev_0x7603_0x683a"
-        self.tb2_topic = "/vicon/tb2/tb2"
-        self.tb3_topic = "/vicon/tb3/tb3"
-        self.tb2_odom_topic = "/tb2/odom"
-        self.tb3_odom_topic = "/tb3/odom"
+        # self.tb2_topic = "/vicon/tb2/tb2"
+        # self.tb3_topic = "/vicon/tb3/tb3"
+        # self.tb2_odom_topic = "/tb2/odom"
+        # self.tb3_odom_topic = "/tb3/odom"
+        self.tb2_topic = "/tb2/amcl_pose"
+        self.tb3_topic = "/tb3/amcl_pose"
+        self.tb2_odom_topic = "/tb2/vio"
+        self.tb3_odom_topic = "/tb3/vio"
+
         self.tb2 = Turtlebot4("tb2")
         self.tb3 = Turtlebot4("tb3")
 
@@ -66,7 +68,7 @@ class MyTestCase(unittest.TestCase):
             measurement_new.save_raw_data()
 
     def test_vio_sanity(self):
-        rosbag = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/exp1"
+        rosbag = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/Experiments/LOS_exp/exp4"
         ns = "/tb3"
         imu_topic = "/oakd/imu/data"
         image_l_topic = "/oakd/left/image_rect/compressed"
@@ -171,9 +173,13 @@ class MyTestCase(unittest.TestCase):
 
     def test_read_bag(self):
         self.set_test_case()
-        self.rosbag = "exp1"
+        # self.rosbag = "exp4"
         measurement = Measurement(self.rosbag)
-        measurement.read_bag()
+        measurement.tb2_odom_topic = self.tb2_odom_topic
+        measurement.tb3_odom_topic = self.tb3_odom_topic
+        measurement.tb2_topic = self.tb2_topic
+        measurement.tb3_topic = self.tb3_topic
+        measurement.read_bag(VIO_source ="specVIO", new_message_conf=True)
         measurement.save_raw_data()
         print(len(measurement.tb3.vio_frame.t))
         print(len(measurement.tb2.vio_frame.t))
@@ -185,9 +191,17 @@ class MyTestCase(unittest.TestCase):
         measurement.tb2.plot_trajectory(plt)
         plt.show()
 
+    def test_create_sampled_pkl(self):
+        pkl_file = "spec_vio_2_min_nlos_raw.pkl"
+        measurement = Measurement()
+        measurement.load_raw_data(pkl_file)
+        measurement.sample(10)
+        measurement.save_sampled_data()
+
+
     def test_read_raw_data_pkl(self):
         self.set_test_case()
-        pikle_file = "./trimmed_rosbags/exp1_raw.pkl"
+        pikle_file = "./exp3_raw.pkl"
         measurement = Measurement()
         measurement.load_raw_data(pikle_file)
         measurement.tb2.plot_trajectory(plt)
@@ -490,9 +504,10 @@ class MyTestCase(unittest.TestCase):
         w_errors = np.empty((0,3))
         v_errors = np.empty((0,3))
         v_cor_errors = np.empty((0,3))
-        for i in range(1, 6):
+        list = [str(i) for i in range(1, 6)]
+        for i in list:
             # sampled_pkl = "../../../Data/Measurements/exp"+str(i)+"_los_sampled.pkl"
-            sampled_pkl = "./corrections3/exp"+str(i)+"_los_sampled.pkl"
+            sampled_pkl = "./corrections3/exp"+i+"_los_sampled.pkl"
             measurement = Measurement()
             measurement.load_sampled_data(sampled_pkl)
             measurement.tb2.vio_frame.outlier_rejection(max_a=2.)

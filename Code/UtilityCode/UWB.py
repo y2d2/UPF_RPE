@@ -146,10 +146,11 @@ class UWB:
         t = [r - self.sampled_t[0] for r in self.sampled_t]
         # plt.figure()
         # ax.title(self.name+" real")
-        ax.plot(t , [d for i, d in enumerate(self.real_d) if (i % factor == 0)], label="Real $d$ [m]",  linewidth=3, color="k")
-        ax.plot(t,[d for i, d in enumerate(self.sampled_d) if (i % factor == 0)], '--', color="tab:purple",  label=r"Measured $\tilde{d}$ [m]", linewidth=3)
-        er = np.abs(np.array(self.sampled_d) - self.real_d)
+        # ax.plot(t , [d for i, d in enumerate(self.real_d) if (i % factor == 0)], label="Real $d$ [m]",  linewidth=3, color="k")
+        # ax.plot(t,[d for i, d in enumerate(self.sampled_d) if (i % factor == 0)], '--', color="tab:purple",  label=r"Measured $\tilde{d}$ [m]", linewidth=3)
+        er = np.array(self.sampled_d) - self.real_d
         ax.plot(t,[d for i, d in enumerate(er) if (i % factor == 0)], '--', color="tab:red", label=r"Error $\epsilon_{d} = |d - \tilde{d} |$ [m]", linewidth=3)
+        ax.grid()
         print("mean error: ", np.mean(er), "std error: ", np.std(er))
         # ax.legend(fontsize=12, loc="upper left")
         # plt.grid()

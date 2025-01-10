@@ -478,8 +478,8 @@ class TwoAgentAnalysis:
             axes[i].set_xlabel("time [s]", fontsize=12)
             axes[i].set_ylabel(self.y_label[variable], fontsize=12)
             if variable == "error_x_relative":
-                axes[i].set_ylim([0.5, 10])
-                axes[i].set_yscale("log")
+                axes[i].set_ylim([0.0, 6])
+                # axes[i].set_yscale("log")
 
         methods_order = methods_order[-1:] + methods_order[:-1]
         legend_handles = [Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]

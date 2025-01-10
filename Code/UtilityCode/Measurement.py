@@ -132,7 +132,7 @@ class Measurement:
 
                 if self.tb2_topic == connection.topic:
                     # print(connection.topic, connection.msgtype)
-                    data = typestore.deserialize_cdr(rawdata, Position)
+                    data = typestore.deserialize_cdr(rawdata, connection.msgtype)
                     self.tb2.update_vicon(data, timestamp)
 
                 if self.tb2_odom_topic == connection.topic:
@@ -150,7 +150,7 @@ class Measurement:
                         self.tb3.update_orb(data)
 
                 if self.tb3_topic == connection.topic:
-                    data = typestore.deserialize_cdr(rawdata, Position)
+                    data = typestore.deserialize_cdr(rawdata, connection.msgtype)
                     self.tb3.update_vicon(data, timestamp)
 
                 if self.uwb_topic == connection.topic:
@@ -380,7 +380,6 @@ class Measurement:
         # I rememeber having set the COG of the turtlebots in vicon at the marker that is almost at UWB chip.
         res = self.uwb.optimise_uwb_T(self.tb2, self.tb3 ,i_0 =i_0,  i_e = i_e)
         print(res)
-
 
     def get_uwb_distances(self):
         ds = np.linalg.norm(self.tb2.vicon_frame.sampled_p - self.tb3.vicon_frame.sampled_p, axis=1)

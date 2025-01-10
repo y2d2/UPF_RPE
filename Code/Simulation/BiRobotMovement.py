@@ -44,6 +44,14 @@ def fix_connected_2D_host(host: NewRobot, connected: NewRobot, **kwargs):
     control2d.set_control()
     connected.move(w=0, v=np.array([0, 0, 0]))
 
+def both_3D_control(host: NewRobot, connected: NewRobot, **kwargs):
+    control_host = kwargs.get("control_host")
+    control_host.set_control()
+    control_connected = kwargs.get("control_connected")
+    control_connected.set_control()
+    # connected.move(w=0, v=np.array([0, 0, 0]))
+    # host.move(w=0, v=np.array([0, 0, 0]))
+
 
 
 def fix_host_random_movement_connected(host: NewRobot, connected: NewRobot, **kwargs):
@@ -85,13 +93,17 @@ def random_moving_drones(list_of_drones: List[NewRobot], **kwargs):
 
 # 2 agent scenarios
 
-class Control2D():
+class Control1D():
     def __init__(self, agent: NewRobot,
-                 max_v=0.5, max_dot_v=0.2, max_w=0.5, max_dot_w = 0.1, p_angle=1., p_pos = 1. ):
+                 max_v=0.5, max_dot_v = 0.2, max_w=0.5, max_dot_w = 0.1, p_angle=1., p_pos = 1.,
+                 frequency = 10):
+        self.frequency = frequency
         self.max_v = max_v
         self.max_dot_v = max_dot_v
+        self.max_delta_v = max_dot_v / frequency
         self.max_w = max_w
         self.max_dot_w = max_dot_w
+        self.max_delta_w = max_dot_w/frequency
 
         self.center = np.array([0,0,0])
         self.radius = 2
@@ -163,4 +175,132 @@ class Control2D():
 
 
 
+class Control3D(Control1D):
+    def __init__(self, agent: NewRobot,
+                 max_v=0.5, max_dot_v=0.2, max_w=0.5, max_dot_w = 0.1, p_angle=1., p_pos = 1.,
+             frequency = 10):
+        super().__init__(agent, max_v, max_dot_v, max_w, max_dot_w , p_angle, p_pos, frequency)
+        self.angle_target=0
+        self.height = 2.
+        self.target_time_max = 10
+        self.target_time = 0
+        self.current_target_time = 0
 
+    def set_random_target(self):
+        self.current_target_time = 0
+        r = np.random.uniform(0, self.radius)
+        theta = np.random.uniform(0, 2 * np.pi)
+        phi = np.random.uniform(0, np.pi)
+        h = np.random.uniform(0, self.height)
+        self.target = self.center + np.array([r * np.cos(phi)* np.cos(theta), r *  np.cos(phi) * np.sin(theta), r *  np.sin(phi)])
+        self.angle_target = np.random.uniform(0, 2*np.pi)
+        self.target_time = np.random.uniform(self.target_time_max/2, self.target_time_max)
+
+    def set_control(self):
+        # x = self.agent.x_real[-1]
+        # theta =  self.agent.h_real[-1]
+        # v_real = self.agent.v_slam_real[-1]
+        # v_norm = np.linalg.norm(v_real)
+        #
+        # w_real = self.agent.w_slam_real[-1]
+        #
+        #
+        #
+        # dx = self.target - x
+        #
+        # if np.linalg.norm(dx) < 0.1:
+        #     self.set_random_target()
+        #     dx = self.target - x
+        #
+        # v_ax = dx / np.linalg.norm(dx)
+        # angle = limit_angle(self.angle_target - theta)
+        #
+        #
+        #
+        # #Define turn angle
+        # w_tar = self.p_angle*angle
+        # dot_w_tar = w_tar - w_real
+        # if np.abs(dot_w_tar) > self.max_dot_w:
+        #     w_tar = w_real +  self.max_dot_w * np.sign(dot_w_tar)
+        # if np.abs(w_tar) > self.max_w:
+        #     w_tar = self.max_w * np.sign(w_tar)
+        #
+        #
+        #
+        # # Slow down to halt to turn
+        # if np.abs(angle) > 0.1:
+        #     v_tar = 0
+        # else:
+        #     v_tar = self.max_v
+        #    # Move towards target.
+        # v_tar = np.linalg.norm(dx)
+        # v_dot_tar = self.p_pos * (v_tar - v_norm)
+        #
+        # if np.abs(v_dot_tar) > self.max_dot_v:
+        #     v_dot_tar  =  self.max_dot_v * np.sign(v_dot_tar)
+        #
+        # v = v_real + v_ax * v_dot_tar
+        # if np.linalg.norm(v) > self.max_v:
+        #     v = self.max_v * v / np.linalg.norm(v)
+        # print(self.target, dx, w_tar, v_tar, v)
+        #
+        # self.agent.move(w_tar, v)
+
+        # Extract current and target positions and yaw
+        if self.current_target_time >= self.target_time:
+            self.set_random_target()
+        self.current_target_time += 1/self.frequency
+
+        current_position = self.agent.x_real[-1]
+        current_yaw = self.agent.h_real[-1]
+
+        current_velocity = self.agent.v_slam_real[-1]
+        current_rotational_speed = self.agent.w_slam_real[-1]
+
+
+        dx = self.target - current_position
+
+        # if np.linalg.norm(dx) < 0.1:
+        #     self.set_random_target()
+
+        target_position = self.target
+        target_yaw = self.angle_target
+
+
+
+        # Compute position error
+        position_error = target_position - current_position
+        rot_matrix = np.array([[np.cos(current_yaw), np.sin(current_yaw), 0],
+                               [-np.sin(current_yaw), np.cos(current_yaw), 0],
+                               [0, 0, 1]])
+        position_error1 = rot_matrix @ position_error
+        position_error2 = self.p_pos * position_error1
+
+        v_dot_vec = position_error2 - current_velocity
+        v_dot_tar = np.linalg.norm(v_dot_vec)
+        if np.abs(v_dot_tar) > self.max_delta_v/self.frequency:
+            v_dot_tar = self.max_delta_v/self.frequency * np.sign(v_dot_tar)
+
+        try:
+            v = current_velocity + v_dot_vec * v_dot_tar/np.linalg.norm(v_dot_vec)
+        except RuntimeWarning:
+            v = current_velocity + v_dot_vec * v_dot_tar
+
+
+        # Compute yaw error (normalize to [-pi, pi])
+        yaw_error = target_yaw - current_yaw
+        yaw_error_1 =(yaw_error - np.pi )% (2 * np.pi) - np.pi
+        w_tar = self.p_angle * yaw_error_1
+        dot_w = w_tar - current_rotational_speed
+        if np.abs(dot_w) > self.max_delta_w:
+            w_tar = current_rotational_speed +  self.max_delta_w * np.sign(dot_w)
+
+
+
+        # Compute velocity commands
+        velocity_command = np.clip(v, -self.max_v, self.max_v)
+        yaw_command = np.clip(w_tar, -self.max_w, self.max_w)
+        # print(self.target, dx, velocity_command, v)
+        # print(yaw_command, yaw_error_1, yaw_error, dot_w)
+
+        self.agent.move(yaw_command, velocity_command)
