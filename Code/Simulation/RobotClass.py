@@ -412,10 +412,10 @@ class NewRobot:
 
     def set_vio_slam(self, DTs, Q):
         T_slam = self.T0
-        x_slam = np.empty((0, 3))
-        h_slam = []
-        dx_slam = np.empty((0,3 ))
-        dh_slam = []
+        x_slam = np.zeros((1, 3))
+        h_slam = [0.]
+        dx_slam = np.zeros((1,3 ))
+        dh_slam = [0.]
         self.q = Q
         for DT in DTs:
             dx_slam = np.vstack((dx_slam,TMF.get_translation(DT)))
@@ -469,10 +469,6 @@ class NewRobot:
                 self.v_slam_real = np.concatenate([self.v_slam_real, v_slam.reshape((1, 3))])
                 Dh_real = limit_angle(self.h_real[i] - self.h_real[i-1])
                 self.w_slam_real.append((Dh_real)/self.simulation_time_step)
-
-
-
-
 
     # -------------------
     # Saving functions

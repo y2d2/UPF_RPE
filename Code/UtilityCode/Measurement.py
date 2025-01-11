@@ -385,11 +385,11 @@ class Measurement:
         ds = np.linalg.norm(self.tb2.vicon_frame.sampled_p - self.tb3.vicon_frame.sampled_p, axis=1)
         self.uwb.real_d = ds
 
-    def get_uwb_LOS(self, sigma_d):
+    def get_uwb_LOS(self, sigma_d, factor=2):
         los_state = np.zeros(len(self.uwb.sampled_d))
         self.get_uwb_distances()
         for i in range(len(self.uwb.sampled_d)):
-            if np.abs(self.uwb.sampled_d[i]  - self.uwb.real_d[i]) < 2*sigma_d:
+            if np.abs(self.uwb.sampled_d[i]  - self.uwb.real_d[i]) < factor*sigma_d:
                 los_state[i] = 1
         return los_state
 
