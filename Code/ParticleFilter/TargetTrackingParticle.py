@@ -15,6 +15,7 @@ class TargetTrackingParticle:
         self.rpea = None
         self.t_si_sj = np.zeros(4)
         self.P_t_si_sj = np.zeros((4, 4))
+        self.los_state = 1
 
     def run_model(self, dt_i, q_i, t_i, P_i, dt_j, q_j, d_ij, sig_uwb, time_i):
         """
@@ -36,7 +37,8 @@ class TargetTrackingParticle:
             term3 = (mu_Q - mu_P).T.dot(inv(sigma_Q)).dot(mu_Q - mu_P)
             return 0.5 * (term1 - k + term2 + term3)
 
-
+        print(self.t_si_sj[:3], self.P_t_si_sj[:3,:3])
+        print(other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
         distance = kl_divergence(self.t_si_sj[:3], self.P_t_si_sj[:3,:3],
                                  other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
         return distance

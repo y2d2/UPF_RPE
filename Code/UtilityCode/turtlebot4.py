@@ -135,7 +135,7 @@ class Frame():
         frame.sampled_T = self.sampled_T[id_0:id_1]
         return frame
 
-    def outlier_rejection(self, max_v = 0.3, max_a = 0.5, max_w =1, horizon = 10):
+    def outlier_rejection(self, max_v = 0.6, max_a = 0.5, max_w =1, horizon = 10):
         v_uncor, w_uncor = self.get_relative_motion()
         self.v_cor = np.empty((0, 3))
         w_cor = np.empty((0, 3))
@@ -143,11 +143,23 @@ class Frame():
         self.v_cor = np.vstack((self.v_cor, v_uncor[0]))
 
         for i in range(1,len(v_uncor)):
-            a = np.linalg.norm(v_uncor[i] -   self.v_cor[i-1]) * self.sample_frequency
-            if a > max_a:
-                v = self.v_cor[i-1]
-            else:
-                v = v_uncor[i]
+            v = np.zeros(3)
+            for j in range(3):
+                if abs(v_uncor[i][j] - self.v_cor[i-1][j])* self.sample_frequency > max_a:
+                    v[j] = self.v_cor[i-1][j]  + np.sign(v_uncor[i][j] - self.v_cor[i-1][j]) * max_a / self.sample_frequency
+                else:
+                    v[j] = v_uncor[i][j]
+
+                if np.abs(v[j]) > max_v:
+                    v[j] = np.sign(v[j]) * max_v
+
+
+            #
+            # a = np.linalg.norm(v_uncor[i] -   self.v_cor[i-1]) * self.sample_frequency
+            # if a > max_a:
+            #     v = self.v_cor[i-1]
+            # else:
+            #     v = v_uncor[i]
             self.v_cor = np.vstack((self.v_cor, v))
 
 

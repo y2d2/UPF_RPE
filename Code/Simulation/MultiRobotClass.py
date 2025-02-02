@@ -15,7 +15,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib
 
-from Code.DataLoggers.TargetTrackingParticle_DataLogger import UKFTargetTrackingParticle_DataLogger
+from Code.DataLoggers.TargetTrackingParticle_DataLogger import UKFTargetTrackingParticle_DataLogger, TargetTrackingParticle_DataLogger
 # import Experiments.RealRobot
 from Code.UtilityCode.utility_fuctions import sphericalToCartesian, limit_angle, transform_matrix, \
     inv_transformation_matrix, get_states_of_transform, cartesianToSpherical
@@ -581,6 +581,8 @@ class TwoAgentSystem():
         # Plot and debug variables:
         self.plot_bool = False
         self.debug_bool = False
+        self.debug_plot_bool = False
+
 
         # Save for analyis:
         self.save_bool = False
@@ -886,7 +888,7 @@ class TwoAgentSystem():
                 dx_1, q_1 = drone1.reset_integration()
 
                 uwb_measurement = distances[i]
-                los_state = True
+                los_state = 1
                 # uwb_measurement, los_state = nlos_function(int(i / self.factor), uwb_measurement)
                 self.los_state.append(los_state)
 
@@ -963,8 +965,7 @@ class TwoAgentSystem():
         lop = ListOfUKFLOSTargetTrackingParticles(drift_correction_bool=drift_bool)
         lop.set_ukf_parameters(kappa=self.kappa, alpha=self.alpha, beta=self.beta)
         if "multi_particles" in parameters and parameters["multi_particles"] ==0 :
-            # TODO: add code to find the intial transform and convert ti
-            t_S0_S1 = self.find_initial_t()
+            t_S0_S1 = self.find_initial_t(drone0, drone1)
             s_S0_S1 = np.concatenate((cartesianToSpherical(t_S0_S1[:3]), np.array([t_S0_S1[-1]])))
             particle = lop.create_particle(x_ha_0, s_S0_S1, np.array([self.sigma_uwb, 0.000001,0.000001,0.000001]), s_S0_S1[0],self.sigma_uwb)
             lop.particles.append(particle)
@@ -1056,7 +1057,7 @@ class TwoAgentSystem():
             print("UPF time 1: ", t4 - t3)
             print("UPF time 0: ", t2 - t1)
         # try:
-        if self.plot_bool and self.debug_bool:
+        if self.plot_bool and self.debug_plot_bool:
             for agent in self.agents:
                 try:
                     # self.agents[agent]["upf"].upf_connected_agent_logger.plot_self(self.los_state)
@@ -1076,17 +1077,20 @@ class TwoAgentSystem():
             upf: UPFConnectedAgent = self.agents[drone_id][self.test_name]
             dl_ca: UPFConnectedAgentDataLogger = self.agents[drone_id]["log"]
             # dl_ca: UPFConnectedAgentDataLogger = upf.upf_connected_agent_logger
-            dl_bp: UKFDatalogger = dl_ca.get_best_particle_log()
+            dl_bp: TargetTrackingParticle_DataLogger = dl_ca.get_best_particle_log()
+            dl_bp_rpea: UKFDatalogger = dl_bp.rpea_datalogger
 
             upf_result = {"number_of_particles": dl_ca.number_of_particles,
                           "calculation_time": dl_ca.calulation_time,
                           # "los_state": dl_bp.los_state,
                           # "los_error": np.abs(np.array(self.los_state) - np.array(dl_bp.los_state)),
-                          "error_x_relative": dl_bp.error_relative_transformation_est,
-                          "error_h_relative": dl_bp.error_relative_heading_est,
-                          "sigma_h_relative": dl_bp.sigma_h_ca,
-                          "sigma_x_relative": dl_bp.sigma_x_ca,
-                          "NIS": dl_bp.NIS}
+                          "error_x_relative": dl_bp_rpea.error_relative_transformation_est,
+                          "error_h_relative": dl_bp_rpea.error_relative_heading_est,
+                          "sigma_h_relative": dl_bp_rpea.sigma_h_ca,
+                          "sigma_x_relative": dl_bp_rpea.sigma_x_ca,
+                          "LOS_state" : dl_bp.los_state,
+                          "True_los_state": self.los_state,
+                          "NIS": dl_bp_rpea.NIS}
             self.data[self.current_sim_name][self.test_name][drone_id] = upf_result
 
             if self.save_bool:
@@ -1098,9 +1102,9 @@ class TwoAgentSystem():
         # if "slam" not in self.data[self.current_sim_name]:aw
         self.data[self.current_sim_name]["slam"] = {}
         for drone_id in self.agents:
-            dl_bp: UKFDatalogger = self.agents[drone_id]["log"].get_best_particle_log()
-            slam_result = {"error_x_relative": dl_bp.error_relative_transformation_slam,
-                           "error_h_relative": dl_bp.error_relative_heading_slam}
+            dl_bp_rpea: UKFDatalogger = self.agents[drone_id]["log"].get_best_particle_log().rpea_datalogger
+            slam_result = {"error_x_relative": dl_bp_rpea.error_relative_transformation_slam,
+                           "error_h_relative": dl_bp_rpea.error_relative_heading_slam}
             self.data[self.current_sim_name]["slam"][drone_id] = slam_result
 
             # A new file will be created
@@ -1116,10 +1120,10 @@ class TwoAgentSystem():
         try:
             if self.plot_bool:
                 for agent in self.agents:
-                    self.agents[agent][self.test_name].upf_connected_agent_logger.plot_self(self.los_state)
-                    plt.show()
-                    plt.pause(0.1)
-                    plt.close()
+                    self.agents[agent]["log"].plot_self(self.los_state)
+                    # plt.show()
+                    # plt.pause(0.1)
+                    # plt.close()
         except Exception as e:
             print(e)
 
@@ -1222,9 +1226,9 @@ class TwoAgentSystem():
         # self.agents["drone_0"]["NLS"].set_best_guess({"drone_1": best_guess})
         self.agents["drone_0"][self.test_name].init_logging(NLSDataLogger(self.agents["drone_0"][self.test_name]))
 
-    def find_initial_t(self):
-        drone0: NewRobot = self.agents["drone_0"]["drone"]
-        drone1: NewRobot = self.agents["drone_1"]["drone"]
+    def find_initial_t(self, drone0, drone1):
+        # drone0: NewRobot = self.agents["drone_0"]["drone"]
+        # drone1: NewRobot = self.agents["drone_1"]["drone"]
         t_O_S0 = np.concatenate((drone0.x_start, np.array([drone0.h_start])))
         t_O_S1 = np.concatenate((drone1.x_start, np.array([drone1.h_start])))
 

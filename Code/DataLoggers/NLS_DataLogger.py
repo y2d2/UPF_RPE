@@ -106,7 +106,7 @@ class NLSDataLogger:
         est_T_G_s0 = T_G_s1 @ transform_matrix(t_s1_s0)
         est_t_G_s0 = get_states_of_transform(est_T_G_s0)
 
-        est_t_s = np.array([est_t_G_s1, est_t_G_s0])
+        est_t_s = np.array([est_t_G_s0, est_t_G_s1])
         self.estimated_ca_position = np.append(self.estimated_ca_position, est_t_s[:, :3].reshape(1, 2, 3), axis=0)
 
     def plot_corrected_estimated_trajectory(self, ax, agent=0, color="k", alpha=1., linestyle="--", marker="", label=None, i=-1, history=None):

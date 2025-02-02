@@ -121,10 +121,6 @@ class UPFConnectedAgent:
         self.weights = []
         self.totalWeight = 1.
         self.best_particle: TargetTrackingParticle | None = None
-        # self.min_likelihood = 5e-1
-        self.min_likelihood = 1e-1
-        self.degeneration_factor = 0.8
-        self.min_likelihood_factor = 0.1
 
         # Host agent variables:
         self.ha = KFHostAgent(x_ha_0)
@@ -532,9 +528,13 @@ class UPFConnectedAgent:
         :return:
         """
         if particle_1 is not particle_2:
-           if particle_1.compare(particle_2) < self.max_dis:
-               return particle_1
-
+            value = particle_1.compare(particle_2)
+            print(value, self.max_dis)
+            if value is not None and value < self.max_dis:
+                if particle_1.weight > particle_2.weight:
+                    return particle_1
+                else:
+                    return particle_2
         return None
 
 

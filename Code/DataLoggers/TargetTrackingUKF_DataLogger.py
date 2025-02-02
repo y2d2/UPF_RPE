@@ -84,6 +84,7 @@ class UKFDatalogger():
             self.estimated_ca_position = np.empty((0, 3))
             self.NIS = []
             self.NEES = []
+            # self.los_state = []
 
 
     def save_graphs(self, folder="./"):
@@ -106,6 +107,7 @@ class UKFDatalogger():
         self.log_slam_data(self.i)
         self.log_variances()
         self.log_nis_nees()
+        # self.los_state.append(self.ukf.los_state)
 
     def log_variances(self):
         self.likelihood.append(self.ukf.kf.likelihood)
@@ -495,6 +497,8 @@ class UKFDatalogger():
         copyDL.estimated_ca_position = copy.deepcopy(self.estimated_ca_position)
 
         copyDL.data_logged = copy.deepcopy(self.data_logged)
+        copyDL.NIS = copy.deepcopy(self.NIS)
+        copyDL.NEES = copy.deepcopy(self.NEES)
 
         return copyDL
 

@@ -115,7 +115,6 @@ class TargetTrackingUKF:
         self.beta = 2
 
         # ---- Kalman filter state:
-        self.nlos_degradation = 0.9
         self.P_x_ca = np.zeros((4, 4))
         self.sigma_dh_ca = 0
         self.sigma_dx_ca = 0

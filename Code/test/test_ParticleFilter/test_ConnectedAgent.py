@@ -157,9 +157,9 @@ class TestConnectedAgent(unittest.TestCase):
         self.run_test(nlos_function=self.nlos_man.los)
 
         self.dl.plot_self(self.los)
-        self.dl.get_best_particle_log().create_3d_plot()
-        self.dl.get_best_particle_log().plot_error_graph()
-        self.dl.get_best_particle_log().plot_ukf_states()
+        self.dl.get_best_particle_log().rpea_datalogger.create_3d_plot()
+        self.dl.get_best_particle_log().rpea_datalogger.plot_error_graph()
+        self.dl.get_best_particle_log().rpea_datalogger.plot_ukf_states()
         plt.show()
 
     def test_tc1_known_start_pose(self):
@@ -204,9 +204,9 @@ class TestConnectedAgent(unittest.TestCase):
         self.run_test(nlos_function=self.nlos_man.los)
 
         self.dl.plot_self(self.los)
-        self.dl.get_best_particle_log().create_3d_plot()
-        self.dl.get_best_particle_log().plot_error_graph()
-        self.dl.get_best_particle_log().plot_ukf_states()
+        self.dl.get_best_particle_log().rpea_datalogger.create_3d_plot()
+        self.dl.get_best_particle_log().rpea_datalogger.plot_error_graph()
+        self.dl.get_best_particle_log().rpea_datalogger.plot_ukf_states()
         plt.show()
 
     # -----------------------

@@ -37,7 +37,7 @@ class UPFConnectedAgentDataLogger:
         return self.particle_logs[-1]
 
     def get_best_particle_log(self) -> TargetTrackingParticle_DataLogger:
-        return self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
+        return self.find_particle_log(self.upf_connected_agent.best_particle)
 
     def add_particle(self, particle):
         # particle.set_datalogger(self.host_agent, self.connected_agent, name="Particle " + str(self.particle_count))

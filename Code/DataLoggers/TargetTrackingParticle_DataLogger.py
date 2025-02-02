@@ -13,14 +13,17 @@ class TargetTrackingParticle_DataLogger:
         self.rpea_datalogger = None
         self.weight = []
         self.likelihood = []
+        self.los_state = []
         if parent is not None:
             self.weight = copy.deepcopy(parent.weight)
             self.likelihood = copy.deepcopy(parent.likelihood)
+            self.los_state = copy.deepcopy(parent.los_state)
 
     def log_data(self, i):
         self.rpea_datalogger.log_data(i)
         self.weight.append(self.particle.weight)
         self.likelihood.append(self.particle.likelihood)
+        self.los_state.append(self.particle.los_state)
 
     def plot_self(self, particle_ax = None, los = None):
         if particle_ax is None:
