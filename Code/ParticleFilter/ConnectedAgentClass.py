@@ -321,6 +321,10 @@ class UPFConnectedAgent:
         self.uwb_measurement = d_ij
         self.time_i = time_i
         # self.check_validity(dx_ca, q_ca)
+        # self.ha.predict(dx_ha=dt_i, Q_ha=q_i)
+        # self.ha.reset_integration()
+
+
         self.run_predict_update_los(dt_j, q_j,  dt_i, q_i, d_ij)
         self.resample()
         # self.calculate_average_particle()

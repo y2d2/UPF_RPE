@@ -50,25 +50,25 @@ class MyTestCase(unittest.TestCase):
         sig_uwb = 0.25
 
         main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/exp_cor_new6/exp"
-        data_folder = "corrections3/"
+        results_folder = main_folder + "Results/exp_cor_new6/debug"
+        data_folder = "corrections3/exp1_los_sampled.pkl"
 
         experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
 
-        methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        methods = ["losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+                   # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    # "algebraic|frequency=1.0|horizon=10",
-                   "algebraic|frequency=10.0|horizon=100",
+                   # "algebraic|frequency=10.0|horizon=100",
                    # # "algebraic|frequency=10.0|horizon=1000",
-                   "QCQP|frequency=10.0|horizon=100",
+                   # "QCQP|frequency=10.0|horizon=100",
                    # # "QCQP|frequency=10.0|horizon=1000",
-                   "NLS|frequency=1.0|horizon=10",
+                   # "NLS|frequency=1.0|horizon=10",
                    ]
 
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
         tas.debug_bool = True
-        tas.plot_bool = False
-        tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
+        tas.plot_bool = True
+        tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data)
         plt.show()
         # return tas, measurements
 

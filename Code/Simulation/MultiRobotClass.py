@@ -1023,11 +1023,11 @@ class TwoAgentSystem():
         upf0log: UPFConnectedAgentDataLogger = self.agents["drone_0"]["log"]
         upf1log: UPFConnectedAgentDataLogger = self.agents["drone_1"]["log"]
 
-        # Not sure if this is needed.
-        upf0.ha.predict(dx_ha=dx_0, Q_ha=q_0)
-        upf1.ha.predict(dx_ha=dx_1, Q_ha=q_1)
-        dx_0, q_0 = upf0.ha.reset_integration()
-        dx_1, q_0 = upf1.ha.reset_integration()
+        # # Not sure if this is needed.
+        # upf0.ha.predict(dx_ha=dx_0, Q_ha=q_0)
+        # upf1.ha.predict(dx_ha=dx_1, Q_ha=q_1)
+        # dx_0, q_0 = upf0.ha.reset_integration()
+        # dx_1, q_0 = upf1.ha.reset_integration()
 
         # Drone 0
         x_ha = drone0.x_slam[i]
@@ -1036,7 +1036,7 @@ class TwoAgentSystem():
         upf0.ha.update(x_ha_0, q_0)
         # Timing the execution of the algorihtm
         t1 = time.time()
-        upf0.run_model(dt_j = dx_1, q_j=q_1, dt_i = np.zeros(4), q_i = np.zeros((4, 4)), d_ij = uwb_measurement, time_i=i)
+        upf0.run_model(dt_j = dx_1, q_j=q_1, dt_i = dx_0, q_i = q_0, d_ij = uwb_measurement, time_i=i)
         t2 = time.time()
         # Logging
         upf0log.log_data(i, t2 - t1)
@@ -1048,7 +1048,7 @@ class TwoAgentSystem():
         upf1.ha.update(x_ha_1, q_1)
         # Timing the execution of the algorihtm
         t3 = time.time()
-        upf1.run_model(dt_j = dx_0, q_j=q_0, dt_i = np.zeros(4), q_i = np.zeros((4, 4)), d_ij= uwb_measurement, time_i=i)
+        upf1.run_model(dt_j = dx_0, q_j=q_0, dt_i =  dx_1, q_i = q_1, d_ij= uwb_measurement, time_i=i)
         t4 = time.time()
         # Logging
         upf1log.log_data(i, t4 - t3)
