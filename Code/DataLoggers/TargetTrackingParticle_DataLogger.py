@@ -14,12 +14,14 @@ class TargetTrackingParticle_DataLogger:
         self.weight = []
         self.likelihood = []
         self.los_state = []
+        self.i = 0
         if parent is not None:
             self.weight = copy.deepcopy(parent.weight)
             self.likelihood = copy.deepcopy(parent.likelihood)
             self.los_state = copy.deepcopy(parent.los_state)
 
     def log_data(self, i):
+        self.i = i
         self.rpea_datalogger.log_data(i)
         self.weight.append(self.particle.weight)
         self.likelihood.append(self.particle.likelihood)

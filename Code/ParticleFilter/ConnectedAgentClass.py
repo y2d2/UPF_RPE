@@ -171,6 +171,8 @@ class UPFConnectedAgent:
         self.sigma_uwb_factor = sigma_uwb_factor
 
         self.max_dis = 0.1
+        self.max_particles = 100
+
         # def set_logging(self, ca_logger):
 
     #     self.logging = True
@@ -328,8 +330,12 @@ class UPFConnectedAgent:
         self.run_predict_update_los(dt_j, q_j,  dt_i, q_i, d_ij)
         self.resample()
         # self.calculate_average_particle()
-        if len(self.particles) > 5000:
-            raise Exception("Too many particles")
+        # print(f"# Particles: {len(self.particles)}, {len(self.weights)}")
+        while len(self.particles) > self.max_particles:
+            min_index = self.weights.index(min(self.weights))  # Find the index of the smallest weight
+            del self.particles[min_index]  # Remove the corresponding particle
+            del self.weights[min_index]
+            # print(f"Removed {min_index}")
 
     def check_validity(self, dx_ca, q_ca):
         if q_ca is not None or q_ca == np.zeros((4, 4)):
@@ -356,61 +362,6 @@ class UPFConnectedAgent:
                 print(e)
                 pass
         self.particles = keep
-
-    # def resample(self):
-    #     """
-    #     Branch kill resampling for UPF.
-    #     """
-    #     new_particles = []
-    #     new_weight = 0
-    #     new_weights = []
-    #
-    #     # Lowerd the average_weight such that depletion is less fast.
-    #     factor = 10
-    #     average_weight = 1/ factor/ len(self.particles)
-    #     # average_weight = self.totalWeight / len(self.particles)
-    #
-    #     # First let's do best particle.
-    #     # best_particle.weight = best_particle.weight / self.totalWeight
-    #     # new_particles.append(best_particle)
-    #     # new_weight += best_particle.weight
-    #
-    #     for particle in self.particles:
-    #         particle.weight = particle.weight / self.totalWeight
-    #         size = int(particle.weight / average_weight)
-    #         weight = int(particle.weight / average_weight)
-    #
-    #
-    #         if weight > 0:
-    #             weight = int(size / factor) + 1.
-    #             merged = False
-    #             for i, kept_particle in enumerate(new_particles):
-    #                 if self.compare_particle(kept_particle, particle):
-    #                     kept_particle.weight += 1.
-    #                     new_weight += 1.
-    #                     new_weights[i] += particle.kf.likelihood
-    #                     merged = True
-    #                     break
-    #             if not merged:
-    #                 particle.weight = 1.
-    #                 new_particles.append(particle)
-    #                 new_weights.append(particle.kf.likelihood)
-    #                 new_weight += particle.weight
-    #                 # particle.weight = weight*average_weight
-    #                 # new_particles.append(particle)
-    #                 # new_weight += weight
-    #
-    #                 # else:
-    #                 #     best_particle.weight += particle.weight
-    #                 #     new_weight += particle.weight
-    #
-    #     self.particles = new_particles
-    #     best_particle = self.particles[np.where(new_weights == np.max(new_weights))[0][0]]
-    #     self.set_best_particle(best_particle)
-    #
-    #     self.generate_new_particles()
-    #     if not self.particles:
-    #         raise Exception("No particles left")
 
     def set_normal_resampling(self, resample_factor=0.1, uwb_sigma_factor=1.5):
         self.sigma_uwb_factor = uwb_sigma_factor
@@ -461,6 +412,7 @@ class UPFConnectedAgent:
         new_particles = []
         new_weight = 0
         new_weights = []
+        new_raw_weights = []
 
         # Lowerd the average_weight such that depletion is less fast.
         # average_weight = 1. / factor / len(self.particles)
@@ -485,15 +437,15 @@ class UPFConnectedAgent:
                 merged = False
                 for i, kept_particle in enumerate(new_particles):
                     if self.compare_particle(kept_particle, particle) is not None:
+                        new_weights[i] += particle.weight
                         kept_particle.weight += weight
                         new_weight += weight
-                        new_weights[i] += particle.weight
                         merged = True
                         break
                 if not merged:
+                    new_weights.append(particle.weight)
                     particle.weight = weight
                     new_particles.append(particle)
-                    new_weights.append(particle.weight)
                     new_weight += particle.weight
                     # particle.weight = weight*average_weight
                     # new_particles.append(particle)
@@ -504,6 +456,7 @@ class UPFConnectedAgent:
                     #     new_weight += particle.weight
 
         self.particles = new_particles
+        self.weights = new_weights
         best_particle = self.particles[np.where(new_weights == np.max(new_weights))[0][0]]
         self.set_best_particle(best_particle)
 
@@ -533,7 +486,7 @@ class UPFConnectedAgent:
         """
         if particle_1 is not particle_2:
             value = particle_1.compare(particle_2)
-            print(value, self.max_dis)
+            # print(value, self.max_dis)
             if value is not None and value < self.max_dis:
                 if particle_1.weight > particle_2.weight:
                     return particle_1

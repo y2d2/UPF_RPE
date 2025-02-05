@@ -19,6 +19,8 @@ class UPFConnectedAgentDataLogger:
         self.init_variables()
         self.i = 0
 
+        self.keep_all_particles_bool = True
+
         # Host agent variables:
         self.number_of_particles = []
         self.ha_pose_stds = np.zeros((0, 4))
@@ -33,8 +35,9 @@ class UPFConnectedAgentDataLogger:
         for particle_log in self.particle_logs:
             if particle_log.particle == particle:
                 return particle_log
-        self.add_particle(particle)
-        return self.particle_logs[-1]
+        return None
+        # self.add_particle(particle)
+        # return self.particle_logs[-1]
 
     def get_best_particle_log(self) -> TargetTrackingParticle_DataLogger:
         return self.find_particle_log(self.upf_connected_agent.best_particle)
@@ -47,6 +50,7 @@ class UPFConnectedAgentDataLogger:
         particle_log = self.particle_type(self.host_agent, self.connected_agent, particle, parent = parent_log)
         self.particle_count += 1
         self.particle_logs.append(particle_log)
+        return particle_log
 
     def init_variables(self):
         for particle in self.upf_connected_agent.particles:
@@ -61,9 +65,15 @@ class UPFConnectedAgentDataLogger:
             self.i = self.upf_connected_agent.time_i
         self.log_ha_data()
         for particle in self.upf_connected_agent.particles:
-            particle_log: TargetTrackingParticle_DataLogger= self.find_particle_log(particle)
+            particle_log: TargetTrackingParticle_DataLogger | None = self.find_particle_log(particle)
+            if particle_log is None:
+                particle_log = self.add_particle(particle)
             particle_log.log_data(i)
 
+        if not self.keep_all_particles_bool:
+            for particle_log in self.particle_logs:
+                if particle_log.i < i - 2:
+                    self.particle_logs.remove(particle_log)
 
     def log_ha_data(self):
         self.number_of_particles.append(len(self.upf_connected_agent.particles))
