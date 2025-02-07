@@ -39,9 +39,12 @@ class TargetTrackingParticle:
 
         # print(self.t_si_sj[:3], self.P_t_si_sj[:3,:3])
         # print(other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
-        distance = kl_divergence(self.t_si_sj[:3], self.P_t_si_sj[:3,:3],
-                                 other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
-        return distance
+        if self.los_state == other_particle.los_state:
+            distance = kl_divergence(self.t_si_sj[:3], self.P_t_si_sj[:3,:3],
+                                     other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
+            return distance
+        else:
+            return None
 
 
     def copy(self):

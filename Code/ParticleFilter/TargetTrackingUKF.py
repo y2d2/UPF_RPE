@@ -402,6 +402,10 @@ class TargetTrackingUKF:
         copiedUKF.sigma_dh_ca = copy.deepcopy(self.sigma_dh_ca)
         copiedUKF.sigma_dx_ca = copy.deepcopy(self.sigma_dx_ca)
 
+        copiedUKF.P_t_si_sj = copy.deepcopy(self.P_t_si_sj)
+        copiedUKF.P_x_ca = copy.deepcopy(self.P_x_ca)
+
+
         copiedUKF.time_i = copy.deepcopy(self.time_i)
         copiedUKF.weight = copy.deepcopy(self.weight)
 

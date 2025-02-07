@@ -385,6 +385,10 @@ class Measurement:
         ds = np.linalg.norm(self.tb2.vicon_frame.sampled_p - self.tb3.vicon_frame.sampled_p, axis=1)
         self.uwb.real_d = ds
 
+    def get_uwb_error(self):
+        uwb_error = [ self.uwb.sampled_d[i] - self.uwb.real_d[i] for i in range(len(self.uwb.sampled_d))]
+        return uwb_error
+
     def get_uwb_LOS(self, sigma_d, factor=2):
         los_state = np.zeros(len(self.uwb.sampled_d))
         self.get_uwb_distances()
@@ -534,6 +538,7 @@ def create_experimental_data(data_folder, sig_v, sig_w, sig_uwb):
         experiment_data["drones"]["drone_1"] = {"DT_slam": DT_vio_tb3, "T_real": T_vicon_tb3, "Q_slam": Q_vio}
         experiment_data["uwb"] = uwb
         experiment_data["los_state"] = uwb_los
+        experiment_data["uwb_error"] = measurement.get_uwb_error()
 
 
         measurements.append(measurement)

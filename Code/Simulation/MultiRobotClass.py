@@ -544,6 +544,7 @@ class TwoAgentSystem():
         self.factor = None
         # self.nlos_man = NLOS_Manager(nlos_bias=2.)
         self.los_state = []
+        self.uwb_error = []
         self.d0 = None
 
         # Experiment variables:
@@ -752,6 +753,7 @@ class TwoAgentSystem():
 
     def run_exp(self, test_name):
         self.los_state = []
+        self.uwb_error =[]
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
 
@@ -777,6 +779,7 @@ class TwoAgentSystem():
 
                 uwb_measurement = distances[i]
                 self.los_state.append(self.experiment_data["los_state"][i])
+                self.uwb_error.append(self.experiment_data["uwb_error"][i])
 
                 eval("self.run_" + self.method + "_simulation" + "(dx_0, q_0, dx_1, q_1, uwb_measurement, i)")
 
@@ -868,6 +871,7 @@ class TwoAgentSystem():
         self.parse_test_name(test_name)
 
         self.los_state = []
+        self.uwb_error =[]
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
         distances = self.sim.get_uwb_measurements("drone_0", "drone_1")
@@ -1089,10 +1093,11 @@ class TwoAgentSystem():
                           "sigma_h_relative": dl_bp_rpea.sigma_h_ca,
                           "sigma_x_relative": dl_bp_rpea.sigma_x_ca,
                           "LOS_state" : dl_bp.los_state,
-                          "True_los_state": self.los_state,
+                          "d_error": self.uwb_error,
+                          "True_los_state": self.los_state, # Can be removed, depends on sigma_uwb
                           "NIS": dl_bp_rpea.NIS}
             self.data[self.current_sim_name][self.test_name][drone_id] = upf_result
-
+            print(upf_result["d_error"])
             if self.save_bool:
                 with open(
                         self.save_folder + "/" + self.current_sim_name + "/" + drone_id + "_" + self.test_name + ".pkl",

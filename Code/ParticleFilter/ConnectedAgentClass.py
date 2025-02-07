@@ -166,7 +166,7 @@ class UPFConnectedAgent:
         # self.upf_connected_agent_logger = None
         self.time_i = None
 
-        self.resample = self.branch_kill_resampling
+        self.resample = self.pruning_resampling
         self.resample_factor = resample_factor
         self.sigma_uwb_factor = sigma_uwb_factor
 
@@ -247,7 +247,8 @@ class UPFConnectedAgent:
         # sigma_s = [sigma_x_ca, sigma_angle, sigma_angle]
         particle.set_initial_state(s, sigma_s)
         self.particles.append(particle)
-        self.set_best_particle(self.particles[0])
+        self.weights.append(1.)
+        self.set_best_particle()
 
     def create_single_particle(self, t, sigma_uwb):
         self.n_altitude = 1
@@ -259,7 +260,8 @@ class UPFConnectedAgent:
         particle.set_initial_state(s_S0_S1, np.array([self.sigma_uwb, 0.000001, 0.000001]),  t[-1], 0.000001,
                                    self.sigma_uwb)
         self.particles.append(particle)
-        self.set_best_particle(self.particles[0])
+        self.weights.append(1.)
+        self.set_best_particle()
 
     # @deprecated()
     def split_sphere_in_equal_areas(self, r: float, sigma_uwb: float, n_altitude: int, n_azimuth: int, n_heading: int):
@@ -307,6 +309,7 @@ class UPFConnectedAgent:
                     particle = self.create_particle()
                     particle.set_initial_state(s, sigma_s)
                     self.particles.append(particle)
+                    self.weigths.append(1.0)
         # for alt in [-np.pi/2, np.pi/2]:
         #     for az in [-np.pi, np.pi]:
         #         for heading in headings:
@@ -316,7 +319,7 @@ class UPFConnectedAgent:
         #                                        heading, sigma_heading, sigma_uwb)
         #             self.particles.append(particle)
 
-        self.set_best_particle(self.particles[0])
+        self.set_best_particle()
 
     def run_model(self, dt_j, q_j,  dt_i, q_i, d_ij,  time_i=None):
         # self.iterations += 1
@@ -329,6 +332,8 @@ class UPFConnectedAgent:
 
         self.run_predict_update_los(dt_j, q_j,  dt_i, q_i, d_ij)
         self.resample()
+        self.compare_particles()
+        self.set_best_particle()
         # self.calculate_average_particle()
         # print(f"# Particles: {len(self.particles)}, {len(self.weights)}")
         while len(self.particles) > self.max_particles:
@@ -403,6 +408,13 @@ class UPFConnectedAgent:
         if not self.particles:
             raise Exception("No particles left")
 
+    def pruning_resampling(self):
+        self.weights = np.array(self.weights) / np.sum(self.weights)
+        valid_indices = np.where(self.weights > self.resample_factor)[0]
+        self.particles = [self.particles[i] for i in valid_indices]
+        for particle in self.particles: particle.weight = 1.
+        self.weights = [self.weights[i] for i in valid_indices]
+
     def set_branch_kill_resampling(self, resample_factor=0.1, sigma_uwb_factor=1.5):
         self.sigma_uwb_factor = sigma_uwb_factor
         self.resample_factor = resample_factor
@@ -418,6 +430,7 @@ class UPFConnectedAgent:
         # average_weight = 1. / factor / len(self.particles)
         average_weight = self.resample_factor / len(self.particles)
 
+
         # First let's do best particle.
         # best_particle.weight = best_particle.weight / self.totalWeight
         # new_particles.append(best_particle)
@@ -429,7 +442,7 @@ class UPFConnectedAgent:
             weight = int(particle.weight / average_weight)
 
             if weight > 0:
-                if weight > 1 / self.resample_factor:
+                if weight > 1 :
                     weight = 2.
                 else:
                     weight = 1.
@@ -474,8 +487,28 @@ class UPFConnectedAgent:
 
         self.t_si_sj_sig = np.max(self.t_si_sj, axis=0) - np.min(self.t_si_sj, axis=0)
 
-    def set_best_particle(self, best_particle):
+    def set_best_particle(self):
+        best_particle = self.particles[np.where(self.weights == np.max(self.weights))[0][0]]
         self.best_particle = best_particle
+
+    def compare_particles(self):
+        new_particles = [self.particles[0]]
+        new_weights = [self.weights[0]]
+        for particle in self.particles:
+            if particle not in new_particles:
+                for i, kept_particle in enumerate(new_particles):
+                    value = self.compare_particle(particle, kept_particle)
+                    merged = False
+                    if value is not None:
+                        kept_particle.weight += particle.weight
+                        new_weights[i] += particle.weight
+                        merged = True
+                        break
+                if not merged:
+                    new_particles.append(particle)
+                    new_weights.append(particle.weight)
+        self.particles = new_particles
+        self.weights = new_weights
 
     def compare_particle(self, particle_1: TargetTrackingParticle, particle_2: TargetTrackingParticle):
         # TODO: Improve this, (does not take into account uncertainty.)
