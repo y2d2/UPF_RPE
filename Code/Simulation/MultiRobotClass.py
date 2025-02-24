@@ -1097,7 +1097,6 @@ class TwoAgentSystem():
                           "True_los_state": self.los_state, # Can be removed, depends on sigma_uwb
                           "NIS": dl_bp_rpea.NIS}
             self.data[self.current_sim_name][self.test_name][drone_id] = upf_result
-            print(upf_result["d_error"])
             if self.save_bool:
                 with open(
                         self.save_folder + "/" + self.current_sim_name + "/" + drone_id + "_" + self.test_name + ".pkl",

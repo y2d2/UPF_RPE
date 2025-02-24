@@ -50,6 +50,14 @@ class MyTestCase(unittest.TestCase):
         self.tb2 = Turtlebot4("tb2")
         self.tb3 = Turtlebot4("tb3")
 
+    def test_read_bag(self):
+        self.set_test_case()
+        measurement = Measurement(self.rosbag)
+        measurement.read_bag(new_message_conf=True)
+        plt.figure()
+        plt.plot(measurement.uwb.e)
+        plt.show()
+
     def test_trim_bags(self):
         self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/networkDrive/Experiments/RPE_UPF/Exp1_unob_LOS_Obs"
         self.rosbag = self.exp_folder + "exp1_full"

@@ -81,6 +81,7 @@ class MyTestCase(unittest.TestCase):
         sigma_dv = [0.1, 0.01]
         sigma_dw = [0.1, 0.01]
         sigma_uwb = [1., 0.1]
+        frequency =[1.0]
 
         upf_sim_full = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                         "Variables": {
@@ -89,7 +90,7 @@ class MyTestCase(unittest.TestCase):
                             "Sigma_dv": sigma_dv,
                             "Sigma_dw": sigma_dw,
                             "Sigma_uwb": sigma_uwb,
-                            "Frequency": [10.0],
+                            "Frequency": frequency,
                         },
                         "Color": "tab:green",
                         "Legend": "Ours, proposed",
@@ -102,7 +103,7 @@ class MyTestCase(unittest.TestCase):
                 "Sigma_dv": sigma_dv,
                 "Sigma_dw": sigma_dw,
                 "Sigma_uwb": sigma_uwb,
-                "Frequency": [10.0],
+                "Frequency": [1],
             },
             "Color": "tab:orange",
             "Legend": "Ours*",
@@ -168,7 +169,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_print_statistics(self):
         result_folders = [
-            "../../../Results/simulations",
+            "../../../Results/simulations_1hz",
         ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         variables = ["error_x_relative", "error_h_relative", "calculation_time"]
@@ -299,13 +300,27 @@ class MyTestCase(unittest.TestCase):
         # taa.calculation_time(save_fig=False)
         plt.show()
 
+    def create_result_dict(self, method, variables, sig_dv, sig_duwb, exp_type, frequencies, legend, color):
+        result_dict = {"Method": method,
+                       "Variables": {
+                           "Type": exp_type,
+                           "Variable": variables,
+                           "Sigma_dv": sig_dv,
+                           "Sigma_uwb": sig_duwb,
+                           "Frequency": frequencies,
+                       },
+                       "Color": color,
+                       "Legend": legend,
+                       }
+        return result_dict
+
     def test_time_analysis_new(self):
         result_folder = [
                         # "./Results/UPF_perfect_guess",
                         # "../../../Data/Results/Sim_LOS_06_2024/1_sim",
                         # "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper",
                         "./Results/small_trajectories",
-                         "../../../test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/experiments_paper/Experiments",
+                         # "../../../test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/experiments_paper/Experiments",
                          ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
 
@@ -428,6 +443,131 @@ class MyTestCase(unittest.TestCase):
         # plt.legend(loc="upper left")
         plt.show()
 
+
+    def test_10hz_vs_1h(self):
+        result_folder = [
+            # "./Results/UPF_perfect_guess",
+            # "../../../test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/UPF_perfect_guess",
+            # # "../../../Data/Results/Sim_LOS_06_2024/1_sim",
+            # "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper",
+            "../../../Results/simulations_1hz",
+            "../../../Results/simulations",
+        ]
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
+        variables = ["error_x_relative", "error_h_relative"]
+        sigma_dv = [0.1, 0.01]
+        sigma_dw = [0.1, 0.01]
+        sigma_uwb = [1., 0.1]
+        frequency = [1.0]  # [10.0]
+        # create 1hz
+        upf_sim_1 = self.create_result_dict("losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                                          variables=variables,
+                                          sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=frequency,
+                                          legend=r"UPF 1hz",
+                                          color="lightgreen")
+        upf_sim_per_1 = self.create_result_dict("losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+                                          variables=variables,
+                                          sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=frequency,
+                                          legend=r"UPF * 1hz",
+                                          color="bisque")
+        upfnodrift_sim_1 = self.create_result_dict("nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                                            variables=variables,
+                                            sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"],
+                                            frequencies=frequency,
+                                            legend=r"UPF  $\tilde{\text{w}}$ pseudo-state  1hz",
+                                            color="salmon")
+        nls_sim_1 = self.create_result_dict("NLS|frequency=0.1|horizon=1", variables=variables,
+                                          sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=[0.1],
+                                          legend=r"NLS * 1hz",
+                                          color="thistle")
+        qcqp_sim_1 = self.create_result_dict("QCQP|frequency=1.0|horizon=10", variables=variables,
+                                            sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"],
+                                            frequencies=frequency,
+                                            legend=r"QCQP 1hz",
+                                            color="cornflowerblue")
+        alg_sim_1 = self.create_result_dict("algebraic|frequency=1.0|horizon=10", variables=variables,
+                                             sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"],
+                                             frequencies=frequency,
+                                             legend=r"Algebraic 1hz",
+                                             color="chocolate")
+
+        frequency = [10.0]  # [10.0]
+        # create 1hz
+        upf_sim_10 = self.create_result_dict("losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                                          variables=variables,
+                                          sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=frequency,
+                                          legend=r"UPF 10hz",
+                                          color="tab:green")
+        upf_sim_per_10 = self.create_result_dict("losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+                                          variables=variables,
+                                          sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=frequency,
+                                          legend=r"UPF * 10hz",
+                                          color="tab:brown")
+        upfnodrift_sim_10 = self.create_result_dict("nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                                                   variables=variables,
+                                                   sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"],
+                                                   frequencies=frequency,
+                                                   legend=r"UPF  $\tilde{\text{w}}$ pseudo-state  10hz",
+                                                   color="tab:red")
+        nls_sim_10 = self.create_result_dict("NLS|frequency=1.0|horizon=10", variables=variables,
+                                          sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"], frequencies=[1.0],
+                                          legend=r"NLS * 10hz",
+                                          color="tab:purple")
+        qcqp_sim_10 = self.create_result_dict("QCQP|frequency=10.0|horizon=100", variables=variables,
+                                            sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"],
+                                            frequencies=frequency,
+                                            legend=r"QCQP 10hz",
+                                            color="tab:blue")
+        alg_sim_10 = self.create_result_dict("algebraic|frequency=10.0|horizon=100", variables=variables,
+                                             sig_dv=sigma_dv, sig_duwb=sigma_uwb, exp_type=["simulation"],
+                                             frequencies=frequency,
+                                             legend=r"Algebraic 10hz",
+                                             color="tab:orange")
+
+        methods_order_sim_full = [ upf_sim_10,
+                                    upf_sim_1,
+                                   upfnodrift_sim_10,
+                                  upfnodrift_sim_1,
+                                   qcqp_sim_10,
+                                  qcqp_sim_1,
+                                   alg_sim_10,
+                                  alg_sim_1,
+                                   upf_sim_per_10,
+                                  upf_sim_per_1,
+                                      nls_sim_10,
+                                  nls_sim_1
+                                  ]
+
+        df_sim_full, methods_names_sim_full, methods_colors_sim_full, methods_legends_sim_full = taa.filter_methods_new(
+            methods_order_sim_full)
+
+        g = taa.boxplot_exp(df_sim_full, methods_color=methods_colors_sim_full,
+                                    methods_legend=methods_legends_sim_full,
+                                    hue_variable="Name", hue_order=methods_names_sim_full,
+                                    col_variable="Variable", col_order=["error_x_relative", "error_h_relative"],
+                                    row_variable="Sigma_dv", row_order=[0.01, 0.1],
+                                    x_variable="Sigma_uwb", x_order=[0.1, 1.],
+                                    )
+        g.fig.set_size_inches(24, 6)
+        for ax in g.axes_dict:
+            if "error_x_relative" in ax:
+                g.axes_dict[ax].set_yscale("log")
+                if 0.1 in ax:
+                    g.axes_dict[ax].set_ylabel(r"$\sigma_v = 0.1 \frac{m}{s}$")
+                if 0.01 in ax:
+                    g.axes_dict[ax].set_ylabel(r"$\sigma_v = 0.01 \frac{m}{s}$")
+            if 0.1 in ax:
+                g.axes_dict[ax].set_xlabel(r"$\sigma_{uwb} [m]$")
+            if 0.01 in ax:
+                if "error_h_relative" in ax:
+                    g.axes_dict[ax].set_title(taa.y_label["error_h_relative"])
+                if "error_x_relative" in ax:
+                    g.axes_dict[ax].set_title(taa.y_label["error_x_relative"])
+        # plt.figure(0).set_size_inches(10, 10)
+        sns.move_legend(g, loc="upper center", bbox_to_anchor=(0.5, 1.), ncol=6)
+        plt.subplots_adjust(top=0.8, bottom=0.12, left=0.12, right=0.99)
+        # plt.suptitle("Monte Carlo simulation")
+        plt.show()
 
 if __name__ == '__main__':
     # unittest.main()

@@ -10,6 +10,7 @@ class UWB:
         #Raw data
         self.name = name
         self.d = []
+        self.e = []
         self.t = []
         self.delta_d = [0]
         self.thress = 1e3
@@ -25,9 +26,11 @@ class UWB:
     def get_measuremend(self, msg_data):
         t = msg_data.header.stamp.sec + msg_data.header.stamp.nanosec * 1e-9
         d = msg_data.uwbrange.distance
+        e = msg_data.uwbrange.energy
         if d < self.thress:
             self.t.append(t)
             self.d.append(d)
+            self.e.append(e)
             if len(self.d) > 1:
                 self.delta_d.append(self.d[-1] - self.d[-2])
 
