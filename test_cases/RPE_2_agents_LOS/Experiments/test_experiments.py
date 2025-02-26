@@ -49,8 +49,8 @@ class MyTestCase(unittest.TestCase):
         sig_w = 0.08
         sig_uwb = 0.25
 
-        main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/exp_cor_new6/debug"
+        main_folder = "./Results/"
+        results_folder = main_folder + "test"
         data_folder = "corrections3/exp1_los_sampled.pkl"
 
         experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
