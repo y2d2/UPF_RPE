@@ -420,6 +420,7 @@ class UPFConnectedAgent:
         self.resample_factor = resample_factor
         self.resample = self.branch_kill_resampling
 
+    @DeprecationWarning
     def branch_kill_resampling(self):
         new_particles = []
         new_weight = 0
@@ -520,7 +521,7 @@ class UPFConnectedAgent:
         if particle_1 is not particle_2:
             value = particle_1.compare(particle_2)
             # print(value, self.max_dis)
-            if value is not None and value < self.max_dis:
+            if value < self.max_dis:
                 if particle_1.weight > particle_2.weight:
                     return particle_1
                 else:

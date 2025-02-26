@@ -31,7 +31,7 @@ class NLS:
         x_0 will have shape (m,4) where m is the number of drones.
         """
         # number of frames
-        self.horizon = horizon
+        self.horizon = int(horizon)
         self.likelihood = 1.0
         self.distances = 0.
         self.agents = agents
