@@ -75,7 +75,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_time_analysis_new(self):
         result_folder = [
-                        "./Results/test_new_system",
+                        "./Results/simulations_1hz",
                         # "../../../Data/Results/Sim_LOS_06_2024/1_sim",
                         # "../../../Data/Results/Sim_LOS_06_2024/final_methods_RPE_paper",
                         #  "../../../test_cases/RPE_2_agents_LOS/Experiments/Experiments/LOS_exp/Results/experiments_paper/Experiments",
@@ -86,12 +86,12 @@ class MyTestCase(unittest.TestCase):
         # result_folder = ("../../../Data/Results/test_files")
         taa = TAA.TwoAgentAnalysis(result_folders=result_folder)
 
-        upf_sim = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+        upf_sim = {"Method": "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
                    "Variables": {
                        "Type": ["simulation"],
                        "Variable": ["error_x_relative", "error_h_relative"],
-                       "Sigma_dv": [0.1],
-                       "Sigma_uwb": [0.1],
+                       "Sigma_dv": [0.01, 0.1],
+                       "Sigma_uwb": [0.1, 1.],
                        # "Sigma_dw": [],
                        "Frequency": [10.0],
                    },
@@ -99,31 +99,31 @@ class MyTestCase(unittest.TestCase):
                    "Legend": "UPF sim, $\sigma_{uwb} = 0.1$, $\sigma_{dv} = 0.1$",
                    }
 
-        upf_sim_2 = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        upf_sim_2 = {"Method": "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    "Variables": {
                        "Type": ["simulation"],
                        "Variable": ["error_x_relative", "error_h_relative"],
-                       "Sigma_dv": [0.1],
-                       "Sigma_uwb": [1.],
+                       "Sigma_dv": [0.01, 0.1],
+                       "Sigma_uwb": [0.1, 1.],
                        # "Sigma_dw": [],
                        "Frequency": [10.0],
                    },
                    "Color": "blue",
                    "Legend": "UPF sim, $\sigma_{uwb} = 1$, $\sigma_{dv} = 0.1$",
                    }
-
-        upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "Variables": {
-                       "Type": ["experiment"],
-                       "Variable": ["error_x_relative", "error_h_relative"],
-                       "Sigma_dv": [0.08],
-                       "Sigma_uwb": [0.25],
-                       # "Sigma_dw": [],
-                       "Frequency": [10.0],
-                   },
-                   "Color": "tab:green",
-                   "Legend": "UPF exp",
-                   }
+        #
+        # upf_exp = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        #            "Variables": {
+        #                "Type": ["experiment"],
+        #                "Variable": ["error_x_relative", "error_h_relative"],
+        #                "Sigma_dv": [0.08],
+        #                "Sigma_uwb": [0.25],
+        #                # "Sigma_dw": [],
+        #                "Frequency": [10.0],
+        #            },
+        #            "Color": "tab:green",
+        #            "Legend": "UPF exp",
+        #            }
 
         # nodriftupf_exp = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
         #                   "Variables": {
@@ -137,14 +137,14 @@ class MyTestCase(unittest.TestCase):
         #                   "Color": "tab:red",
         #                   "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state",
         #                   }
-        alg_exp = {"Method": "algebraic|frequency=10.0|horizon=1000",
+        alg_exp = {"Method": "algebraic|frequency=1.0|horizon=100",
                    "Variables": {
                        "Type": ["simulation"],
                        "Variable": ["error_x_relative", "error_h_relative"],
                        "Sigma_dv": [0.01, 0.1],
                        "Sigma_uwb": [0.1, 1.],
                        # "Sigma_dw": [],
-                       "Frequency": [10.0],
+                       "Frequency": [1.0],
                    },
                    "Color": "tab:orange",
                    "Legend": "Algebraic",

@@ -1,4 +1,6 @@
 import numpy as np
+from matplotlib.gridspec import GridSpec
+
 from Code.Simulation.RobotClass import NewRobot
 from Code.BaseLines.QCQP import QCQP
 import Code.UtilityCode.Transformation_Matrix_Fucntions as TMF
@@ -59,12 +61,12 @@ class QCQP_Log:
         ax[0].plot(self.x_ca_r_error)
         # ax[0].set_xlabel("Time step")
         ax[0].set_ylabel("Position error [m]")
-        ax[0].legend()
+        # ax[0].legend()
         ax[0].grid(True)
         ax[1].plot(self.x_ca_r_heading_error)
         ax[1].set_xlabel("Time step")
         ax[1].set_ylabel("Orientation error [(rad)]")
-        ax[1].legend()
+        # ax[1].legend()
         ax[1].grid(True)
 
 
@@ -90,6 +92,28 @@ class QCQP_Log:
                       marker="o", alpha=alpha, color=color)
             ax.plot3D(data[-1, 0], data[-1, 1], data[-1, 2],
                       marker="x", alpha=alpha, color=color)
+
+
+    def plot_graphs(self, fig= None):
+        if fig is None:
+            fig = plt.figure(figsize=(18, 10))
+
+        fig.suptitle("QCQP datalogger")
+        ax = []
+        gs = GridSpec(3, 4, figure=fig, height_ratios=[1, 1, 1], width_ratios=[1, 1, 1, 1])
+        ax_3d = fig.add_subplot(gs[:3, :3], projection="3d")
+
+
+        self.plot_corrected_estimated_trajectory(ax_3d, color="red", linestyle=":", marker="", label="QCQP estimate")
+
+        self.host.set_plotting_settings(color="green", label="Estimating Agent")
+        self.host.plot_real_position(ax_3d)
+        self.connected.set_plotting_settings(color="black", label="Estimated Agent")
+        self.connected.plot_real_position(ax_3d)
+        ax_3d.legend()
+        ax_error =  [fig.add_subplot(gs[i, -1]) for i in range(2)]
+        self.plot_self(ax_error)
+
 
 
     def plot_estimated_pose(self, ax, id, i=-1):

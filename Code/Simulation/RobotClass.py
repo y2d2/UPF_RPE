@@ -311,12 +311,13 @@ class NewRobot:
     # -------------------
     # Plotting functions
     # -------------------
-    def set_plotting_settings(self, color="k", mark="", linestyle="-"):
+    def set_plotting_settings(self, color="k", mark="", linestyle="-", label=""):
         self.color = color
         self.mark = mark
         self.linestyle = linestyle
+        self.label = label
 
-    def plot_real_position(self, ax, annotation="", alpha=1, i=-1, history=None):
+    def plot_real_position(self, ax, annotation="", alpha=1, i=-1, history=None, legend=True):
 
         if history is None or history > i:
             j=0
@@ -324,15 +325,22 @@ class NewRobot:
             j = i - history
             if j < 0:
                 j = 0
-
-
-        if annotation is None:
+        if legend:
+            if annotation is None:
+                ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2], label=self.label + " " + "real position",
+                          color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+            else:
+                ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],
+                          color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha,
+                          label=annotation + " " + "real position")
+        else:
+            ax.stem([self.x_real[0, 0]], [self.x_real[0, 1]], [self.x_real[0, 2]],
+                    basefmt="k^", linefmt="k:", bottom=0)
             ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],
                       color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
-        else:
-            ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],
-                      color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha,
-                      label=annotation + " " + "real position")
+
+        # ax.stem([self.x_real[j, 0]], [self.x_real[j, 1]], [self.x_real[j, 2]],
+        #         markerfmt="o", linefmt="grey", bottom=0)
         ax.plot3D(self.x_real[j, 0], self.x_real[j, 1], self.x_real[j, 2],
                   color=self.color, marker="o", linestyle=self.linestyle, alpha=alpha)
         ax.plot3D(self.x_real[i, 0], self.x_real[i, 1], self.x_real[i, 2],
@@ -369,6 +377,17 @@ class NewRobot:
         ax.plot3D(self.x_real[:, 0], self.x_real[:, 1], self.x_real[:, 2], color=color, label=label)
 
 
+    def plot_projections(self, ax=None, alpha =1):
+        if ax is None:
+            _, ax = plt.subplots(4, 2)
+
+        time = np.arange(0, len(self.x_real)) * self.simulation_time_step
+        for i in range(3):
+            ax[i,0].plot(time, self.x_real[:, i], color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+            ax[i,1].plot(time, self.v_slam_real[:, i], color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+        ax[3,0].plot(time, self.h_real, color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+        ax[3,1].plot(time, self.w_slam_real,color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+        return ax
 
     # -------------------
     # Experiment functions
@@ -393,10 +412,10 @@ class NewRobot:
 
     def set_vio_slam(self, DTs, Q):
         T_slam = self.T0
-        x_slam = np.empty((0, 3))
-        h_slam = []
-        dx_slam = np.empty((0,3 ))
-        dh_slam = []
+        x_slam = np.zeros((1, 3))
+        h_slam = [0.]
+        dx_slam = np.zeros((1,3 ))
+        dh_slam = [0.]
         self.q = Q
         for DT in DTs:
             dx_slam = np.vstack((dx_slam,TMF.get_translation(DT)))
@@ -436,13 +455,20 @@ class NewRobot:
     def calculate_d_slam_drift(self):
         self.x_slam = self.x_real[0].reshape((1, 3))
         self.h_slam = self.h_real[0].reshape((1))
+        self.v_slam_real = np.zeros((1, 3))
+        self.w_slam_real = [0]
         for i, dx in enumerate(self.dx_slam):
             if i != 0:
                 x_slam = self.x_slam[-1] + get_rot_matrix(self.h_slam[-1]) @ dx
                 self.x_slam = np.concatenate([self.x_slam, x_slam.reshape((1, 3))])
                 self.h_slam = np.concatenate([self.h_slam, np.array([self.h_slam[-1] + self.dh_slam[i]])])
-
-
+        for i in range(1, len(self.x_real)):
+            if i != 0:
+                vel = (self.x_real[i] - self.x_real[i - 1])/self.simulation_time_step
+                v_slam = get_rot_matrix(-self.h_real[i]) @ vel
+                self.v_slam_real = np.concatenate([self.v_slam_real, v_slam.reshape((1, 3))])
+                Dh_real = limit_angle(self.h_real[i] - self.h_real[i-1])
+                self.w_slam_real.append((Dh_real)/self.simulation_time_step)
 
     # -------------------
     # Saving functions

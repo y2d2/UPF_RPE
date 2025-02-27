@@ -60,21 +60,21 @@ def make_imu_msg(msg, inverse_imu=False , redo_imu=False):
 
 
 if __name__=="__main__":
-    save = False
+    save = True
     redo_imu = True
     inverse_imu = True
     show_left = False
     show_right = False
     show_RGB = False
 
-    rosbag_dir = "/home/yuri/Documents/sharedDrive/Experiments/cam_calibration/cam_tb3/"
-    rosbag2_name = "tb3_cam_cal_1"
-    rosbag1_name = "tb3_cam_cal_1_folder/"
+    rosbag_dir = "../../test_cases/RPE_2_agents_LOS/Experiments/"
+    rosbag2_name = "exp1_full"
+    rosbag1_name = "exp1_full_ros1/"
 
     imu_topic = "/oak/imu/data"
-    rgb_topic = "/oak/rgb/image_raw/compressed"
-    left_topic= "/oak/left/image_rect/compressed"
-    right_topic= "/oak/right/image_rect/compressed"
+    rgb_topic = "/tb3/oakd/rgb/image_rect/compressed"
+    left_topic= "/tb3/oakd/left/image_rect/compressed"
+    right_topic= "/tb3/oakd/right/image_rect/compressed"
 
     rgb_dir = rosbag_dir+rosbag1_name+"cam_rgb/"
     l_dir = rosbag_dir+rosbag1_name+"cam_l/"

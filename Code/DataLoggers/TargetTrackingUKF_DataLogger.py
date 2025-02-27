@@ -84,6 +84,7 @@ class UKFDatalogger():
             self.estimated_ca_position = np.empty((0, 3))
             self.NIS = []
             self.NEES = []
+            # self.los_state = []
 
 
     def save_graphs(self, folder="./"):
@@ -106,6 +107,7 @@ class UKFDatalogger():
         self.log_slam_data(self.i)
         self.log_variances()
         self.log_nis_nees()
+        # self.los_state.append(self.ukf.los_state)
 
     def log_variances(self):
         self.likelihood.append(self.ukf.kf.likelihood)
@@ -295,10 +297,14 @@ class UKFDatalogger():
         if self.data_logged:
             ax.plot3D(data[:, 0], data[:, 1], data[:, 2],
                       marker=marker, alpha=alpha, linestyle=linestyle, label=label, color=color)
-            ax.plot3D(data[0, 0], data[0, 1], data[0, 2],
-                      marker="o", alpha=alpha, color=color)
+            # ax.stem(
+            #     x, y, z, linefmt='grey', markerfmt='D', bottom=np.pi)
+            ax.stem([data[0, 0]], [data[0, 1]], [data[0, 2]],
+                      basefmt="k^", linefmt="k:", bottom=0)
             ax.plot3D(data[-1, 0], data[-1, 1], data[-1, 2],
                       marker="x", alpha=alpha, color=color)
+            ax.plot3D(data[0, 0], data[0, 1], data[0, 2],
+                      marker="o", alpha=alpha, color=color)
 
     def plot_relative_transformation(self, ax, color="k", alpha=1, linestyle="-", marker="", label="Real"):
         """
@@ -491,6 +497,8 @@ class UKFDatalogger():
         copyDL.estimated_ca_position = copy.deepcopy(self.estimated_ca_position)
 
         copyDL.data_logged = copy.deepcopy(self.data_logged)
+        copyDL.NIS = copy.deepcopy(self.NIS)
+        copyDL.NEES = copy.deepcopy(self.NEES)
 
         return copyDL
 

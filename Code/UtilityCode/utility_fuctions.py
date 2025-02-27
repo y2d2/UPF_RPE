@@ -7,7 +7,6 @@ Created on Wed Feb  1 18:28:22 2023
 """
 import numpy as np
 
-
 def get_rot_matrix(angle: float) -> np.ndarray:
     return np.array([[np.cos(angle), -np.sin(angle), 0.],
                      [np.sin(angle), np.cos(angle), 0.],

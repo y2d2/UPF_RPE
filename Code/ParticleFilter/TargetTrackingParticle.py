@@ -17,6 +17,8 @@ class TargetTrackingParticle:
         self.rpea = None
         self.t_si_sj = np.zeros(4)
         self.P_t_si_sj = np.zeros((4, 4))
+        # self.get_states()
+        self.los_state = 1
 
     def run_model(self, dt_i, q_i, t_i, P_i, dt_j, q_j, d_ij, sig_uwb, time_i):
         """
@@ -26,10 +28,15 @@ class TargetTrackingParticle:
         """
         pass
 
+    def get_states(self):
+        pass
+
     def compare(self, other_particle):
         """
         This function should compare the particle with another particle.
+        #TODO: this function does not include orientations...
         """
+
         def kl_divergence(mu_P, sigma_P, mu_Q, sigma_Q):
             # Proposed by chatgpt 3.5
             k = len(mu_P)
@@ -38,10 +45,14 @@ class TargetTrackingParticle:
             term3 = (mu_Q - mu_P).T.dot(inv(sigma_Q)).dot(mu_Q - mu_P)
             return 0.5 * (term1 - k + term2 + term3)
 
-
-        distance = kl_divergence(self.t_si_sj[:3], self.P_t_si_sj[:3,:3],
-                                 other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
-        return distance
+        # print(self.t_si_sj[:3], self.P_t_si_sj[:3,:3])
+        # print(other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
+        if self.los_state == other_particle.los_state:
+            distance = kl_divergence(self.t_si_sj[:3], self.P_t_si_sj[:3,:3],
+                                     other_particle.t_si_sj[:3], other_particle.P_t_si_sj[:3,:3])
+            return distance
+        else:
+            return 1e6
 
 
     def copy(self):
@@ -52,12 +63,16 @@ class UKFLOSTargetTrackingParticle(TargetTrackingParticle):
     def __init__(self, rpea: TargetTrackingUKF, weight=1., parent=None):
         super().__init__(weight, parent=parent)
         self.rpea: TargetTrackingUKF = rpea
+        self.get_states()
         self.drift_correction_bool = True
 
     def run_model(self, dt_i, q_i, t_i, P_i, dt_j, q_j, d_ij, sig_uwb, time_i):
         self.rpea.run_filter(dt_j, q_j, t_i, P_i, d_ij, sig_uwb, self.drift_correction_bool, True, time_i)
         self.likelihood = self.rpea.kf.likelihood
         self.weight = self.weight * self.likelihood
+        self.get_states()
+
+    def get_states(self):
         self.t_si_sj = self.rpea.t_si_sj
         self.P_t_si_sj = self.rpea.P_t_si_sj
 
@@ -70,6 +85,7 @@ class NLSLOSTargetTrackingParticle(TargetTrackingParticle):
     def __init__(self, rpea: NLS, weight=1., parent=None):
         super().__init__(weight, parent=parent)
         self.rpea: NLS = rpea
+        self.get_states()
         self.drift_correction_bool = True
 
     def run_model(self, dt_i, q_i, t_i, P_i, dt_j, q_j, d_ij, sig_uwb, time_i):
@@ -78,10 +94,14 @@ class NLSLOSTargetTrackingParticle(TargetTrackingParticle):
         d = np.array([[0, d_ij], [0, 0]])
         self.rpea.update(d, dx, q_odom)
         # self.rpea.run_filter(dt_j, q_j, t_i, P_i, d_ij, sig_uwb, self.drift_correction_bool, True, time_i)
-        self.t_si_sj = self.rpea.x_rel[0, 1]
-        self.P_t_si_sj = get_4d_rot_matrix(self.rpea.x[0, -1]) * self.rpea.x_cov[-8:-4, -8:-4] + self.rpea.x_cov[-4:, -4:]
+        self.get_states()
         self.likelihood = self.rpea.likelihood
         self.weight = self.weight * self.likelihood
+
+    def get_states(self):
+        self.t_si_sj = self.rpea.x_rel[0, 1]
+        self.P_t_si_sj = get_4d_rot_matrix(self.rpea.x[0, -1]) * self.rpea.x_cov[-8:-4, -8:-4] + self.rpea.x_cov[-4:, -4:]
+
 
     def copy(self):
         rpea_copy = self.rpea.copy()
