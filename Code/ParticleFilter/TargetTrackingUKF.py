@@ -242,6 +242,9 @@ class TargetTrackingUKF:
         DT_sj = transform_matrix(self.Dt_sj)
         T_cji_sj = T_cji_sj_d @ DT_sj
         x[4:-1] = get_states_of_transform(T_cji_sj)
+        if self.drift_correction_bool:
+            x[-2] = x[-2] - x[-1]
+
 
         # x[4:-1] = x_odom[:3]
         return x
