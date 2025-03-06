@@ -778,7 +778,7 @@ class TwoAgentSystem():
                 dx_1, q_1 = drone1.reset_integration()
 
                 uwb_measurement = distances[i]
-                self.los_state.append(self.experiment_data["los_state"][i])
+                self.los_state.append(int(self.experiment_data["los_state"][i]))
                 self.uwb_error.append(self.experiment_data["uwb_error"][i])
 
                 eval("self.run_" + self.method + "_simulation" + "(dx_0, q_0, dx_1, q_1, uwb_measurement, i)")
