@@ -137,7 +137,7 @@ class UPFConnectedAgentDataLogger:
         self.plot_start_poses(ax_3d)
         ax_best_particle = [fig.add_subplot(gs[i, -1]) for i in range(2)]
         # ax_best_particle[0].set_title("Best Particle")
-        bp_dl.plot_ukf_drift(ax_best_particle)
+        bp_dl.plot_drift(ax_best_particle)
         ax_best_particle[0].legend(loc="upper left")
 
         likelihood_ax = fig.add_subplot(gs[-1, -1])
@@ -161,7 +161,7 @@ class UPFConnectedAgentDataLogger:
         fig = plt.figure(figsize=(18, 10))  # , layout="constrained")
         fig.suptitle("Host Agent: " + host_id + "; Connected agent: " + self.upf_connected_agent.id)
         ax = []
-        gs = GridSpec(4, 4, figure=fig, height_ratios=[1, 1, 1, 1], width_ratios=[1, 1, 1, 1])
+        gs = GridSpec(4, 4, figure=fig, height_ratios=[1, 1, 1, 2], width_ratios=[1, 1, 1, 1])
         ax_3d = fig.add_subplot(gs[:3, :3], projection="3d")
         self.plot_start_poses(ax_3d)
 
@@ -169,7 +169,7 @@ class UPFConnectedAgentDataLogger:
         ax_best_particle = [fig.add_subplot(gs[i, -1]) for i in range(2)]
         # ax_best_particle[0].set_title("Best Particle")
         try:
-            bp_dl.rpea_datalogger.plot_ukf_drift(ax_best_particle)
+            bp_dl.rpea_datalogger.plot_drift(ax_best_particle)
             ax_best_particle[0].legend(loc="upper left")
         except AttributeError:
             pass
@@ -202,19 +202,21 @@ class UPFConnectedAgentDataLogger:
         particle_ax = fig.add_subplot(gs[3, 0])
         particle_ax.plot(self.number_of_particles)
         particle_ax.set_title("Number of particles")
+        particle_ax.twinx().plot(self.calulation_time, color="k", label="Calculation time")
+        # particle_ax.plot(self.calulation_time, label="Calculation time")
         particle_ax.grid(True)
 
         likelihood_ax = fig.add_subplot(gs[3, 1])
-        likelihood_ax.plot(self.calulation_time, label="Calculation time")
-        likelihood_ax.set_title("Calculation time")
-        likelihood_ax.legend()
+
+        # likelihood_ax.set_title("Calculation time")
+        # likelihood_ax.legend()
 
         # ---- Likelihood Axis
         # likelihood_ax = fig.add_subplot(gs[3, 1])
         # plt.figure()
         # likelihood_ax = plt
-        likelihood_ax.plot(bp_dl.likelihood, label="Likelihood")
-        likelihood_ax.plot(bp_dl.weight, label="Weigth")
+        # likelihood_ax.plot(bp_dl.likelihood, label="Likelihood")
+        # likelihood_ax.plot(bp_dl.weight, label="Weigth")
         if los is not None:
             likelihood_ax.plot(los, color="k", label="Real LOS State")
 
@@ -237,7 +239,7 @@ class UPFConnectedAgentDataLogger:
 
     def plot_connected_agent(self, ax):
         bp_dl = self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
-        bp_dl.plot_ukf_drift(ax[:2])
+        bp_dl.plot_drift(ax[:2])
 
         likelihood_ax = ax[2]
         likelihood_ax.plot(bp_dl.likelihood, color="darkred", label="Likelihood")

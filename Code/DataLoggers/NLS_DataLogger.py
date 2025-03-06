@@ -86,6 +86,32 @@ class NLSDataLogger:
         ax[1].set_ylabel("Error [rad]")
         ax[1].grid(True)
 
+    def plot_drift(self, ax):
+        self.plot_self(ax)
+        # # plot drift of the position
+        # ax[0].set_ylabel("Position [m]")
+        # # ax[0].plot(self.error_ca_position, linestyle=self.relative_linestyle, color="darkgreen",
+        # #            label="ca position estimation error")
+        # ax[0].plot(self.x_ca_r_error[:, 0, 1], linestyle=self.relative_linestyle,
+        #            color="tab:blue", label="Error on position")
+        # # ax[0].plot(self.error_relative_transformation_slam, linestyle=self.relative_linestyle, color=self.slam_color,
+        # #            label="relative transformation slam")
+        # # ax[0].plot(self.sigma_x_ca_0, color=self.estimation_color, linestyle=self.stds_linestyle, label="std on the start position estimation")
+        # # ax[0].plot(self.sigma_x_ca, color="red", linestyle=self.stds_linestyle,
+        # #            label="Estimated std on the position.")
+        # # ax[0].grid(True)
+        # # ax[1].legend()
+        #
+        # # plot drift of the heading
+        # ax[1].set_ylabel("Heading [(rad)]")
+        # ax[1].plot(self.x_ca_r_heading_error[:, 0, 1], linestyle=self.relative_linestyle,
+        #            color="tab:blue", label="Error on orientation")
+        # # ax[1].plot(self.error_relative_heading_slam, linestyle=self.relative_linestyle, color=self.slam_color)
+        # # ax[1].plot(self.sigma_h_ca, color="red", linestyle=self.stds_linestyle,
+        # #            label="Estimated std on the orientation.")
+        # # ax[1].grid(True)
+        # # ax[1].legend()
+
     def calculate_pose(self, i):
         #TODO: adapt to multi agent? (Only made for 2 agents.)
         a0_p_real = self.nls_solver.agents_list[0].x_real[i]

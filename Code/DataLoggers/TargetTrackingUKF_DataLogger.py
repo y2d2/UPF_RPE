@@ -231,7 +231,7 @@ class UKFDatalogger():
         self.NIS.append(nis)
 
 
-    def plot_ukf_drift(self, ax):
+    def plot_drift(self, ax):
         # plot drift of the position
         ax[0].set_ylabel("Position [m]")
         # ax[0].plot(self.error_ca_position, linestyle=self.relative_linestyle, color="darkgreen",
@@ -419,7 +419,7 @@ class UKFDatalogger():
             # self.plot_position_error(ax[0, 1])
             # self.plot_position_stds(ax[0, 1])
 
-            self.plot_ukf_drift(ax[:2, 1])
+            self.plot_drift(ax[:2, 1])
 
             label = ["r", "az", "alt", "h_0", "x", "y", "z", "h"]
             for i in range(8):

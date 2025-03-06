@@ -227,6 +227,7 @@ class TargetTrackingUKF:
 
             # calculate drifted T_cji_sj_d
             T_D = transform_matrix(np.array([0, 0, 0, x[-1]]))
+            # T_D_inv = transform_matrix(np.array([0, 0, 0, -x[-1]]))
             # T_D = np.eye(5)
             T_cij_oi = inv_transformation_matrix(self.t_oi_cij)
             T_cji_cij_k = inv_transformation_matrix(t_cij_cji_k)
@@ -239,6 +240,10 @@ class TargetTrackingUKF:
         T_cji_sj = T_cji_sj_d @ DT_sj
         x[4:-1] = get_states_of_transform(T_cji_sj)
 
+        if self.drift_correction_bool:
+            x[-2] = x[-2] - x[-1]
+
+        # x[-2] = x[-2] - x[-1]
         # x[4:-1] = x_odom[:3]
         return x
 

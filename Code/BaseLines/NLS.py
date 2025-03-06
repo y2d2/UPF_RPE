@@ -57,7 +57,7 @@ class NLS:
         self.x_odom_prev = np.zeros((self.m,4))
         self.q_prev = np.zeros((self.m, 4,4))
         self.q = np.zeros((self.horizon, self.m, 4, 4))
-
+        self.x_odom_since_update = np.zeros((self.m, 4))
         # list of estimated transformations:
         self.x_origin = np.ones((self.horizon, self.m, 4))
         for s in range(self.horizon):
@@ -75,8 +75,8 @@ class NLS:
         self.vi_uwb = np.array([self.sigma_uwb ** -2])
         # single_agent_cov = np.eye(4) * 1.
 
-        #Give a bit of initial uncertainty otherwise to stiff and initial bad measurements can pull the solution of to much.
-        self.x_cov = 0.01*np.ones((self.horizon * self.m * 4, self.horizon * self.m * 4))
+        #Give a bit of initial uncertainty otherwise to stiff and initial bad measurements can pull the solution of too much.
+        self.x_cov = 1*np.ones((self.horizon * self.m * 4, self.horizon * self.m * 4))
         # for i in range(self.n * self.m):
         #     self.x_cov[i * 4:(i + 1) * 4, i * 4:(i + 1) * 4] = single_agent_cov
         self.res = []
@@ -101,7 +101,7 @@ class NLS:
     def calculate_likelihood(self):
         dist_sq = self.distances ** 2
         det_cov = self.sigma_uwb**(2)
-        norm_factor = (2 * np.pi) ** (1/ 2) * np.sqrt(det_cov)
+        norm_factor = (2 * np.pi * det_cov) ** (1/ 2)
         self.likelihood = (1 / norm_factor) * np.exp(-0.5 * dist_sq)
 
     # --- Update Functions
@@ -127,6 +127,8 @@ class NLS:
                     # )
                     sol = root(self.optimise, x, method='lm')
                     self.x_cov = sol.cov_x.copy()
+                    # seems the NLS is to confident and so increasing this uncertainty
+                    # self.x_cov = self.x_cov
                     # self.x_cov = np.linalg.inv(sol.jac.T @ sol.jac)  # approximate covariance matrix
                     x = sol.x.reshape(self.horizon, self.m, 4)
                     self.calculate_likelihood()
@@ -135,6 +137,8 @@ class NLS:
                 except LinAlgError as e:
                     self.calculate_relative_poses(converged=False)
                     print("LinAlgError")
+            else:
+                self.calculate_relative_poses()
 
 
         except AttributeError:
@@ -145,6 +149,7 @@ class NLS:
         for i in range(self.m):
             self.q_prev[i] = self.q_prev[i] + get_4d_rot_matrix(self.x_odom_prev[i, -1]) @ q_odom[i] @ get_4d_rot_matrix(self.x_odom_prev[i, -1]).T
             self.x_odom_prev[i, :] = self.x_odom_prev[i, :] + get_4d_rot_matrix(self.x_odom_prev[ i, -1]) @ dx_odom[i, :]
+            self.x_odom_since_update[i, :] =  self.x_odom_since_update[i,:] + get_4d_rot_matrix(self.x_odom_prev[ i, -1]) @ dx_odom[i, :]
 
 
 
@@ -153,6 +158,7 @@ class NLS:
             self.d = np.vstack((self.d, d.reshape(1, *d.shape)))
             self.q = np.vstack((self.q, self.q_prev.reshape(1, *self.q_prev.shape)))
             self.q_prev = np.zeros((self.m, 4, 4))
+            self.x_odom_since_update = np.zeros((self.m, 4))
 
         # Remove old odom measurements:
         if self.x_odom.shape[0] > self.horizon:
@@ -175,7 +181,9 @@ class NLS:
         dx = np.ravel(x - x_prev)
         for i in range(self.horizon * self.m * 4):
             if self.x_cov[i, i] != 0:
-                dx[i] = mahalanobis(np.array([0]), np.array([dx[i]]), np.array([1 / self.x_cov[i, i]]))
+                # dx[i] = mahalanobis(np.array([0]), np.array([dx[i]]), np.array([1 / self.x_cov[i, i]]))
+                # cov  = 0.1*np.eye(4)
+                dx[i] = mahalanobis(np.array([0]), np.array([dx[i]]), np.array([1]))
             res.append(dx[i])
         return res
 
@@ -189,7 +197,7 @@ class NLS:
             for i in range(self.m):
                 for k in range(self.m - i - 1):
                     j = i + k + 1
-                    distance = np.linalg.norm(x[s, i] - x[s, j])
+                    distance = np.linalg.norm(x[s, i,:-1] - x[s, j,:-1])
                     error = mahalanobis(np.array([self.d[s, i, j]]), np.array([distance]), self.vi_uwb)
                     res.append(error)
                     self.distances = error
@@ -230,7 +238,9 @@ class NLS:
     def calculate_poses(self):
         for i in range(self.m):
             f = get_4d_rot_matrix(self.x_origin[-1, i, -1])
-            self.x[i] = self.x_origin[-1, i] + f @ self.x_odom[-1, i]
+            x_update = self.x_origin[-1, i] + f @ self.x_odom[-1, i]
+            f_update = get_4d_rot_matrix(x_update[-1])
+            self.x[i] = x_update + f_update @ self.x_odom_since_update[i]
 
     def calculate_relative_poses(self, converged=True):
         self.calculate_poses()

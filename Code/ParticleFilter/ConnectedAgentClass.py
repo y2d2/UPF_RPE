@@ -410,7 +410,9 @@ class UPFConnectedAgent:
 
     def pruning_resampling(self):
         self.weights = np.array(self.weights) / np.sum(self.weights)
-        valid_indices = np.where(self.weights > self.resample_factor)[0]
+        #Todo: Why not keep only 1 / len(self.particles) seems better adapted to number of particles?
+        resample_factor = np.min(np.array([self.resample_factor, 1. / (len(self.particles)+1)]))
+        valid_indices = np.where(self.weights > resample_factor)[0]
         self.particles = [self.particles[i] for i in valid_indices]
         for particle in self.particles: particle.weight = 1.
         self.weights = [self.weights[i] for i in valid_indices]
@@ -647,7 +649,7 @@ class UPFConnectedAgentDataLogger:
         # ---- Best Particle Axis
         ax_best_particle = [fig.add_subplot(gs[i, -1]) for i in range(2)]
         # ax_best_particle[0].set_title("Best Particle")
-        bp_dl.plot_ukf_drift(ax_best_particle)
+        bp_dl.plot_drift(ax_best_particle)
         ax_best_particle[0].legend(loc="upper left")
 
         # ---- Host agent Axis
@@ -726,7 +728,7 @@ class UPFConnectedAgentDataLogger:
 
     def plot_connected_agent(self, ax):
         bp_dl = self.find_particle_log(self.upf_connected_agent.best_particle)
-        bp_dl.plot_ukf_drift(ax[:2])
+        bp_dl.plot_drift(ax[:2])
 
         likelihood_ax = ax[2]
         likelihood_ax.plot(bp_dl.likelihood, color="darkred", label="Likelihood")
