@@ -623,7 +623,7 @@ class TwoAgentSystem():
         name = "c".join(name.split("."))
         name = "n".join(name.split("-"))
         self.result_file = os.path.join(self.result_folder, name + ".pkl")
-        if not os.path.isfile(self.result_file) or redo_bool:
+        if (not os.path.isfile(self.result_file) or redo_bool):
             self.data = {}
             self.data[self.current_sim_name] = {}
             self.data["parameters"] = self.parameters
