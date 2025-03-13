@@ -265,6 +265,40 @@ class TwoAgentAnalysis:
                 new_legend_data[name] = legend_data[name]
         g.add_legend(legend_data=new_legend_data)
 
+    def print_latex_row(self, methods_name, variables, df):
+        dict_of_methods = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|Type": "Ours, propossed $10Hz$",
+                           "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|Type": "Ours, propossed $1Hz$",
+                           "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|Type": " Ours, $\\tilde{\\text{w}}$ pseudo-state $10Hz$",
+                           "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|Type": " Ours, $\\tilde{\\text{w}}$ pseudo-state $1Hz$",
+                           "NLS|frequency=1.0|horizon=10|Type": "NLS $10Hz$ \cite{Ziegler_2021_Distributed}",
+                           "NLS|frequency=0.1|horizon=1|Type": "NLS $1Hz$ \cite{Ziegler_2021_Distributed}",
+                           "QCQP|frequency=10.0|horizon=100|Type" : "QCQP $10Hz$ \cite{nguyen2023RTE}",
+                           "QCQP|frequency=1.0|horizon=10|Type" : "QCQP $1Hz$ \cite{nguyen2023RTE}",
+                           "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0|Type" : "Ours* $10Hz$",
+                           "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0|Type" : "Ours* $1Hz$",
+                           }
+
+        for method in methods_name:
+            print_str = ""
+            for meth in dict_of_methods:
+                if meth in method:
+                    print_str = dict_of_methods[meth]
+                    for variable in variables:
+                        print(method,variable, df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean())
+                        if variable == "calculation_time":
+                            try:
+                                print_str += " & " + str(int(1000*df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean()))
+                            except:
+                                print_str += " & " + str(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean())
+                        else:
+                            print_str += " & " + f"{df[(df['Name'] == method) & (df['Variable'] == variable)]['value'].median():.2g}"
+                            print_str += " & " + f"{df[(df['Name'] == method) & (df['Variable'] == variable)]['value'].mean():.2g}"
+                            print_str += " & " + f"{df[(df['Name'] == method) & (df['Variable'] == variable)]['value'].std():.2g}"
+                            # print_str += " & " + str(round(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].median(),2))
+                            # print_str += " & " + str(round(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean(),2))
+                            # print_str += " & " + str(round(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].std(),2))
+            print(print_str + " \\\\")
+
     def print_statistics(self, methods_name, variables, df):
         print('-----------------------------------------')
         print("Statistacal Analysis")
@@ -418,7 +452,7 @@ class TwoAgentAnalysis:
             methods_order.insert(-2, "Sigma")
             legend_col = 3
         else:
-            legend_col = 5
+            legend_col = 4
         method_df, methods_order = self.filter_methods(methods_order, sigma_uwbs, sigma_vs, frequencies, start_time)
 
         fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 3))
@@ -426,7 +460,7 @@ class TwoAgentAnalysis:
             df = method_df.loc[(method_df["Variable"] == variable)]
             method_means = []
             time_points = df["Time"].unique()
-
+            print(methods_order)
             for method in methods_order:
                 method_time_values = []                  # to store values at each time point for a specific method
                 for time_point in time_points:
@@ -481,7 +515,7 @@ class TwoAgentAnalysis:
                 axes[i].set_ylim([0.5, 10])
                 axes[i].set_yscale("log")
 
-        methods_order = methods_order[-1:] + methods_order[:-1]
+        # methods_order = methods_order[-1:] + methods_order[:-1]
         legend_handles = [Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]
         legend_labels = [methods_legend[method] for method in methods_order]
 
@@ -520,9 +554,9 @@ class TwoAgentAnalysis:
 
             axes[i].set_xlabel("time [s]", fontsize=12)
             # axes[i].set_ylabel(self.y_label[variable], fontsize=12)
-            if variable == "error_x_relative":
-                axes[i].set_yscale("log")
-                axes[i].set_ylim([0.1, 50])
+            # if variable == "error_x_relative":
+                # axes[i].set_yscale("log")
+                # axes[i].set_ylim([0., 7])
 
         legend_handles = [Line2D([0], [0], color=methods_colors[method], linewidth=2.5) for method in methods_names]
         legend_labels = [methods_legends[method] for method in methods_names]
