@@ -396,11 +396,11 @@ class MyTestCase(unittest.TestCase):
 
         methods_order = [
             upf_exp_10hz, upf_exp_1hz,
-            # nodriftupf_exp_10hz, nodriftupf_exp_1hz,
+            nodriftupf_exp_10hz, nodriftupf_exp_1hz,
             # alg_exp_10hz, alg_exp_1hz,
-            # qcqp_exp_10hz, qcqp_exp_1hz,
+            qcqp_exp_10hz, qcqp_exp_1hz,
             upf_exp_per_10hz, upf_exp_per_1hz,
-            # nls_exp_10hz, nls_exp_1hz,
+            nls_exp_10hz, nls_exp_1hz,
         ]
 
         return methods_order
@@ -410,7 +410,7 @@ class MyTestCase(unittest.TestCase):
         result_folders = [
             # "../../../Results/server_exp",
             "../../../Results/experiments",
-            "Results/exp_1hz"
+            "Results/corr"
         ]
         variables = ["error_x_relative", "error_h_relative"]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
