@@ -47,7 +47,7 @@ class TwoAgentAnalysis:
     # -----------------------
     # Loading functions:
     # -----------------------
-    def load_results(self):
+    def load_results(self, reformat_bool=False):
         self.results = {}
         self.data = {}
         for result_folder in self.result_folders:
@@ -65,7 +65,7 @@ class TwoAgentAnalysis:
                         except EOFError:
                             print("!!!!!!!!! Could not open: ", result_folder + "/" + file + " !!!!!!!!!")
                     f.close()
-                    if "numerical_data" not in data:
+                    if "numerical_data" not in data or reformat_bool:
                         print("Reformating the data for analysis " + file + " ...")
                         data = self.reformat_data(data)
                         with open(result_folder + "/" + file, "wb") as f:
@@ -87,10 +87,12 @@ class TwoAgentAnalysis:
         return
 
     def reformat_data(self, data):
+        # data["parameters"]["runs"] =[]
         data["numerical_data"] = {}
         result = {}
         for sim in data:
             if sim != "parameters" and sim != "analysis" and sim != "numerical_data":
+                data["parameters"]["runs"]= sim
                 for method in data[sim]:
                     for drone_name in data[sim][method]:
                         if method not in data["numerical_data"]:
@@ -157,10 +159,11 @@ class TwoAgentAnalysis:
                                               Sigma_dv=data["parameters"]["sigma_dv"],
                                               Sigma_dw=data["parameters"]["sigma_dw"],
                                               Sigma_uwb=data["parameters"]["sigma_uwb"],
+                                              Run = data["parameters"]["runs"],
                                               Type=data["parameters"]["type"],
                                               Frequency=data["parameters"]["frequency"])
                 df = pd.melt(df,
-                             id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_dw', 'Sigma_uwb', "Type", "Frequency"],
+                             id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_dw', 'Sigma_uwb', "Run", "Type", "Frequency"],
                              var_name=["Time"])
                 self.dfs.append(df)
 
@@ -168,9 +171,9 @@ class TwoAgentAnalysis:
             # df_var = pd.melt(df_var, id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_uwb'], var_name=["Time [s]"])  # MELT
             # dfs[method] = df_var
 
-    def create_panda_dataframe(self):
+    def create_panda_dataframe(self, reformat_bool=False):
         if not self.dfs:
-            self.load_results()
+            self.load_results(reformat_bool)
         # dfs = pd.concat(self.dfs)
         # self.df = pd.concat(self.dfs)
         return
@@ -264,6 +267,40 @@ class TwoAgentAnalysis:
             else:
                 new_legend_data[name] = legend_data[name]
         g.add_legend(legend_data=new_legend_data)
+
+    def print_latex_row(self, methods_name, variables, df):
+        dict_of_methods = {"losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|Type": "Ours, propossed $10Hz$",
+                           "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|Type": "Ours, propossed $1Hz$",
+                           "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|Type": " Ours, $\\tilde{\\text{w}}$ pseudo-state $10Hz$",
+                           "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|Type": " Ours, $\\tilde{\\text{w}}$ pseudo-state $1Hz$",
+                           "NLS|frequency=1.0|horizon=10|Type": "NLS $10Hz$ \cite{Ziegler_2021_Distributed}",
+                           "NLS|frequency=0.1|horizon=1|Type": "NLS $1Hz$ \cite{Ziegler_2021_Distributed}",
+                           "QCQP|frequency=10.0|horizon=100|Type" : "QCQP $10Hz$ \cite{nguyen2023RTE}",
+                           "QCQP|frequency=1.0|horizon=10|Type" : "QCQP $1Hz$ \cite{nguyen2023RTE}",
+                           "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0|Type" : "Ours* $10Hz$",
+                           "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0|Type" : "Ours* $1Hz$",
+                           }
+
+        for method in methods_name:
+            print_str = ""
+            for meth in dict_of_methods:
+                if meth in method:
+                    print_str = dict_of_methods[meth]
+                    for variable in variables:
+                        print(method,variable, df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean())
+                        if variable == "calculation_time":
+                            try:
+                                print_str += " & " + str(int(1000*df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean()))
+                            except:
+                                print_str += " & " + str(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean())
+                        else:
+                            print_str += " & " + f"{df[(df['Name'] == method) & (df['Variable'] == variable)]['value'].median():.2g}"
+                            print_str += " & " + f"{df[(df['Name'] == method) & (df['Variable'] == variable)]['value'].mean():.2g}"
+                            print_str += " & " + f"{df[(df['Name'] == method) & (df['Variable'] == variable)]['value'].std():.2g}"
+                            # print_str += " & " + str(round(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].median(),2))
+                            # print_str += " & " + str(round(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].mean(),2))
+                            # print_str += " & " + str(round(df[(df["Name"] == method) & (df["Variable"] == variable)]["value"].std(),2))
+            print(print_str + " \\\\")
 
     def print_statistics(self, methods_name, variables, df):
         print('-----------------------------------------')
