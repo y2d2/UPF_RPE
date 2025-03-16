@@ -401,7 +401,7 @@ class MyTestCase(unittest.TestCase):
             upf_exp_10hz, upf_exp_1hz,
             nodriftupf_exp_10hz, nodriftupf_exp_1hz,
             # alg_exp_10hz, alg_exp_1hz,
-            qcqp_exp_10hz, qcqp_exp_1hz,
+            # qcqp_exp_10hz, qcqp_exp_1hz,
             upf_exp_per_10hz, upf_exp_per_1hz,
             nls_exp_10hz, nls_exp_1hz,
         ]
@@ -413,7 +413,8 @@ class MyTestCase(unittest.TestCase):
             # "../../../Results/server_exp",
             # "../../../Results/experiments",
             # "Results/corr",
-            "../../../Results/sim_cor_test",
+            "../../../Results/Sim_cor/freq10",
+            # "../../../Results/sim_cor_test",
             # "../../../Results/simulations_1hz",
         ]
         variables = ["error_x_relative", "error_h_relative", "calculation_time"]
@@ -424,6 +425,31 @@ class MyTestCase(unittest.TestCase):
         df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
         taa.print_latex_row(methods_names, variables, df)
 
+    def test_sim_analysis(self):
+        result_folders = [
+            "../../../Results/Sim_cor/freq10",
+        ]
+        variables = ["error_x_relative", "error_h_relative"]
+        taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
+        methods_order = self.load_results(variables, types="simulation",
+                                          sigma_dv=[0.1, 0.01], sigma_dw=[0.1, 0.01], sigma_uwb=[1.0, 0.1])
+
+        df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
+        # taa.print_statistics(methods_names, variables, df)
+        g = taa.boxplot_exp(df, methods_color=methods_colors, methods_legend=methods_legends,
+                            hue_variable="Name", hue_order=methods_names,
+                            col_variable="Variable", col_order=["error_x_relative", "error_h_relative"],
+                            row_variable="Sigma_dv", row_order=[0.01, 0.1],
+                            x_variable="Sigma_uwb", x_order=[0.1, 1.],
+                            )
+
+        g.axes_dict["error_x_relative"].set_yscale("log")
+        g.axes_dict["error_h_relative"].set_ylabel(taa.y_label["error_h_relative"], fontsize=12)
+        g.axes_dict["error_x_relative"].set_ylabel(taa.y_label["error_x_relative"], fontsize=12)
+        sns.move_legend(g, loc="upper center", bbox_to_anchor=(0.5, 0.98), ncol=5)
+        plt.subplots_adjust(top=0.8, bottom=0.12, left=0.1, right=0.99)
+        # plt.suptitle("Experiments")
+        plt.show()
 
     def test_exp_analysis(self):
         result_folders = [
@@ -432,7 +458,7 @@ class MyTestCase(unittest.TestCase):
             "../../../Results/Sim_cor",
             # "Results/corr"
         ]
-        variables = ["error_x_relative", "error_h_relative", "calculation_time"]
+        variables = ["error_x_relative", "error_h_relative"]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = self.load_results(variables, types="simulation")
 
@@ -555,7 +581,7 @@ class MyTestCase(unittest.TestCase):
                             # "./Experiments/LOS_exp/Results/experiments_paper/exp5"
                             # "./Experiments/LOS_exp/Results/exp_cor_new1/exp"
                             # "../../../Results/experiments",
-                            "Results/corr"
+                            "Results/Final"
                             ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = [
