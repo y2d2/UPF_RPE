@@ -91,6 +91,50 @@ class TwoAgentAnalysis:
                         print("Error in reformatting the data: ", file)
         return
 
+    def laod_directly_to_df(self):
+        self.dfs = []
+
+        for result_folder in self.result_folders:
+            n_files = len(os.listdir(result_folder))
+            file_nr = 0.
+            for file in os.listdir(result_folder):
+                if int(file_nr / n_files * 100.) > self.percent_to_load:
+                    return
+                file_nr += 1
+                if file.endswith(".pkl"):
+                    with open(result_folder + "/" + file, "rb") as f:
+                        try:
+                            data = pkl.load(f)
+                            print("Loading " + str(round(file_nr / n_files * 100., 2)), "%: " + result_folder + "/" + file)
+                        except EOFError:
+                            print("!!!!!!!!! Could not open: ", result_folder + "/" + file + " !!!!!!!!!")
+                    f.close()
+                    self.new_panda_dataframe(data)
+
+    def new_panda_dataframe(self,data):
+        for sim in data:
+            for method in data[sim]:
+                if method != "slam" and sim != "parameters" and sim != "analysis" and sim != "numerical_data":
+                    for drone_name in data[sim][method]:
+                        for variable in data[sim][method][drone_name]:
+                            res = np.array(data[sim][method][drone_name][variable]).astype(float)
+                            df = pd.DataFrame(res).assign(Variable=variable,
+                                                          Method=method,
+                                                          Sigma_dv=data["parameters"]["sigma_dv"],
+                                                          Sigma_dw=data["parameters"]["sigma_dw"],
+                                                          Sigma_uwb=data["parameters"]["sigma_uwb"],
+                                                          Run = sim,
+                                                          Drone = drone_name,
+                                                          Type=data["parameters"]["type"],
+                                                          Frequency=data["parameters"]["frequency"])
+                            df = pd.melt(df,
+                                         id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_dw', 'Sigma_uwb', "Run",
+                                                  "Drone", "Type", "Frequency"],
+                                         var_name=["Number"])
+                            df["Time"] = df["Number"] / df["Frequency"].astype(float)
+
+                            self.dfs.append(df)
+
     def reformat_data(self, data):
         # data["parameters"]["runs"] =[]
         data["numerical_data"] = {}
