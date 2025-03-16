@@ -61,18 +61,20 @@ class TwoAgentAnalysis:
                     with open(result_folder + "/" + file, "rb") as f:
                         try:
                             data = pkl.load(f)
-                            print("Loading " + str(int(file_nr / n_files * 100.)), "%: " + result_folder + "/" + file)
+                            print("Loading " + str(round(file_nr / n_files * 100., 2)), "%: " + result_folder + "/" + file)
                         except EOFError:
                             print("!!!!!!!!! Could not open: ", result_folder + "/" + file + " !!!!!!!!!")
                     f.close()
-                    if "numerical_data" not in data or reformat_bool:
-                        print("Reformating the data for analysis " + file + " ...")
-                        data = self.reformat_data(data)
-                        with open(result_folder + "/" + file, "wb") as f:
-                            pkl.dump(data, f)
-                        f.close()
-                    # self.data[file] = data
-                    self.data[file] = "Loaded"
+                    try:
+                        if "numerical_data" not in data or reformat_bool:
+                            print("Reformating the data for analysis " + file + " ...")
+
+                            data = self.reformat_data(data)
+                            with open(result_folder + "/" + file, "wb") as f:
+                                pkl.dump(data, f)
+                            f.close()
+                        # self.data[file] = data
+                        self.data[file] = "Loaded"
 
                     # if "analysis" not in data:
                     #     print("Starting statistical analysis of " + file + " ...")
@@ -83,7 +85,10 @@ class TwoAgentAnalysis:
                     # self.results[file] = data["analysis"]
 
                     # if "panda_date" not in data:
-                    self.reformat_data_to_pandas(data)
+                        self.reformat_data_to_pandas(data)
+                    except Exception as e:
+                        print("Error in reformatting the data: ", e)
+                        print("Error in reformatting the data: ", file)
         return
 
     def reformat_data(self, data):
@@ -94,15 +99,16 @@ class TwoAgentAnalysis:
             if sim != "parameters" and sim != "analysis" and sim != "numerical_data":
                 data["parameters"]["runs"]= sim
                 for method in data[sim]:
-                    for drone_name in data[sim][method]:
-                        if method not in data["numerical_data"]:
-                            data["numerical_data"][method] = {}
-                            result[method] = {}
-                        for variable in data[sim][method][drone_name]:
-                            if variable not in data["numerical_data"][method]:
-                                data["numerical_data"][method][variable] = {}
-                                result[method][variable] = []
-                            result[method][variable].append(data[sim][method][drone_name][variable])
+                    if method != "slam":
+                        for drone_name in data[sim][method]:
+                            if method not in data["numerical_data"]:
+                                data["numerical_data"][method] = {}
+                                result[method] = {}
+                            for variable in data[sim][method][drone_name]:
+                                if variable not in data["numerical_data"][method]:
+                                    data["numerical_data"][method][variable] = {}
+                                    result[method][variable] = []
+                                result[method][variable].append(data[sim][method][drone_name][variable])
         for method in data["numerical_data"]:
             for variable in data["numerical_data"][method]:
                 res = np.array(result[method][variable]).astype(float)
