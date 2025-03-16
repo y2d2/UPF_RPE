@@ -543,8 +543,8 @@ class TwoAgentSystem():
         self.frequency = None
         self.factor = None
         # self.nlos_man = NLOS_Manager(nlos_bias=2.)
-        self.los_state = []
-        self.uwb_error = []
+        self.los_state = [1]
+        self.uwb_error = [0.]
         self.d0 = None
 
         # Experiment variables:
@@ -1096,6 +1096,8 @@ class TwoAgentSystem():
                           "d_error": self.uwb_error,
                           "True_los_state": self.los_state, # Can be removed, depends on sigma_uwb
                           "NIS": dl_bp_rpea.NIS}
+            print(len(self.uwb_error) , len(self.los_state), len(dl_bp.los_state))
+
             self.data[self.current_sim_name][self.test_name][drone_id] = upf_result
             if self.save_bool:
                 with open(

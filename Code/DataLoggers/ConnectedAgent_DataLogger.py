@@ -67,7 +67,8 @@ class UPFConnectedAgentDataLogger:
         for particle in self.upf_connected_agent.particles:
             particle_log: TargetTrackingParticle_DataLogger | None = self.find_particle_log(particle)
             if particle_log is None:
-                particle_log = self.add_particle(particle)
+                self.add_particle(particle)
+        for particle_log in self.particle_logs:
             particle_log.log_data(i)
 
         if not self.keep_all_particles_bool:
