@@ -86,40 +86,42 @@ class MyTestCase(unittest.TestCase):
         sigma_dv = [0.1, 0.01]
         sigma_dw = [0.1, 0.01]
         sigma_uwb = [1., 0.1]
+        frequency = 1.0
+        horizon = 10
 
-        upf_sim_full = {"Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        upf_sim_full = {"Method": f"losupf|frequency={frequency}|resample_factor=0.1|sigma_uwb_factor=1.0",
                         "Variables": {
                             "Type": ["simulation"],
                             "Variable": variables,
                             "Sigma_dv": sigma_dv,
                             "Sigma_dw": sigma_dw,
                             "Sigma_uwb": sigma_uwb,
-                            "Frequency": [10.0],
+                            "Frequency": [frequency],
                         },
                         "Color": "tab:green",
                         "Legend": "Ours, proposed",
                         }
         upf_sim_full_per = {
-            "Method": "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+            "Method": f"losupf|frequency={frequency}|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
             "Variables": {
                 "Type": ["simulation"],
                 "Variable": variables,
                 "Sigma_dv": sigma_dv,
                 "Sigma_dw": sigma_dw,
                 "Sigma_uwb": sigma_uwb,
-                "Frequency": [10.0],
+                "Frequency": [frequency],
             },
             "Color": "tab:orange",
             "Legend": "Ours*",
             }
-        nodriftupf_sim_full = {"Method": "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        nodriftupf_sim_full = {"Method": f"nodriftupf|frequency={frequency}|resample_factor=0.1|sigma_uwb_factor=1.0",
                                "Variables": {
                                    "Type": ["simulation"],
                                    "Variable": variables,
                                    "Sigma_dv": sigma_dv,
                                    "Sigma_dw": sigma_dw,
                                    "Sigma_uwb": sigma_uwb,
-                                   "Frequency": [10.0],
+                                   "Frequency": [frequency],
                                },
                                "Color": "tab:red",
                                "Legend": r"Ours, $\tilde{\text{w}}$ pseudo-state",
@@ -131,32 +133,32 @@ class MyTestCase(unittest.TestCase):
                             "Sigma_dv": sigma_dv,
                             "Sigma_dw": sigma_dw,
                             "Sigma_uwb": sigma_uwb,
-                            "Frequency": [10.0],
+                            "Frequency": [frequency],
                         },
                         "Color": "tab:orange",
                         "Legend": "Algebraic",
                         }
-        qcqp_sim_full = {"Method": "QCQP|frequency=10.0|horizon=100",
+        qcqp_sim_full = {"Method": f"QCQP|frequency={frequency}|horizon={horizon}",
                          "Variables": {
                              "Type": ["simulation"],
                              "Variable": variables,
                              "Sigma_dv": sigma_dv,
                              "Sigma_dw": sigma_dw,
                              "Sigma_uwb": sigma_uwb,
-                             "Frequency": [10.0],
+                             "Frequency": [frequency],
                          },
                          "Color": "tab:blue",
                          "Legend": "QCQP",
                          }
         nls_sim_full = {
-            "Method": "NLS|frequency=1.0|horizon=10",
+            "Method": f"NLS|frequency={frequency / 10}|horizon={int(horizon / 10)}",
             "Variables": {
                 "Type": ["simulation"],
                 "Variable": variables,
                 "Sigma_dv": sigma_dv,
                 "Sigma_dw": sigma_dw,
                 "Sigma_uwb": sigma_uwb,
-                "Frequency": [1.0],
+                "Frequency": [frequency/10],
             },
             "Color": "tab:purple",
             "Legend": "NLS*",
@@ -185,7 +187,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_sim_analysis(self):
         result_folders = [
-            "../../../Results/simulations",
+            "../../../Results/Sim_cor/freq1",
         ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         variables = ["error_x_relative", "error_h_relative"]
@@ -193,7 +195,7 @@ class MyTestCase(unittest.TestCase):
 
         df_sim_full, methods_names_sim_full, methods_colors_sim_full, methods_legends_sim_full = taa.filter_methods_new(
             methods_order)
-
+        taa.print_latex_row(methods_names_sim_full, variables, df_sim_full)
         g = taa.boxplot_exp(df_sim_full, methods_color=methods_colors_sim_full,
                                     methods_legend=methods_legends_sim_full,
                                     hue_variable="Name", hue_order=methods_names_sim_full,
