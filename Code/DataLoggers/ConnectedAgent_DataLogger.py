@@ -157,10 +157,10 @@ class UPFConnectedAgentDataLogger:
         likelihood_ax.grid(True)
 
 
-    def plot_self(self, los=None, host_id="No host id"):
+    def plot_self(self, los=None, title="No title"):
         bp_dl: TargetTrackingParticle_DataLogger =self.find_particle_log(self.upf_connected_agent.best_particle)
         fig = plt.figure(figsize=(18, 10))  # , layout="constrained")
-        fig.suptitle("Host Agent: " + host_id + "; Connected agent: " + self.upf_connected_agent.id)
+        fig.suptitle(title)
         ax = []
         gs = GridSpec(4, 4, figure=fig, height_ratios=[1, 1, 1, 2], width_ratios=[1, 1, 1, 1])
         ax_3d = fig.add_subplot(gs[:3, :3], projection="3d")
@@ -185,12 +185,15 @@ class UPFConnectedAgentDataLogger:
         ha_ax.grid(True)
         ha_ax.legend()
 
-        dx_ha_ax = fig.add_subplot(gs[3, -1])
-        label = ["x [m]", "y [m]", "z [m]", "h [(rad)]"]
-        dx_ha_ax.set_xlabel("std of dx of the host agent")
-        for i in range(4):
-            dx_ha_ax.plot(self.dx_ha_stds[:, i], label=label[i])
-        dx_ha_ax.legend()
+        # dx_ha_ax = fig.add_subplot(gs[3, -1])
+        # label = ["x [m]", "y [m]", "z [m]", "h [(rad)]"]
+        # dx_ha_ax.set_xlabel("std of dx of the host agent")
+        # for i in range(4):
+        #     dx_ha_ax.plot(self.dx_ha_stds[:, i], label=label[i])
+        # dx_ha_ax.legend()
+
+        distance_ax = fig.add_subplot(gs[3, -1])
+        bp_dl.plot_test(distance_ax, los)
 
         dx_ha_ax_1 = fig.add_subplot(gs[3, 2])
         label = ["x [m]", "y [m]", "z [m]", "h [(rad)]"]
@@ -217,9 +220,9 @@ class UPFConnectedAgentDataLogger:
         # plt.figure()
         # likelihood_ax = plt
         # likelihood_ax.plot(bp_dl.likelihood, label="Likelihood")
-        # likelihood_ax.plot(bp_dl.weight, label="Weigth")
-        if los is not None:
-            likelihood_ax.plot(los, color="k", label="Real LOS State")
+        # # likelihood_ax.plot(bp_dl.weight, label="Weigth")
+        # if los is not None:
+        #     likelihood_ax.plot(los, color="k", label="Real LOS State")
 
         bp_dl.plot_self(particle_ax=likelihood_ax, los=los)
 

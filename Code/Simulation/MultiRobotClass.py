@@ -723,6 +723,7 @@ class TwoAgentSystem():
                 os.mkdir(self.save_folder + "/" + exp_data["name"])
             self.experiment_data = exp_data
             self.current_sim_name = self.experiment_data["name"]
+            print(datetime.now(), " ", self.current_sim_name)
             # self.get_data()
             # if self.current_sim_name not in self.data:
             #     self.data[self.current_sim_name] = {}
@@ -752,8 +753,8 @@ class TwoAgentSystem():
         self.d0 = self.experiment_data["uwb"][0]
 
     def run_exp(self, test_name):
-        self.los_state = []
-        self.uwb_error =[]
+        self.los_state = [1]
+        self.uwb_error =[0]
         drone0: NewRobot = self.agents["drone_0"]["drone"]
         drone1: NewRobot = self.agents["drone_1"]["drone"]
 
@@ -1034,8 +1035,8 @@ class TwoAgentSystem():
         # dx_1, q_0 = upf1.ha.reset_integration()
 
         # Drone 0
-        x_ha = drone0.x_slam[i]
-        h_ha = drone0.h_slam[i]
+        x_ha = drone0.x_slam[i+1]
+        h_ha = drone0.h_slam[i+1]
         x_ha_0 = np.concatenate([x_ha, np.array([h_ha])])
         upf0.ha.update(x_ha_0, q_0)
         # Timing the execution of the algorihtm
@@ -1046,8 +1047,8 @@ class TwoAgentSystem():
         upf0log.log_data(i, t2 - t1)
 
         # Drone 1
-        x_ha = drone1.x_slam[i]
-        h_ha = drone1.h_slam[i]
+        x_ha = drone1.x_slam[i+1]
+        h_ha = drone1.h_slam[i+1]
         x_ha_1 = np.concatenate([x_ha, np.array([h_ha])])
         upf1.ha.update(x_ha_1, q_1)
         # Timing the execution of the algorihtm
@@ -1066,8 +1067,8 @@ class TwoAgentSystem():
                 try:
                     # self.agents[agent]["upf"].upf_connected_agent_logger.plot_self(self.los_state)
                     self.agents[agent]["log"].plot_self(self.los_state)
-                    plt.pause(2)
-                    plt.close()
+                    # plt.pause(2)
+                    # plt.close()
                 except KeyError:
                     print("keyerror")
             plt.show()
@@ -1126,7 +1127,9 @@ class TwoAgentSystem():
         try:
             if self.plot_bool:
                 for agent in self.agents:
-                    self.agents[agent]["log"].plot_self(self.los_state)
+                    # plt.figure()
+                    print(f"plotting {self.current_sim_name} for agent {agent}")
+                    self.agents[agent]["log"].plot_self(self.los_state, title=agent + " " + self.current_sim_name)
                     # plt.show()
                     # plt.pause(0.1)
                     # plt.close()

@@ -640,7 +640,7 @@ class UPFConnectedAgentDataLogger:
     def plot_self(self, los=None, host_id="No host id"):
         bp_dl: UKFDatalogger = self.find_particle_log(self.upf_connected_agent.best_particle)
         fig = plt.figure(figsize=(18, 10))  # , layout="constrained")
-        fig.suptitle("Host Agent: " + host_id + "; Connected agent: " + self.upf_connected_agent.id)
+        # fig.suptitle("Host Agent: " + host_id + "; Connected agent: " + self.upf_connected_agent.id)
         ax = []
         gs = GridSpec(4, 4, figure=fig, height_ratios=[1, 1, 1, 1], width_ratios=[1, 1, 1, 1])
         ax_3d = fig.add_subplot(gs[:3, :3], projection="3d")

@@ -117,23 +117,38 @@ class TwoAgentAnalysis:
                 if method != "slam" and sim != "parameters" and sim != "analysis" and sim != "numerical_data":
                     for drone_name in data[sim][method]:
                         for variable in data[sim][method][drone_name]:
-                            res = np.array(data[sim][method][drone_name][variable]).astype(float)
-                            df = pd.DataFrame(res).assign(Variable=variable,
-                                                          Method=method,
-                                                          Sigma_dv=data["parameters"]["sigma_dv"],
-                                                          Sigma_dw=data["parameters"]["sigma_dw"],
-                                                          Sigma_uwb=data["parameters"]["sigma_uwb"],
-                                                          Run = sim,
-                                                          Drone = drone_name,
-                                                          Type=data["parameters"]["type"],
-                                                          Frequency=data["parameters"]["frequency"])
-                            df = pd.melt(df,
-                                         id_vars=['Variable', 'Method', 'Sigma_dv', 'Sigma_dw', 'Sigma_uwb', "Run",
-                                                  "Drone", "Type", "Frequency"],
-                                         var_name=["Number"])
-                            df["Time"] = df["Number"] / df["Frequency"].astype(float)
+                            if variable != "True_los_state":
+                                res = np.array(data[sim][method][drone_name][variable]).astype(float)
+                                df = pd.DataFrame({"value": res})
+                                df["Number"] = df.index  # Uses the index as the number to preserve order
 
-                            self.dfs.append(df)
+                                # Add additional variables
+                                df["Variable"] = variable
+                                df["Method"] = method
+                                df["Sigma_dv"] = data["parameters"]["sigma_dv"]
+                                df["Sigma_dw"] = data["parameters"]["sigma_dw"]
+                                df["Sigma_uwb"] = data["parameters"]["sigma_uwb"]
+                                df["Run"] = sim
+                                df["Drone"] = drone_name
+                                df["Type"] = data["parameters"]["type"]
+                                df["Frequency"] = data["parameters"]["frequency"]
+
+                                # Compute "Time" using "Number" and "Frequency"
+                                df["Time"] = df["Number"] / df["Frequency"].astype(float)
+
+                                # df = pd.DataFrame(res).assign(Variable=variable,
+                                #                               Method=method,
+                                #                               Sigma_dv=data["parameters"]["sigma_dv"],
+                                #                               Sigma_dw=data["parameters"]["sigma_dw"],
+                                #                               Sigma_uwb=data["parameters"]["sigma_uwb"],
+                                #                               Run = sim,
+                                #                               Drone = drone_name,
+                                #                               Type=data["parameters"]["type"],
+                                #                               Frequency=data["parameters"]["frequency"],
+                                #                               Number=df.index )
+                                # df["Time"] = df["Number"] / df["Frequency"].astype(float)
+
+                                self.dfs.append(df)
 
     def reformat_data(self, data):
         # data["parameters"]["runs"] =[]
