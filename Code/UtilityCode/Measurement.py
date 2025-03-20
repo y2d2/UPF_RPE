@@ -7,6 +7,7 @@ from Code.UtilityCode.turtlebot4 import Turtlebot4
 from Code.Simulation.MultiRobotClass import TwoAgentSystem
 import numpy as np
 import pickle as pkl
+import matplotlib.pyplot as plt
 
 # import Experiments
 
@@ -400,9 +401,13 @@ class Measurement:
     #------------------
     # VIO processing
     #-----------------
-    def get_VIO_error(self, plot=False):
+    def get_VIO_error(self, plot=False, title=None):
         self.tb2.get_vio_error(plot)
+        if title is not None:
+            plt.suptitle("tb2 "+ title)
         self.tb3.get_vio_error(plot)
+        if title is not None:
+            plt.suptitle("tb2 "+ title)
 
     def correct_orb_transformation(self):
         T_cor = np.array([[0,-1,0,0],

@@ -644,6 +644,7 @@ class TwoAgentSystem():
                 self.data = {}
                 self.data[self.current_sim_name] = {}
                 self.data["parameters"] = self.parameters
+                self.data["parameters"]["type"] = self.type
                 return True
         return False
         # while exists:

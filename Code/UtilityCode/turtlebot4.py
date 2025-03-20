@@ -270,10 +270,10 @@ class Frame():
         lables = ["x", "y", "z"]
         for i in range(3):
             ax[i,0].plot(self.t, self.p[:, i], '*', label="p_" + lables[i])
-            ax[i,0].plot(self.sampled_t, self.sampled_p[:, i], '*',label="p_" + lables[i])
+            # ax[i,0].plot(self.sampled_t, self.sampled_p[:, i], '*',label="p_" + lables[i])
             ax[i,1].plot(self.t, self.q[:, i], '*', label="q_" + lables[i])
             ax[i,1].plot(self.sampled_t, self.sampled_q[:, i], '*', label="q_" + lables[i])
-            # ax[i].plot(self.sampled_t, self.sampled_v[:, i], '*',label="v_" + lables[i])
+            ax[i,0].plot( self.sampled_v[:, i], '--',label="v_" + lables[i])
             # ax[i].plot(self.sampled_t, self.sampled_w[:, i], '*',label="w_" + lables[i])
             ax[i,1].legend()
             ax[i,0].legend()
