@@ -703,7 +703,7 @@ class TwoAgentSystem():
         self.sim = MultiRobotSingleSimulation(sim_folder)
         self.sim.run_simulation(self.sigma_dv, self.sigma_dw, self.sigma_uwb)
         # self.factor = int(1.0/self.frequency / self.sim.parameters["simulation_time_step"])
-        if self.plot_bool:
+        if self.debug_plot_bool:
             self.sim.init_plot(interactive=True)
 
     #-----------------------------
@@ -879,8 +879,8 @@ class TwoAgentSystem():
         distances = self.sim.get_uwb_measurements("drone_0", "drone_1")
         self.factor = int(1.0 / self.frequency / self.sim.parameters["simulation_time_step"])
         for i in range(1, self.sim.parameters["simulation_time_steps"]):
-            if self.plot_bool:
-                self.sim.plot_trajectories_evolution(i, 50)
+            # if self.debug_plot_bool:
+            #     self.sim.plot_trajectories_evolution(i, 50)
 
             # Integrate the odometry:
             for drone in self.agents:
@@ -895,12 +895,13 @@ class TwoAgentSystem():
 
                 uwb_measurement = distances[i]
                 los_state = 1
-                # uwb_measurement, los_state = nlos_function(int(i / self.factor), uwb_measurement)
+                if nlos_function is not None:
+                    uwb_measurement, los_state = nlos_function(int(i / self.factor), uwb_measurement)
                 self.los_state.append(los_state)
 
                 eval("self.run_" + self.method + "_simulation" + "(dx_0, q_0, dx_1, q_1, uwb_measurement, i)")
 
-        if self.plot_bool:
+        if self.debug_plot_bool:
             plt.close()
         eval("self.end_" + self.method + "_test()")
 
