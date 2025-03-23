@@ -150,6 +150,13 @@ class TwoAgentAnalysis:
 
                                 self.dfs.append(df)
 
+    def save_df(self, file_name):
+        df = pd.concat(self.dfs)
+        df.to_pickle(file_name)
+
+    def load_df(self, file_name):
+        self.df = pd.read_pickle(file_name)
+
     def reformat_data(self, data):
         # data["parameters"]["runs"] =[]
         data["numerical_data"] = {}
