@@ -387,7 +387,7 @@ class Measurement:
         self.uwb.real_d = ds
 
     def get_uwb_error(self):
-        uwb_error = [ self.uwb.sampled_d[i] - self.uwb.real_d[i] for i in range(len(self.uwb.sampled_d))]
+        uwb_error = np.abs([ self.uwb.sampled_d[i] - self.uwb.real_d[i] for i in range(len(self.uwb.sampled_d))])
         return uwb_error
 
     def get_uwb_LOS(self, sigma_d, factor=2):

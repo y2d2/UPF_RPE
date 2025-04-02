@@ -155,7 +155,11 @@ class TwoAgentAnalysis:
         df.to_pickle(file_name)
 
     def load_df(self, file_name):
-        self.df = pd.read_pickle(file_name)
+        df = pd.read_pickle(file_name)
+        if self.df is None:
+            self.df = df
+        else:
+            self.df = pd.concat([self.dfs, df])
 
     def reformat_data(self, data):
         # data["parameters"]["runs"] =[]
