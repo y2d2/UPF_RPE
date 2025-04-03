@@ -185,6 +185,7 @@ class Control3D(Control1D):
         self.target_time_max = 10
         self.target_time = 0
         self.current_target_time = 0
+        self.speed_target = np.array([0,0,0])
 
     def set_random_target(self):
         self.current_target_time = 0
@@ -194,59 +195,13 @@ class Control3D(Control1D):
         h = np.random.uniform(0, self.height)
         self.target = self.center + np.array([r * np.cos(phi)* np.cos(theta), r *  np.cos(phi) * np.sin(theta), r *  np.sin(phi)])
         self.angle_target = np.random.uniform(0, 2*np.pi)
-        self.target_time = np.random.uniform(self.target_time_max/2, self.target_time_max)
+        speed_target_x = np.random.uniform(-self.max_v, self.max_v)
+        speed_target_y = np.random.uniform(-self.max_v, self.max_v)
+        speed_target_z = np.random.uniform(-self.max_v, self.max_v)
+        self.speed_target = np.array([speed_target_x, speed_target_y, speed_target_z])
+        self.target_time = np.random.uniform(self.target_time_max/4, self.target_time_max)
 
     def set_control(self):
-        # x = self.agent.x_real[-1]
-        # theta =  self.agent.h_real[-1]
-        # v_real = self.agent.v_slam_real[-1]
-        # v_norm = np.linalg.norm(v_real)
-        #
-        # w_real = self.agent.w_slam_real[-1]
-        #
-        #
-        #
-        # dx = self.target - x
-        #
-        # if np.linalg.norm(dx) < 0.1:
-        #     self.set_random_target()
-        #     dx = self.target - x
-        #
-        # v_ax = dx / np.linalg.norm(dx)
-        # angle = limit_angle(self.angle_target - theta)
-        #
-        #
-        #
-        # #Define turn angle
-        # w_tar = self.p_angle*angle
-        # dot_w_tar = w_tar - w_real
-        # if np.abs(dot_w_tar) > self.max_dot_w:
-        #     w_tar = w_real +  self.max_dot_w * np.sign(dot_w_tar)
-        # if np.abs(w_tar) > self.max_w:
-        #     w_tar = self.max_w * np.sign(w_tar)
-        #
-        #
-        #
-        # # Slow down to halt to turn
-        # if np.abs(angle) > 0.1:
-        #     v_tar = 0
-        # else:
-        #     v_tar = self.max_v
-        #    # Move towards target.
-        # v_tar = np.linalg.norm(dx)
-        # v_dot_tar = self.p_pos * (v_tar - v_norm)
-        #
-        # if np.abs(v_dot_tar) > self.max_dot_v:
-        #     v_dot_tar  =  self.max_dot_v * np.sign(v_dot_tar)
-        #
-        # v = v_real + v_ax * v_dot_tar
-        # if np.linalg.norm(v) > self.max_v:
-        #     v = self.max_v * v / np.linalg.norm(v)
-        # print(self.target, dx, w_tar, v_tar, v)
-        #
-        # self.agent.move(w_tar, v)
-
-        # Extract current and target positions and yaw
         if self.current_target_time >= self.target_time:
             self.set_random_target()
         self.current_target_time += 1/self.frequency
@@ -275,16 +230,18 @@ class Control3D(Control1D):
                                [0, 0, 1]])
         position_error1 = rot_matrix @ position_error
         position_error2 = self.p_pos * position_error1
+        # v_dot_vec =  self.speed_target - self.agent.v_slam
 
-        v_dot_vec = position_error2 - current_velocity
+        # v_dot_vec = position_error2 - current_velocity
+        v_dot_vec = self.speed_target - current_velocity
         v_dot_tar = np.linalg.norm(v_dot_vec)
-        if np.abs(v_dot_tar) > self.max_delta_v/self.frequency:
-            v_dot_tar = self.max_delta_v/self.frequency * np.sign(v_dot_tar)
-
-        try:
+        if np.abs(v_dot_tar) > self.max_delta_v:
+            v_dot_tar = self.max_delta_v * np.sign(v_dot_tar)
+        if v_dot_tar == 0:
+            v = current_velocity
+        else:
             v = current_velocity + v_dot_vec * v_dot_tar/np.linalg.norm(v_dot_vec)
-        except RuntimeWarning:
-            v = current_velocity + v_dot_vec * v_dot_tar
+
 
 
         # Compute yaw error (normalize to [-pi, pi])

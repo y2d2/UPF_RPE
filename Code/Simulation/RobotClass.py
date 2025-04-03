@@ -385,6 +385,8 @@ class NewRobot:
         for i in range(3):
             ax[i,0].plot(time, self.x_real[:, i], color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
             ax[i,1].plot(time, self.v_slam_real[:, i], color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+            ax[i,0].set_ylabel("x" + str(i))
+            ax[i,1].set_ylabel("v" + str(i))
         ax[3,0].plot(time, self.h_real, color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
         ax[3,1].plot(time, self.w_slam_real,color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
         return ax
