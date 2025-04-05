@@ -195,10 +195,11 @@ class Control3D(Control1D):
         h = np.random.uniform(0, self.height)
         self.target = self.center + np.array([r * np.cos(phi)* np.cos(theta), r *  np.cos(phi) * np.sin(theta), r *  np.sin(phi)])
         self.angle_target = np.random.uniform(0, 2*np.pi)
-        speed_target_x = np.random.uniform(-self.max_v, self.max_v)
-        speed_target_y = np.random.uniform(-self.max_v, self.max_v)
-        speed_target_z = np.random.uniform(-self.max_v, self.max_v)
-        self.speed_target = np.array([speed_target_x, speed_target_y, speed_target_z])
+        self.speed_target = np.random.uniform([-self.max_v, -self.max_v, -self.max_v], [self.max_v, self.max_v, self.max_v])
+        # speed_target_x = np.random.uniform(-self.max_v, self.max_v)
+        # speed_target_y = np.random.uniform(-self.max_v, self.max_v)
+        # speed_target_z = np.random.uniform(-self.max_v, self.max_v)
+        # self.speed_target = np.array([speed_target_x, speed_target_y, speed_target_z])
         self.target_time = np.random.uniform(self.target_time_max/4, self.target_time_max)
 
     def set_control(self):
