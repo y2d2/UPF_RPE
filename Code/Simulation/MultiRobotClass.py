@@ -864,7 +864,10 @@ class TwoAgentSystem():
         parameters = {}
         for i in range(1, len(parsing_test_name)):
             parameter = parsing_test_name[i].split("=")
-            parameters[parameter[0]] = float(parameter[1])
+            try:
+                parameters[parameter[0]] = float(parameter[1])
+            except:
+                parameters[parameter[0]] = parameter[1]
         self.parameters = self.generate_general_parameters(parameters)
         eval("self.init_" + parsing_test_name[0] + "_test(self.parameters)")
 
