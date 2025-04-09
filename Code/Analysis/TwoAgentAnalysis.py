@@ -159,7 +159,12 @@ class TwoAgentAnalysis:
         if self.df is None:
             self.df = df
         else:
-            self.df = pd.concat([self.dfs, df])
+            self.df = pd.concat([self.df, df])
+
+    def load_df_list(self, list_of_df):
+        for df_file in list_of_df:
+            self.load_df(df_file)
+
 
     def reformat_data(self, data):
         # data["parameters"]["runs"] =[]
