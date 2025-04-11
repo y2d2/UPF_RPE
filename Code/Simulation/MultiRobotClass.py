@@ -622,6 +622,7 @@ class TwoAgentSystem():
             self.sigma_uwb) + "|s_dv=" + str(self.sigma_dv) + "|s_dw=" + str(self.sigma_dw)
         name = "c".join(name.split("."))
         name = "n".join(name.split("-"))
+        name = "_s_".join(name.split("/"))
         self.result_file = os.path.join(self.result_folder, name + ".pkl")
         if (not os.path.isfile(self.result_file) or redo_bool):
             self.data = {}
