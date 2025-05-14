@@ -652,7 +652,7 @@ class TwoAgentSystem():
 
 
 
-    @DeprecationWarning
+    # @DeprecationWarning
     def get_results_file(self):
         if self.result_file is None:
             # result_name = "number_of_agents_" + str(self.number_of_agents)
@@ -666,7 +666,7 @@ class TwoAgentSystem():
             self.result_name = result_name
             self.result_file = os.path.join(self.result_folder, result_name + ".pkl")
 
-    @DeprecationWarning
+    # @DeprecationWarning
     def get_data(self):
         if self.result_file is None:
             self.get_results_file()
@@ -688,7 +688,7 @@ class TwoAgentSystem():
                                            "alpha": self.alpha, "kappa": self.kappa, "beta": self.beta,
                                            "number_of_agents": self.number_of_agents}
 
-    @DeprecationWarning
+    # @DeprecationWarning
     def get_data_from_file(self, file):
         self.result_file = file
         self.get_data()

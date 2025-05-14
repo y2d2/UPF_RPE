@@ -148,3 +148,5 @@ dmypy.json
 /Results/
 /test_cases/RPE_2_agents_LOS/Experiments/trimmed_rosbags/
 /test_cases/RPE_2_agents_LOS/Experiments/corrections3/
+/fig/
+/test_cases/RPE_2_agents_LOS/Experiments/presentation/

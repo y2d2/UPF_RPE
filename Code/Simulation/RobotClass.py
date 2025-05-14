@@ -329,12 +329,16 @@ class NewRobot:
             if annotation is None:
                 ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2], label=self.label + " " + "real position",
                           color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
+                ax.stem([self.x_real[i, 0]], [self.x_real[i, 1]], [self.x_real[i, 2]],
+                        basefmt="k^", linefmt="k:", bottom=0)
             else:
                 ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],
                           color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha,
                           label=annotation + " " + "real position")
+                ax.stem([self.x_real[i, 0]], [self.x_real[i, 1]], [self.x_real[i, 2]],
+                        basefmt="k^", linefmt="k:", bottom=0)
         else:
-            ax.stem([self.x_real[0, 0]], [self.x_real[0, 1]], [self.x_real[0, 2]],
+            ax.stem([self.x_real[i, 0]], [self.x_real[i, 1]], [self.x_real[i, 2]],
                     basefmt="k^", linefmt="k:", bottom=0)
             ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],
                       color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)

@@ -430,7 +430,7 @@ class TwoAgentAnalysis:
 
 
         g = sns.catplot(data=df, kind='box', col=col_variable, row=row_variable, y='value', x=x_variable, hue='Name',
-                        dodge=True, aspect=0.65, palette=methods_color, hue_order=hue_order,
+                        dodge=True, aspect=0.65, palette=methods_color, hue_order=hue_order, height= 10,
                         legend=False, sharey=sharey)
         if x_order is None:
             x_order = ["" for _ in df[x_variable].unique()]
@@ -525,7 +525,7 @@ class TwoAgentAnalysis:
         plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
     def lineplot(self, df, methods_names, methods_colors =None, methods_styles=None, methods_legends=None, variables=["error_x_relative", "error_h_relative"]):
-        fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 3))
+        fig, axes = plt.subplots(1, len(variables),  figsize=(8 * len(variables), 8))
         for i, variable in enumerate(variables):
             var_df = df.loc[(df["Variable"] == variable)]
             method_means = []
@@ -551,20 +551,16 @@ class TwoAgentAnalysis:
             g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Name" ,linewidth=2.5, legend=False,
                           palette=methods_colors, hue_order=methods_names) # markers=True)
 
-
-            axes[i].set_xlabel("time [s]", fontsize=12)
+        return axes
+            # axes[i].set_xlabel("time [s]", fontsize=12)
             # axes[i].set_ylabel(self.y_label[variable], fontsize=12)
             # if variable == "error_x_relative":
                 # axes[i].set_yscale("log")
                 # axes[i].set_ylim([0., 7])
 
-        legend_handles = [Line2D([0], [0], color=methods_colors[method], linewidth=2.5) for method in methods_names]
-        legend_labels = [methods_legends[method] for method in methods_names]
-        # fig.suptitle("Average error evolution of the experiments")
-        fig.legend(handles=legend_handles, labels=legend_labels, ncol=3, fontsize=12, loc="upper center",
-                   bbox_to_anchor=(0.5, 0.92))
-        plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
-        return axes
+
+        # plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
+        # return axes
         # g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
         #                  palette=methods_color, hue_order=methods_order, linewidth=2.5, legend=False)
 

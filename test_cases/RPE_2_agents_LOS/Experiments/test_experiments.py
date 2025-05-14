@@ -50,15 +50,16 @@ class MyTestCase(unittest.TestCase):
         sig_uwb = 0.25
 
         # main_folder = "./"
-        results_folder = "Results/corr"
+        results_folder = "Results/test"
         data_folder = "corrections3/"
 
         experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
 
-        methods = ["losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+        methods = [
+                # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
-                   "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+                   # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                   # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
                    # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
                    # # "algebraic|frequency=1.0|horizon=10",
                    # "algebraic|frequency=1.0|horizon=10",
@@ -71,7 +72,7 @@ class MyTestCase(unittest.TestCase):
         tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
         tas.debug_bool = True
         tas.plot_bool = False
-        tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
+        tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data)
         plt.show()
         # return tas, measurements
 
@@ -593,23 +594,24 @@ class MyTestCase(unittest.TestCase):
                         #  # "algebraic|frequency=1.0|horizon=10",
                         #  # "algebraic|frequency=1.0|horizon=100",
                         #  "algebraic|frequency=10.0|horizon=100",
-                        #  # "QCQP|horizon=10",
-                        #  "QCQP|frequency=10.0|horizon=100",
+                        #  "QCQP|horizon=10",
                          # "QCQP|frequency=1.0|horizon=100",
                         #  "QCQP|frequency=10.0|horizon=1000",
                         # "NLS|frequency=1.0|horizon=10",
                         # "NLS|frequency=1.0|horizon=100",
             "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-            "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+            "QCQP|frequency=10.0|horizon=100",
 
-            "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-            "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+            # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+
+            # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+            # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
 
             "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
-            "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+            # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
 
             "NLS|frequency=1.0|horizon=10",
-            "NLS|frequency=0.1|horizon=1",
+            # "NLS|frequency=0.1|horizon=1",
 
         ]
 
@@ -626,7 +628,7 @@ class MyTestCase(unittest.TestCase):
                          # "algebraic|frequency=10.0|horizon=100": "tab:orange",
                          # "QCQP|horizon=10": "tab:purple",
                          # "QCQP|frequency=1.0|horizon=100": "tab:blue",
-                         # "QCQP|frequency=10.0|horizon=100": "tab:blue",
+                         "QCQP|frequency=10.0|horizon=100": "tab:blue",
                         "NLS|frequency=0.1|horizon=1": "thistle",
                         "NLS|frequency=1.0|horizon=10": "tab:purple",
                         # "NLS|frequency=1.0|horizon=10|perfect_guess=0": "tab:purple",
@@ -643,10 +645,10 @@ class MyTestCase(unittest.TestCase):
                           # "algebraic|frequency=1.0|horizon=10": "Algebraic 10s",
                           # "algebraic|frequency=1.0|horizon=100": "Algebraic",
                           # "algebraic|frequency=10.0|horizon=100": "Algebraic",
-                          # # "QCQP|horizon=10": "QCQP_10",
+                          # "QCQP|horizon=10": "QCQP_10",
                           # "QCQP|frequency=1.0|horizon=10": "QCQP",
                           # "QCQP|frequency=10.0|horizon=1000": "QCQP",
-                          # "QCQP|frequency=10.0|horizon=100": "QCQP",
+                          "QCQP|frequency=10.0|horizon=100": "QCQP",
                             "NLS|frequency=1.0|horizon=10": "NLS* 10Hz",
                             "NLS|frequency=0.1|horizon=1": "NLS* 1Hz",
                         # "NLS|frequency=1.0|horizon=10|perfect_guess=0": "NLS*",
@@ -668,6 +670,8 @@ class MyTestCase(unittest.TestCase):
 
         # taa.delete_data()
         taa.create_panda_dataframe()
+        sns.set_context("talk", font_scale=1.8)  # "talk" or "poster" context
+        sns.set_style("whitegrid")
         taa.time_analysis(sigma_uwbs=[0.15, 0.25], sigma_vs=[0.03, 0.08], frequencies = [0.1,1.0,10.0], start_time=0.,
                           methods_order=methods_order, methods_color=methods_color, methods_legend=methods_legend,
                           sigma_bound=False, save_fig=False)

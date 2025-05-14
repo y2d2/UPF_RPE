@@ -1,13 +1,15 @@
 import unittest
 import os
 import Code.Simulation.MultiRobotClass
-from Code.BaseLines import NLS, NLSDataLogger
+from Code.BaseLines import NLS
+from Code.DataLoggers.NLS_DataLogger import NLSDataLogger
 import numpy as np
 import pickle as pkl
 
-from Code.UtilityCode import Measurement
+from Code.UtilityCode.Measurement import Measurement, create_experiment, create_experimental_data
 
-from Code.Simulation import NewRobot
+
+from Code.Simulation.RobotClass import NewRobot
 import matplotlib
 
 from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
@@ -75,21 +77,27 @@ class MyTestCase(unittest.TestCase):
         return tas
 
     def test_run_LOS_exp(self):
-        sig_v = 0.15
-        sig_w = 0.05
+        sig_v = 0.08
+        sig_w = 0.08
         sig_uwb = 0.25
 
-        main_folder = "./exp1_unobservable_sampled.pkl" # seems to be oke trajectory for presentation purposes
+        main_folder = "./corrections3/exp1_los_sampled.pkl" # seems to be oke trajectory for presentation purposes
         # main_folder = "./exp1_sec2_los_sampled.pkl"
-        results_folder ="./Real_Exp_test/"
+        results_folder ="./Results/Movie"
         data_folder = main_folder
 
-        experiment_data, _ = self.create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
-        tas = self.create_experiment(results_folder, sig_v, sig_w, sig_uwb)
+        experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
+        tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
         tas.debug_bool= False
-        tas.set_save_results("./presentation")
+        # tas.set_save_results("./presentation")
+        tas.save_folder = "./presentation"
+        tas.save_bool = True
+        methods = [
+            "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+
+                ]
         # tas.run_experiment(methods=[ "NLS", "algebraic", "upf", "losupf", "nodriftupf"], redo_bool=False, experiment_data=experiment_data)
-        tas.run_experiment(methods=["losupf"], redo_bool=False, experiment_data=experiment_data)
+        tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data)
         plt.show()
         return tas
 
@@ -186,18 +194,26 @@ class MyTestCase(unittest.TestCase):
     def test_show_trajectory_estimations(self):
         from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
         plt.ion()
-        upf0: UPFConnectedAgent = pkl.load(open("presentation/exp3_sec1_los_sampled/drone_0_losupf.pkl", "rb"))
-        upf0_logger: UPFConnectedAgentDataLogger = upf0.upf_connected_agent_logger
+        upf0_logger: UPFConnectedAgentDataLogger = pkl.load(open("presentation/exp1_los_sampled/drone_0_losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0.pkl", "rb"))
+        upf1_logger: UPFConnectedAgentDataLogger = pkl.load(open("presentation/exp1_los_sampled/drone_1_losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0.pkl", "rb"))
+        upf1_logger.particle_logs[0]
+        # upf0_logger: UPFConnectedAgentDataLogger = upf0.upf_connected_agent_logger
         fig = plt.figure(figsize=(18, 10))
         ax = fig.add_subplot(111, projection="3d")
         plt.show()
-        for i in range(1, 40):
+        for i in range(1, 300):
             ax.cla()
             ax.set_xlim(-6, 3)
             ax.set_ylim(-1, 8)
             ax.set_zlim(-4, 4)
-            upf0_logger.plot_ca_active_particles(ax, i * 10, history=10)
-            upf0_logger.plot_host_agent_trajectory(ax, color="red", i=i * 10)
+            # upf0_logger.plot_poses(ax, color_ha="red", color_ca="blue", name_ha="Drone 0", name_ca="Drone 1")
+            upf0_logger.plot_ca_active_particles(ax, i, color="salmon", history=10)
+            upf0_logger.plot_host_agent_trajectory(ax, color="navy", i=i * 10)
+
+            upf1_logger.plot_ca_active_particles(ax, i, color="blue", history=10)
+            upf1_logger.plot_host_agent_trajectory(ax, color="red", i=i * 10)
+            # upf0_logger.plot_connected_agent_trajectories(ax, color="blue", i=i * 10)
+
             ax.set_title("time: :" + str(i) + "s")
             # fig.savefig('./presentation/Action/' + str(i) + '.png')
             plt.pause(0.05)
