@@ -290,7 +290,7 @@ class UKFDatalogger():
                 plt.savefig(self.save_folder + save_name)
 
     #TODO: What is difference between self.estimated_ca_position and self.ca_position_estimation?
-    def plot_ca_corrected_estimated_trajectory(self, ax, color="k", alpha=1, linestyle="--", marker="", label=None, i=-1, history=None):
+    def plot_ca_corrected_estimated_trajectory(self, ax, color="k", alpha=1, linestyle="-", marker="", label=None, i=-1, history=None):
         try:
             if history is None or history > i:
                 self.plot_trajectory(self.estimated_ca_position[:i,:], ax, color, alpha, linestyle, marker, label)
@@ -310,8 +310,11 @@ class UKFDatalogger():
                       marker=marker, alpha=alpha, linestyle=linestyle, label=label, color=color)
             # ax.stem(
             #     x, y, z, linefmt='grey', markerfmt='D', bottom=np.pi)
-            ax.stem([data[-1, 0]], [data[-1, 1]], [data[-1, 2]],
-                      basefmt="k^", linefmt="k:", bottom=0)
+            stems = ax.stem([data[-1, 0]], [data[-1, 1]], [data[-1, 2]],
+                      basefmt="^", linefmt=":", bottom=0)
+            stems.stemlines.set_color(color)
+            stems.baseline.set_color(color)
+            stems.markerline.set_color(color)
             ax.plot3D(data[-1, 0], data[-1, 1], data[-1, 2],
                       marker="x", alpha=alpha, color=color)
             ax.plot3D(data[0, 0], data[0, 1], data[0, 2],

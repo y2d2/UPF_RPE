@@ -330,13 +330,17 @@ class NewRobot:
                 ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2], label=self.label + " " + "real position",
                           color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
                 ax.stem([self.x_real[i, 0]], [self.x_real[i, 1]], [self.x_real[i, 2]],
-                        basefmt="k^", linefmt="k:", bottom=0)
+                        basefmt="k^", linefmt="k:", bottom=0,markerfmt= "")
             else:
                 ax.plot3D(self.x_real[j:i, 0], self.x_real[j:i, 1], self.x_real[j:i, 2],
                           color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha,
                           label=annotation + " " + "real position")
-                ax.stem([self.x_real[i, 0]], [self.x_real[i, 1]], [self.x_real[i, 2]],
-                        basefmt="k^", linefmt="k:", bottom=0)
+                stems = ax.stem([self.x_real[i, 0]], [self.x_real[i, 1]], [self.x_real[i, 2]],
+                        basefmt=f"^", linefmt=f":", bottom=0,markerfmt= "")
+                stems.stemlines.set_color(self.color)
+                stems.baseline.set_color(self.color)
+                stems.markerline.set_color(self.color)
+                # stems.stembase.set_color(self.color)
         else:
             ax.stem([self.x_real[i, 0]], [self.x_real[i, 1]], [self.x_real[i, 2]],
                     basefmt="k^", linefmt="k:", bottom=0)

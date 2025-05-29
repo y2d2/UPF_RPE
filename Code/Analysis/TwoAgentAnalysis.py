@@ -430,12 +430,12 @@ class TwoAgentAnalysis:
 
 
         g = sns.catplot(data=df, kind='box', col=col_variable, row=row_variable, y='value', x=x_variable, hue='Name',
-                        dodge=True, aspect=0.65, palette=methods_color, hue_order=hue_order, height= 10,
+                        dodge=True, aspect=1.33, palette=methods_color, hue_order=hue_order, height= 8,
                         legend=False, sharey=sharey)
         if x_order is None:
             x_order = ["" for _ in df[x_variable].unique()]
         self.remove_x_ticks(g, x_order)
-        self.set_legend(g, hue_order, methods_legend)
+        # self.set_legend(g, hue_order, methods_legend)
         return g
 
 
@@ -525,7 +525,7 @@ class TwoAgentAnalysis:
         plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 
     def lineplot(self, df, methods_names, methods_colors =None, methods_styles=None, methods_legends=None, variables=["error_x_relative", "error_h_relative"]):
-        fig, axes = plt.subplots(1, len(variables),  figsize=(8 * len(variables), 8))
+        fig, axes = plt.subplots(1, len(variables),  figsize=(12* len(variables), 8))
         for i, variable in enumerate(variables):
             var_df = df.loc[(df["Variable"] == variable)]
             method_means = []
@@ -546,7 +546,10 @@ class TwoAgentAnalysis:
                 avg_time_df[method_mean["Method"]] = method_mean["TimeValues"]
             avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Name", value_name="MeanValue")
 
-            plt.sca(axes[i])
+            try:
+                plt.sca(axes[i])
+            except:
+                pass
             # use custom linestyle: methods_styles in the sns.lineplot:
             g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Name" ,linewidth=2.5, legend=False,
                           palette=methods_colors, hue_order=methods_names) # markers=True)

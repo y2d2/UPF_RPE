@@ -3,8 +3,12 @@ import os
 import Code.Simulation.MultiRobotClass
 from Code.BaseLines import NLS
 from Code.DataLoggers.NLS_DataLogger import NLSDataLogger
+from Code.DataLoggers.QCQP_DataLogger import QCQP_Log
+from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
+from Code.DataLoggers.TargetTrackingUKF_DataLogger import UKFDatalogger
 import numpy as np
 import pickle as pkl
+from PIL import Image
 
 from Code.UtilityCode.Measurement import Measurement, create_experiment, create_experimental_data
 
@@ -77,11 +81,12 @@ class MyTestCase(unittest.TestCase):
         return tas
 
     def test_run_LOS_exp(self):
-        sig_v = 0.08
-        sig_w = 0.08
-        sig_uwb = 0.25
+        sig_v = 0.15
+        sig_w = 0.06
+        sig_uwb = 0.3
 
-        main_folder = "./corrections3/exp1_los_sampled.pkl" # seems to be oke trajectory for presentation purposes
+        main_folder = "./corrections3" # seems to be oke trajectory for presentation purposes
+        # main_folder = "./Experiments/Unob_exp/Measurements/exp2_unobservable_sampled.pkl" # seems to be oke trajectory for presentation purposes
         # main_folder = "./exp1_sec2_los_sampled.pkl"
         results_folder ="./Results/Movie"
         data_folder = main_folder
@@ -93,11 +98,14 @@ class MyTestCase(unittest.TestCase):
         tas.save_folder = "./presentation"
         tas.save_bool = True
         methods = [
-            "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
-
-                ]
+            "nodriftupf|frequency=10.0|resample_factor=0.5|sigma_uwb_factor=1.0",
+            "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+            # "NLS|frequency=1.0|horizon=10",
+            # "QCQP|frequency=1.0|horizon=20",
+            # "nodriftupf|frequency=1.0|resample_factor=0.5|sigma_uwb_factor=1.0",
+        ]
         # tas.run_experiment(methods=[ "NLS", "algebraic", "upf", "losupf", "nodriftupf"], redo_bool=False, experiment_data=experiment_data)
-        tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data)
+        tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
         plt.show()
         return tas
 
@@ -191,12 +199,52 @@ class MyTestCase(unittest.TestCase):
 
         plt.show()
 
-    def test_show_trajectory_estimations(self):
-        from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
+    def test_show_unob_uncertainty1(self):
         plt.ion()
-        upf0_logger: UPFConnectedAgentDataLogger = pkl.load(open("presentation/exp1_los_sampled/drone_0_losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0.pkl", "rb"))
-        upf1_logger: UPFConnectedAgentDataLogger = pkl.load(open("presentation/exp1_los_sampled/drone_1_losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0.pkl", "rb"))
-        upf1_logger.particle_logs[0]
+        folder = "presentation/exp2_unobservable_sampled/"
+
+        upf0_logger: UPFConnectedAgentDataLogger = pkl.load(
+            open(folder + "drone_0_losupf|frequency=1.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        upf1_logger: UPFConnectedAgentDataLogger = pkl.load(
+            open(folder + "drone_1_losupf|frequency=1.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+
+        log_0 : UKFDatalogger = upf0_logger.get_best_particle_log()
+        log_1 : UKFDatalogger = upf1_logger.get_best_particle_log()
+
+        fig = plt.figure()
+        plt.show()
+
+
+        for i in range(1, 60):
+            plt.cla()
+            plt.xlim([0,60])
+            plt.ylim([0,0.8])
+            plt.plot(log_0.stds[:i, 1], color='red', alpha=1, linestyle="-",
+                     label="Estimation of agent 1", linewidth=3)
+            plt.plot(log_1.stds[:i, 1], color='dodgerblue', alpha=1, linestyle="-",
+                     label="Estimation of agent 0", linewidth=3)
+            plt.xlabel("Time [s]", fontsize=12)
+            plt.ylabel(r"Azimuth standard deviation [rad]", fontsize=12)
+            plt.title("Uncertainty on azimuth estimation for 1 particle", fontsize=12)
+            # plt.legend(fontsize=12)
+            fig.savefig(folder+"/movie/est" + str(i) + '.png')
+
+            plt.pause(0.05)
+
+
+
+    def test_show_trajectory_estimations(self):
+
+        plt.ion()
+        folder = "presentation/exp4_los_sampled/"
+
+        upf0_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_0_losupf|frequency=1.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        upf1_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_1_losupf|frequency=1.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        upf0_10_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_0_losupf|frequency=10.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        upf1_10_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_1_losupf|frequency=10.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        # nod_upf1_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_1_nodriftupf|frequency=1.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        # qcqp_logger : QCQP_Log  = pkl.load(open(folder + "drone_1_QCQP|frequency=1.0|horizon=20.pkl", "rb"))
+
         # upf0_logger: UPFConnectedAgentDataLogger = upf0.upf_connected_agent_logger
         fig = plt.figure(figsize=(18, 10))
         ax = fig.add_subplot(111, projection="3d")
@@ -206,31 +254,46 @@ class MyTestCase(unittest.TestCase):
             ax.set_xlim(-6, 3)
             ax.set_ylim(-1, 8)
             ax.set_zlim(-4, 4)
-            # upf0_logger.plot_poses(ax, color_ha="red", color_ca="blue", name_ha="Drone 0", name_ca="Drone 1")
-            upf0_logger.plot_ca_active_particles(ax, i, color="salmon", history=10)
-            upf0_logger.plot_host_agent_trajectory(ax, color="navy", i=i * 10)
+            upf0_logger.plot_ca_active_particles(ax, i, color="red", history=10)
+            upf0_logger.plot_host_agent_trajectory(ax, color="navy", i=i * 10, history=100)
+            upf0_10_logger.plot_ca_active_particles(ax, i=i*10, color="orange", history=100)
 
-            upf1_logger.plot_ca_active_particles(ax, i, color="blue", history=10)
-            upf1_logger.plot_host_agent_trajectory(ax, color="red", i=i * 10)
+
+            upf1_logger.plot_ca_active_particles(ax, i, color="green", history=10)
+            upf1_10_logger.plot_ca_active_particles(ax, i*10, color="cornflowerblue", history=100)
+            # nod_upf1_logger.plot_ca_active_particles(ax, i, color="orange", history=10)
+            upf1_logger.plot_host_agent_trajectory(ax, color="darkred", i=i * 10, history=100)
+
+            # qcqp_logger.plot_corrected_estimated_trajectory(ax, i=i, color = "tab:blue", history=10)
             # upf0_logger.plot_connected_agent_trajectories(ax, color="blue", i=i * 10)
 
             ax.set_title("time: :" + str(i) + "s")
-            # fig.savefig('./presentation/Action/' + str(i) + '.png')
+            # fig.savefig(folder+"/movie/" + str(i) + '.png')
             plt.pause(0.05)
+
+    def resize_image_if_needed(self,image_path, target_size):
+        with Image.open(image_path) as img:
+            if img.size != target_size:
+                print(f"Resizing {image_path} from {img.size} to {target_size}")
+                img = img.resize(target_size, Image.Resampling.LANCZOS)
+                img.save(image_path)
 
     def test_create_movie(self):
         import moviepy.video.io.ImageSequenceClip
-        image_folder = './presentation/Action/'
-        fps = 1
-
+        image_folder = "presentation/exp2_unobservable_sampled/movie"
+        fps = 10
+        # target_size = (640, 480)
+        target_size = (1800, 1000)
         # image_files = [os.path.join(image_folder, img)
         #                for img in os.listdir(image_folder)
         #                if img.endswith(".png")]
         image_files = []
-        for i in range(1,29):
-            image_files.append(os.path.join(image_folder, str(i)+".png"))
+        for i in range(1,60):
+            image_path = os.path.join(image_folder, str(i)+".png")
+            self.resize_image_if_needed(image_path, target_size)
+            image_files.append(image_path)
         clip = moviepy.video.io.ImageSequenceClip.ImageSequenceClip(image_files, fps=fps)
-        clip.write_videofile('my_video.mp4')
+        clip.write_videofile('Unob.mp4')
 
 if __name__ == '__main__':
     pass

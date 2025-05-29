@@ -70,16 +70,16 @@ class QCQP_Log:
         ax[1].grid(True)
 
 
-    def plot_corrected_estimated_trajectory(self, ax, color="k", alpha=1, linestyle="--", marker="", label=None,
+    def plot_corrected_estimated_trajectory(self, ax, color="k", alpha=1, linestyle="-", marker="", label=None,
                                             i=-1, history=None):
         try:
             if history is None or history > i:
-                self.plot_trajectory(self.estimated_ca_position, ax, color, alpha, linestyle, marker, label)
+                self.plot_trajectory(self.estimated_ca_position[:i, :], ax, color, alpha, linestyle, marker, label)
             else:
                 j = i - history
-                if j < 1:
-                    j = 1
-                self.plot_trajectory(self.estimated_ca_position, ax, color, alpha, linestyle, marker, label)
+                if j < 0:
+                    j = 0
+                self.plot_trajectory(self.estimated_ca_position[j:i, :], ax, color, alpha, linestyle, marker, label)
         except IndexError:
             print("index error")
 
@@ -88,6 +88,11 @@ class QCQP_Log:
         if self.data_logged:
             ax.plot3D(data[:, 0], data[:, 1], data[:, 2],
                       marker=marker, alpha=alpha, linestyle=linestyle, label=label, color=color)
+            stems = ax.stem([data[-1, 0]], [data[-1, 1]], [data[-1, 2]],
+                            basefmt="^", linefmt=":", bottom=0)
+            stems.stemlines.set_color(color)
+            stems.baseline.set_color(color)
+            stems.markerline.set_color(color)
             ax.plot3D(data[0, 0], data[0, 1], data[0, 2],
                       marker="o", alpha=alpha, color=color)
             ax.plot3D(data[-1, 0], data[-1, 1], data[-1, 2],

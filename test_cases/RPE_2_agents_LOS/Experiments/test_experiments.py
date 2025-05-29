@@ -607,10 +607,10 @@ class MyTestCase(unittest.TestCase):
             # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
             # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
 
-            "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+            # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
             # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
 
-            "NLS|frequency=1.0|horizon=10",
+            # "NLS|frequency=1.0|horizon=10",
             # "NLS|frequency=0.1|horizon=1",
 
         ]
@@ -846,7 +846,7 @@ class MyTestCase(unittest.TestCase):
         sig_uwb = 0.3
 
         main_folder = "./Experiments/Unob_exp/Measurements/"
-        results_folder = main_folder + "Results/"
+        results_folder = main_folder + "Results_2/"
         data_folder = main_folder + "Measurements/"
         data_folder = main_folder + "exp2_unobservable_sampled.pkl"
         print(data_folder)
