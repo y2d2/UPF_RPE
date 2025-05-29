@@ -8,8 +8,7 @@ Additionally, the repository also provides  measurement and simulation data as w
 The [Quick_start.ipynb](Quick_start.ipynb) provides a quick start guide to usage of the UPF, NLS QCPQ and algebraic method implemented in this repository. 
 The [Graphs.ipynb](Graphs.ipynb)Graphs.ipynb file provides an in-depth analysis that was used for the paper.
 ## Paper 
-The paper is currently under revision. 
-
+The paper: [Where are you?](https://ieeexplore.ieee.org/abstract/document/10750234?casa_token=nZKWozOlKE4AAAAA:B15ASmZJLmgrk9cPuf6RSqETXNaZdmAowfBAx6I0crgVE3Xy7lHah57oGZ2tCpxX33oaTMg7le3vmw)
 
 ## Current known issues
 - The graphs of quick_start.ipynb have to be uniformized, and a final analysis as well as example of ros implementation have to be added. 
