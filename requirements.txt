@@ -21,7 +21,7 @@ cmeel==0.53.3
 comm==0.2.2
 contourpy==1.2.0
 cycler==0.12.1
-cyipopt==1.4.1
+#cyipopt==1.4.1
 debugpy==1.8.5
 decorator==5.1.1
 defusedxml==0.7.1

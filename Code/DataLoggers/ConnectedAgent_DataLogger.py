@@ -31,7 +31,7 @@ class UPFConnectedAgentDataLogger:
         # Timing variables:
         self.calulation_time = []
 
-    def find_particle_log(self, particle) -> TargetTrackingParticle_DataLogger:
+    def find_particle_log(self, particle):
         for particle_log in self.particle_logs:
             if particle_log.particle == particle:
                 return particle_log
@@ -39,7 +39,7 @@ class UPFConnectedAgentDataLogger:
         # self.add_particle(particle)
         # return self.particle_logs[-1]
 
-    def get_best_particle_log(self) -> TargetTrackingParticle_DataLogger:
+    def get_best_particle_log(self) :
         return self.find_particle_log(self.upf_connected_agent.best_particle)
 
     def add_particle(self, particle):
@@ -65,10 +65,10 @@ class UPFConnectedAgentDataLogger:
             self.i = self.upf_connected_agent.time_i
         self.log_ha_data()
         for particle in self.upf_connected_agent.particles:
-            particle_log: TargetTrackingParticle_DataLogger | None = self.find_particle_log(particle)
+            particle_log = self.find_particle_log(particle)
             if particle_log is None:
-                self.add_particle(particle)
-        for particle_log in self.particle_logs:
+                particle_log=self.add_particle(particle)
+        # for particle_log in self.particle_logs:
             particle_log.log_data(i)
 
         if not self.keep_all_particles_bool:
@@ -265,8 +265,9 @@ class UPFConnectedAgentDataLogger:
         active_particles = []
         for par_log in self.particle_logs:
             if par_log.i > i:
+                print("Particle log i: ", par_log.i, " i: ", i)
                 # active_particles.append(par_log)
-                par_log.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i =i, history=history)
+                par_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i =i, history=history)
                 # par_log.datalogger.plot_ca_estimated_trajectory(ax, color="b", alpha=0.3, label=None, i = int(i/10)+1)
         # self.plot_connected_agent_trajectory(ax, i = i)
 

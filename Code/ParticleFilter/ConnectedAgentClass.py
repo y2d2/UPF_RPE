@@ -749,6 +749,7 @@ class UPFConnectedAgentDataLogger:
         active_particles = []
         for par_log in self.particle_logs:
             if par_log.i > i:
+                pass
                 # active_particles.append(par_log)
                 par_log.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i=i,
                                                                history=history)
