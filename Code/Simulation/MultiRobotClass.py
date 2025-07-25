@@ -555,6 +555,7 @@ class TwoAgentSystem():
         self.type = ""
         self.prefix = ""
 
+        self.D2_bool = False # If true the z component of the IO input is set to 0.
         # QCQP and Algebraic parameters:
         self.horizon = 100
 
@@ -779,7 +780,11 @@ class TwoAgentSystem():
             if i % self.factor == 0:
                 dx_0, q_0 = drone0.reset_integration()
                 dx_1, q_1 = drone1.reset_integration()
-
+                if self.D2_bool:
+                    dx_0[2] = 0
+                    dx_1[2] = 0
+                    q_1[2,2] = 0
+                    q_1[2,2] = 0
                 uwb_measurement = distances[i]
                 self.los_state.append(int(self.experiment_data["los_state"][i]))
                 self.uwb_error.append(self.experiment_data["uwb_error"][i])
@@ -860,7 +865,7 @@ class TwoAgentSystem():
         return parameters
 
     def parse_test_name(self, test_name):
-        self.test_name = test_name
+
         parsing_test_name = test_name.split("|")
         parameters = {}
         for i in range(1, len(parsing_test_name)):
@@ -869,6 +874,10 @@ class TwoAgentSystem():
                 parameters[parameter[0]] = float(parameter[1])
             except:
                 parameters[parameter[0]] = parameter[1]
+        if "/" in test_name:
+            test_name = test_name.replace("/", "")
+        self.test_name = test_name
+
         self.parameters = self.generate_general_parameters(parameters)
         eval("self.init_" + parsing_test_name[0] + "_test(self.parameters)")
 

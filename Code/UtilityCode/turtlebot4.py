@@ -381,6 +381,12 @@ class Turtlebot4:
         t, p, o, v, w = self.get_measuremend(data)
         self.vio_frame.get_full_measurement(t, p, o, v, w)
 
+    def update_odom(self, data):
+        t, p, o, v, w = self.get_measuremend(data)
+        self.vio_frame.get_full_measurement(t, p, o, v, w)
+
+        # print(data)
+
     def update_vicon(self, data, t=0.):
         t = t / 1e9
         try:

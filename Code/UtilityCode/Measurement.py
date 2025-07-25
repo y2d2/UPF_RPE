@@ -142,6 +142,8 @@ class Measurement:
                         self.tb2.update_specVIO(data)
                     if VIO_source == "orb":
                         self.tb2.update_orb(data)
+                    if VIO_source == "odom":
+                        self.tb2.update_odom(data)
 
                 if self.tb3_odom_topic == connection.topic:
                     data = typestore.deserialize_cdr(rawdata, connection.msgtype)
@@ -149,6 +151,8 @@ class Measurement:
                         self.tb3.update_specVIO(data)
                     if VIO_source == "orb":
                         self.tb3.update_orb(data)
+                    if VIO_source == "odom":
+                        self.tb3.update_odom(data)
 
                 if self.tb3_topic == connection.topic:
                     data = typestore.deserialize_cdr(rawdata, connection.msgtype)

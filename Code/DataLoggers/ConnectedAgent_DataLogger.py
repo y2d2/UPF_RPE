@@ -265,11 +265,11 @@ class UPFConnectedAgentDataLogger:
         active_particles = []
         for par_log in self.particle_logs:
             if par_log.i > i:
-                print("Particle log i: ", par_log.i, " i: ", i)
-                # active_particles.append(par_log)
-                par_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i =i, history=history)
-                # par_log.datalogger.plot_ca_estimated_trajectory(ax, color="b", alpha=0.3, label=None, i = int(i/10)+1)
-        # self.plot_connected_agent_trajectory(ax, i = i)
+                pass
+                # par_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i =i, history=history)
 
+        par_log = self.get_best_particle_log()
+        par_log.rpea_datalogger.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=1, label=None, i=i,
+                                                                       history=history)
 
         # fig = plt.figure(figsize=(18, 10), projection="3d")
