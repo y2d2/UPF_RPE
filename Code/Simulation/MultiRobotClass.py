@@ -783,8 +783,8 @@ class TwoAgentSystem():
                 if self.D2_bool:
                     dx_0[2] = 0
                     dx_1[2] = 0
-                    q_1[2,2] = 0
-                    q_1[2,2] = 0
+                    q_1[2,2] = 1e-8
+                    q_1[2,2] = 1e-8
                 uwb_measurement = distances[i]
                 self.los_state.append(int(self.experiment_data["los_state"][i]))
                 self.uwb_error.append(self.experiment_data["uwb_error"][i])
