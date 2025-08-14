@@ -637,5 +637,78 @@ class MyTestCase(unittest.TestCase):
             axs.grid()
         plt.show()
         return tb2, tb3
+
+    def test_plot_test_data(self):
+        fig, ax = plt.subplots(5, 10, figsize=(10,15), sharey='row')
+        folder = "./new_env/"
+        models = [ "spec_vio_2_min_nlos_sampled",
+                    "spec_vio_1_min_onoff_nlos_3_sampled",
+                    "spec_vio_1_min_nlos_new_sampled",
+                     "spec_vio_1_min_onoff_nlos_1_sampled",
+                     "spec_vio_1_min_onoff_nlos_1_2_sampled",
+                    "spec_vio_1_min_onoff_nlos_1_3_sampled",
+
+                    "spec_vio_1_min_onoff_nlos_1_1_sampled",
+                    "spec_vio_1_min_nlos_sampled",
+                    "spec_vio_1_min_onoff_nlos_2_sampled",
+            "spec_vio_1_min_onoff_nlos_sampled",]
+        # models = ["exp3_sampled", "exp4_sampled",
+        #                       "exp_7_13_1_sampled", "exp_7_13_6_sampled_cor_sampled"]
+        models = ["exp_7_13_1_sampled", "exp_7_13_2_sampled", "exp_7_13_3_sampled",
+                  "exp_7_13_5_sampled", "exp_7_13_6_sampled"]
+        fig, ax = plt.subplots(5, len(models), figsize=(10, 15), sharey='row')
+        for i, name in enumerate(models):
+            ax[-1, i].set_xlabel("Time [s]")
+            ax[0, i].set_title("Exp "+str(i+1))
+
+
+            # sampled_pkl = "../../../Data/Measurements/exp"+str(i)+"_los_sampled.pkl"
+            # sampled_pkl = "../../../Data/Measurements/exp" + str(i) + "_los_sampled.pkl"
+            sampled_pkl =folder + name + ".pkl"
+            measurement = Measurement()
+            measurement.load_sampled_data(sampled_pkl)
+            # measurement.uwb.outlier_rejection(10, 0.01)
+            measurement.get_uwb_distances()
+            measurement.uwb.plot_real( ax=ax[-1, i ])
+
+            sample_freq=measurement.sample_frequency
+
+
+            sig_v = 0.1
+            sig_w = 0.1
+            sig_uwb = 0.2
+            sig_d = sig_v / sample_freq
+            sig_phi = sig_w / sample_freq
+            Q_vio = np.diag([sig_d ** 2, sig_d ** 2, sig_d ** 2, sig_phi ** 2])
+
+            DT_vio_tb2 = measurement.tb2.vio_frame.get_relative_motion_in_T()
+            DT_vio_tb3 = measurement.tb3.vio_frame.get_relative_motion_in_T()
+            T_vicon_tb2 = measurement.tb2.vicon_frame.sampled_T
+            T_vicon_tb3 = measurement.tb3.vicon_frame.sampled_T
+
+            tb2 = NewRobot()
+            tb2.from_experimental_data(T_vicon_tb2, DT_vio_tb2, Q_vio, sample_freq)
+            tb3 = NewRobot()
+            tb3.from_experimental_data(T_vicon_tb3, DT_vio_tb3, Q_vio, sample_freq)
+
+            tb3.plot_slam_error(ax=ax[:-1, i], annotation="TB1", color="blue")
+            tb2.plot_slam_error(ax=ax[:-1, i], annotation="TB2", color="red")
+
+        ax[-1, 0].set_ylabel(r"UWB error [m]")
+        ax[0, 0].set_ylabel(r"VIO drift error x [m]")
+        ax[1, 0].set_ylabel(r"VIO drift error y [m]")
+        ax[2, 0].set_ylabel(r"VIO drift error z [m]")
+        ax[3, 0].set_ylabel(r"VIO drift error $\theta$ [(rad)]")
+        #Create custom legend with TB1 and TB2 and UWB in red blue and purple:
+        handles = [plt.Line2D([0], [0], color='blue', lw=2, label='Robot 1'),
+                     plt.Line2D([0], [0], color='red', lw=2, label='Robot 2'),
+                     plt.Line2D([0], [0], color='purple', lw=2, label='UWB')]
+        # Manually adjust subplots to make space for legend
+        fig.subplots_adjust(top=0.92)
+        fig.legend(handles=handles, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 0.96))
+        plt.suptitle("Experimental data for the experiments in the new environments.", fontsize=16)
+
+        # plt.tight_layout()
+        plt.show()
 if __name__ == '__main__':
     unittest.main()
