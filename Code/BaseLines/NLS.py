@@ -171,7 +171,7 @@ class NLS:
             for i in range(self.m):
                 for k in range(self.m - i - 1):
                     j = i + k + 1
-                    distance = np.linalg.norm(x[s, i] - x[s, j])
+                    distance = np.linalg.norm(x[s, i,:3] - x[s, j,:3])
                     error = mahalanobis(np.array([self.d[s, i, j]]), np.array([distance]), self.vi_uwb)
                     res.append(error)
         # return res

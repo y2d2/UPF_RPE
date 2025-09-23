@@ -236,12 +236,12 @@ class MyTestCase(unittest.TestCase):
     def test_show_trajectory_estimations(self):
 
         plt.ion()
-        folder = "presentation/exp4_los_sampled/"
+        folder = "presentation/exp5_los_sampled/"
 
-        upf0_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_0_losupf|frequency=1.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
-        upf1_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_1_losupf|frequency=1.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
-        upf0_10_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_0_losupf|frequency=10.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
-        upf1_10_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_1_losupf|frequency=10.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        upf0_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_0_losupf|frequency=10.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        upf1_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_1_losupf|frequency=10.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        # upf0_10_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_0_losupf|frequency=10.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
+        # upf1_10_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_1_losupf|frequency=10.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
         # nod_upf1_logger: UPFConnectedAgentDataLogger = pkl.load(open(folder +"drone_1_nodriftupf|frequency=1.0|resample_factor=0.5|sigma_uwb_factor=1.0.pkl", "rb"))
         # qcqp_logger : QCQP_Log  = pkl.load(open(folder + "drone_1_QCQP|frequency=1.0|horizon=20.pkl", "rb"))
 
@@ -256,11 +256,11 @@ class MyTestCase(unittest.TestCase):
             ax.set_zlim(-4, 4)
             upf0_logger.plot_ca_active_particles(ax, i, color="red", history=10)
             upf0_logger.plot_host_agent_trajectory(ax, color="navy", i=i * 10, history=100)
-            upf0_10_logger.plot_ca_active_particles(ax, i=i*10, color="orange", history=100)
+            # upf0_10_logger.plot_ca_active_particles(ax, i=i*10, color="orange", history=100)
 
 
-            upf1_logger.plot_ca_active_particles(ax, i, color="green", history=10)
-            upf1_10_logger.plot_ca_active_particles(ax, i*10, color="cornflowerblue", history=100)
+            upf1_logger.plot_ca_active_particles(ax, i, color="cornflowerblue", history=10)
+            # upf1_10_logger.plot_ca_active_particles(ax, i*10, color="cornflowerblue", history=100)
             # nod_upf1_logger.plot_ca_active_particles(ax, i, color="orange", history=10)
             upf1_logger.plot_host_agent_trajectory(ax, color="darkred", i=i * 10, history=100)
 

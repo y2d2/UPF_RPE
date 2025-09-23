@@ -2,6 +2,8 @@ import os
 
 import rosbags.rosbag2 as rb2
 import unittest
+
+from IPython.core.pylabtools import figsize
 from rosbags.serde import deserialize_cdr
 
 import Code.Simulation.MultiRobotClass as MRC
@@ -34,16 +36,17 @@ class MyTestCase(unittest.TestCase):
 
     def set_test_case(self):
         self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/experiments/"
-        self.rosbag = self.exp_folder+"exp4"
+        self.exp_folder = "/home/yuri/Documents/PhD/ROS_WS/sharedDrive/Exp_guillaume/"
+        self.rosbag = self.exp_folder+"odom_test_simu"
         self.name = self.rosbag.split("/")[-1]
-        self.sampled_pkl = "LOS_exp1_sampled.pkl"
+        self.sampled_pkl = "odom_test_simu.pkl"
 
         self.measurment_folder = "Experiments/Measurements/Unob_exp"
 
         self.uwb_topic = "/yd_uwb/dev_0x7603_0x683a"
-        self.tb2_topic = "/vicon/tb2/tb2"
+        self.tb2_topic = "/a200_0957/ground_truth_pose"
         self.tb3_topic = "/vicon/tb3/tb3"
-        self.tb2_odom_topic = "/tb2/odom"
+        self.tb2_odom_topic = "/a200_0957/platform/odom"
         self.tb3_odom_topic = "/tb3/odom"
         self.tb2 = Turtlebot4("tb2")
         self.tb3 = Turtlebot4("tb3")
@@ -171,9 +174,12 @@ class MyTestCase(unittest.TestCase):
 
     def test_read_bag(self):
         self.set_test_case()
-        self.rosbag = "exp1"
+        # self.rosbag = "exp1"
         measurement = Measurement(self.rosbag)
-        measurement.read_bag()
+        measurement.save_folder ="./Guilaume_exp/"
+        measurement.tb2_topic = "/a200_0957/ground_truth_pose"
+        measurement.tb2_odom_topic = "/a200_0957/platform/odom"
+        measurement.read_bag(VIO_source ="odom")
         measurement.save_raw_data()
         print(len(measurement.tb3.vio_frame.t))
         print(len(measurement.tb2.vio_frame.t))
@@ -181,9 +187,29 @@ class MyTestCase(unittest.TestCase):
         print(len(measurement.tb2.vicon_frame.t))
         print(len(measurement.uwb.t))
         plt.figure()
-        measurement.tb3.plot_trajectory(plt)
+        # measurement.tb3.plot_trajectory(plt)
         measurement.tb2.plot_trajectory(plt)
         plt.show()
+
+    def test_create_tb3_measurments_for_fixed(self):
+        pikle_file = "./Guilaume_exp/odom_test_simu_raw.pkl"
+        measurement = Measurement()
+        measurement.load_raw_data(pikle_file)
+        for i, t in enumerate(measurement.tb2.vicon_frame.t):
+            measurement.tb3.vicon_frame.get_full_measurement(t, np.array([0,0,0]), np.array([1,0,0,0]))
+            d = np.linalg.norm(measurement.tb2.vicon_frame.p[i])
+            measurement.uwb.get_measurment(t, d)
+        for i, t in enumerate(measurement.tb2.vio_frame.t):
+            measurement.tb3.vio_frame.get_full_measurement(t, np.array([0,0,0]), np.array([1,0,0,0]))
+
+        measurement.save_folder="./Guilaume_exp"
+        measurement.name = "odom_test_simu_aug"
+        # measurement.save_raw_data()
+        # plt.figure()
+        # measurement.tb3.plot_trajectory(plt)
+        # measurement.tb2.plot_trajectory(plt)
+        # measurement.uwb.plot()
+        # plt.show()
 
     def test_read_raw_data_pkl(self):
         self.set_test_case()
@@ -209,21 +235,30 @@ class MyTestCase(unittest.TestCase):
             measurement.save_sampled_data()
 
     def test_raw_data(self):
-        pickle_file = "./trimmed_rosbags/exp1_raw.pkl"
+        pickle_file = "./Guilaume_exp/Guilaume_expodom_test_simu_aug_raw.pkl"
         measurement = Measurement()
-        measurement.save_folder ="./trimmed_rosbags/"
+        measurement.save_folder = "./Guilaume_exp/"
+        measurement.name ="test_simu_aug"
+        # measurement.save_folder ="./trimmed_rosbags/"
         measurement.load_raw_data(pickle_file)
         measurement.sample(10)
+        # measurement.tb2.sample(10)
         measurement.plot_sampled()
         measurement.print_sampled_lengths()
-        measurement.get_VIO_error(plot=True)
+        # measurement.get_VIO_error(plot=True)
         # measurement.tb2.plot_vio_error()
         # measurement.tb3.plot_vio_error()
-        measurement.get_uwb_distances()
-        measurement.uwb.plot_real()
-        measurement.uwb.plot_indices()
+        # measurement.get_uwb_distances()
+        # measurement.uwb.plot_real()
+        # measurement.uwb.plot_indices()
+        # measurement.save_sampled_data()
+        plt.figure()
+        measurement.tb3.plot_trajectory(plt)
+        measurement.tb2.plot_trajectory(plt)
+        plt.legend()
+        measurement.uwb.plot()
         plt.show()
-        return measurement
+        # return measurement
 
 
 
@@ -520,7 +555,6 @@ class MyTestCase(unittest.TestCase):
 
         plt.show()
 
-
     def test_set_vio_correction(self):
         self.set_test_case()
         for i in range(1, 6):
@@ -536,46 +570,124 @@ class MyTestCase(unittest.TestCase):
             measurement.save_folder = "./corrections4/"
             measurement.save_sampled_data()
 
+    def test_apply_uwb_outlier_rejection(self):
+        fig, ax = plt.subplots(5, 1)
+        for i in range(1, 6):
+            # sampled_pkl = "../../../Data/Measurements/exp"+str(i)+"_los_sampled.pkl"
+            sampled_pkl = "../../../Data/Measurements/exp" + str(i) + "_los_sampled.pkl"
+            measurement = Measurement()
+            measurement.load_sampled_data(sampled_pkl)
+            measurement.uwb.outlier_rejection(10, 0.01)
+            measurement.get_uwb_distances()
+            measurement.uwb.plot_real(ax=ax[i - 1])
+            measurement.save_folder = "./corrections3_UWB_outlier_rejection/"
+            measurement.save_sampled_data()
+        plt.show()
+
+    def test_plot_test_data(self):
+        fig, ax = plt.subplots(2, 5, figsize=(10,15), sharey='row')
+        folder = "./new_env/"
+        models = ["spec_vio_2_min_nlos_sampled",
+            "spec_vio_1_min_onoff_nlos_3_sampled",]
+
+        for i, name in enumerate(models):
+            ax[-1, i-1].set_xlabel("Time [s]")
+            ax[0, i-1].set_title("exp "+str(i))
+
+
+            # sampled_pkl = "../../../Data/Measurements/exp"+str(i)+"_los_sampled.pkl"
+            # sampled_pkl = "../../../Data/Measurements/exp" + str(i) + "_los_sampled.pkl"
+            sampled_pkl =folder + name + ".pkl"
+            print(os.path.exists(sampled_pkl))
+            measurement = Measurement()
+            measurement.load_sampled_data(sampled_pkl)
+            # measurement.uwb.outlier_rejection(10, 0.01)
+            measurement.get_uwb_distances()
+            measurement.uwb.plot_real( ax=ax[-1, i - 1])
+
+            sample_freq=measurement.sample_frequency
+
+
+            sig_v = 0.1
+            sig_w = 0.1
+            sig_uwb = 0.2
+            sig_d = sig_v / sample_freq
+            sig_phi = sig_w / sample_freq
+            Q_vio = np.diag([sig_d ** 2, sig_d ** 2, sig_d ** 2, sig_phi ** 2])
+
+            DT_vio_tb2 = measurement.tb2.vio_frame.get_relative_motion_in_T()
+            DT_vio_tb3 = measurement.tb3.vio_frame.get_relative_motion_in_T()
+            T_vicon_tb2 = measurement.tb2.vicon_frame.sampled_T
+            T_vicon_tb3 = measurement.tb3.vicon_frame.sampled_T
+
+            tb2 = NewRobot()
+            tb2.from_experimental_data(T_vicon_tb2, DT_vio_tb2, Q_vio, sample_freq)
+            tb3 = NewRobot()
+            tb3.from_experimental_data(T_vicon_tb3, DT_vio_tb3, Q_vio, sample_freq)
+
+            tb3.plot_slam_error(ax=ax[:-1, i - 1], annotation="TB1", color="blue")
+            tb2.plot_slam_error(ax=ax[:-1, i - 1], annotation="TB2", color="red")
+
+        ax[-1, 0].set_ylabel(r"UWB error [m]")
+        ax[0, 0].set_ylabel(r"VIO drift error x [m]")
+        ax[1, 0].set_ylabel(r"VIO drift error y [m]")
+        ax[2, 0].set_ylabel(r"VIO drift error z [m]")
+        ax[3, 0].set_ylabel(r"VIO drift error $\theta$ [(rad)]")
+        #Create custom legend with TB1 and TB2 and UWB in red blue and purple:
+        handles = [plt.Line2D([0], [0], color='blue', lw=2, label='Robot 1'),
+                     plt.Line2D([0], [0], color='red', lw=2, label='Robot 2'),
+                     plt.Line2D([0], [0], color='purple', lw=2, label='UWB')]
+        # Manually adjust subplots to make space for legend
+        fig.subplots_adjust(top=0.92)
+        fig.legend(handles=handles, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 0.97))
+        plt.suptitle("Experimental data of the 5 experiments.", fontsize=16)
+
+        # plt.tight_layout()
+        plt.show()
+
     def test_new_robot_population(self):
         # self.set_test_case()
-        sampled_pkl = "./Measurements_correction/exp2_los_sampled.pkl"
-        measurement = Measurement()
-        measurement.load_sampled_data(sampled_pkl)
-        sample_freq=measurement.sample_frequency
+        for i in range(1, 6):
+            sampled_pkl = f"./corrections3/exp{i}_los_sampled.pkl"
+            measurement = Measurement()
+            measurement.load_sampled_data(sampled_pkl)
+            sample_freq=measurement.sample_frequency
 
-        # measurement.correct_orb_transformation()
+            # measurement.correct_orb_transformation()
 
-        sig_v = 0.1
-        sig_w = 0.1
-        sig_uwb = 0.2
-        sig_d = sig_v / sample_freq
-        sig_phi = sig_w / sample_freq
-        Q_vio = np.diag([sig_d ** 2, sig_d ** 2, sig_d ** 2, sig_phi ** 2])
+            sig_v = 0.1
+            sig_w = 0.1
+            sig_uwb = 0.2
+            sig_d = sig_v / sample_freq
+            sig_phi = sig_w / sample_freq
+            Q_vio = np.diag([sig_d ** 2, sig_d ** 2, sig_d ** 2, sig_phi ** 2])
 
-        DT_vio_tb2 = measurement.tb2.vio_frame.get_relative_motion_in_T()
-        DT_vio_tb3 = measurement.tb3.vio_frame.get_relative_motion_in_T()
-        T_vicon_tb2 = measurement.tb2.vicon_frame.sampled_T
-        T_vicon_tb3 = measurement.tb3.vicon_frame.sampled_T
+            DT_vio_tb2 = measurement.tb2.vio_frame.get_relative_motion_in_T()
+            DT_vio_tb3 = measurement.tb3.vio_frame.get_relative_motion_in_T()
+            T_vicon_tb2 = measurement.tb2.vicon_frame.sampled_T
+            T_vicon_tb3 = measurement.tb3.vicon_frame.sampled_T
 
-        tb2 = NewRobot()
-        tb2.from_experimental_data(T_vicon_tb2, DT_vio_tb2, Q_vio, sample_freq)
-        tb3 = NewRobot()
-        tb3.from_experimental_data(T_vicon_tb3, DT_vio_tb3, Q_vio, sample_freq)
+            tb2 = NewRobot()
+            tb2.from_experimental_data(T_vicon_tb2, DT_vio_tb2, Q_vio, sample_freq)
+            tb3 = NewRobot()
+            tb3.from_experimental_data(T_vicon_tb3, DT_vio_tb3, Q_vio, sample_freq)
 
-        ax = plt.axes(projection="3d")
-        tb2.set_plotting_settings(color="r")
-        tb2.plot_real_position(ax)
-        tb2.plot_slam_position(ax,  linestyle=":", alpha=0.6 )
-        tb3.set_plotting_settings(color="b")
-        tb3.plot_real_position(ax)
-        tb3.plot_slam_position(ax, linestyle=":", alpha=0.6)
-        plt.legend()
-        ax = tb3.plot_slam_error(annotation="TB1", color ="blue")
-        ax = tb2.plot_slam_error(annotation="TB2", ax=ax, color="red")
-        for axs in ax:
-            axs.legend()
-            axs.grid()
+            plt.figure()
+            ax = plt.axes(projection="3d")
+            tb2.set_plotting_settings(color="r")
+            tb2.plot_real_position(ax)
+            tb2.plot_slam_position(ax,  linestyle=":", alpha=0.6 )
+            tb3.set_plotting_settings(color="b")
+            tb3.plot_real_position(ax)
+            tb3.plot_slam_position(ax, linestyle=":", alpha=0.6)
+            plt.legend()
+
+            ax = tb3.plot_slam_error(annotation="TB1", color ="blue")
+            ax = tb2.plot_slam_error(ax = ax, annotation="TB2",  color="red")
+            for axs in ax:
+                axs.legend()
+                axs.grid()
         plt.show()
-        return tb2, tb3
+        # return tb2, tb3
 if __name__ == '__main__':
     unittest.main()

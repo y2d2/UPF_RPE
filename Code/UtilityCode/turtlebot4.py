@@ -369,6 +369,12 @@ class Turtlebot4:
         t, p, o, v, w = self.get_measuremend(data)
         self.vio_frame.get_full_measurement(t, p, o, v, w)
 
+    def update_odom(self, data):
+        t, p, o, v, w = self.get_measuremend(data)
+        self.vio_frame.get_full_measurement(t, p, o, v, w)
+
+        # print(data):
+
     def update_vicon(self, data, t=0.):
         t = t / 1e9
         try:
@@ -380,12 +386,18 @@ class Turtlebot4:
                 t, p, o, v, w = self.get_measuremend(data)
                 self.vicon_frame.get_full_measurement(t, p, o, v, w)
             except AttributeError:
-                t = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
-                p = np.array([data.pose.pose.position.x, data.pose.pose.position.y, data.pose.pose.position.z])
-                o = np.array([data.pose.pose.orientation.w, data.pose.pose.orientation.x, data.pose.pose.orientation.y,
-                              data.pose.pose.orientation.z])
-                self.vicon_frame.get_full_measurement(t, p, o)
-
+                try:
+                    t = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
+                    p = np.array([data.pose.pose.position.x, data.pose.pose.position.y, data.pose.pose.position.z])
+                    o = np.array([data.pose.pose.orientation.w, data.pose.pose.orientation.x, data.pose.pose.orientation.y,
+                                  data.pose.pose.orientation.z])
+                    self.vicon_frame.get_full_measurement(t, p, o)
+                except AttributeError:
+                    t = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
+                    p = np.array([data.pose.position.x, data.pose.position.y, data.pose.position.z])
+                    o = np.array([data.pose.orientation.w, data.pose.orientation.x, data.pose.orientation.y,
+                                  data.pose.orientation.z])
+                    self.vicon_frame.get_full_measurement(t, p, o)
 
     #--------------
     # Sampling and processing
@@ -465,9 +477,9 @@ class Turtlebot4:
         ax.plot(self.vicon_frame.p[1:, 0], self.vicon_frame.p[1:, 1], color="tab:blue", label="vicon")
         ax.plot(self.vicon_frame.p[0,0], self.vicon_frame.p[0,1], 'o', color="tab:blue", label="vicon")
         ax.plot(self.vicon_frame.p[-1,0], self.vicon_frame.p[-1,1], 'x', color="tab:blue", label="vicon")
-        ax.plot(self.vio_frame.p[1:, 0], self.vio_frame.p[1:, 1], color="tab:orange", label="vins")
-        ax.plot(self.vio_frame.p[0, 0], self.vio_frame.p[0, 1], 'o', color="tab:orange", label="vicon")
-        ax.plot(self.vio_frame.p[-1, 0], self.vio_frame.p[-1, 1], 'x', color="tab:orange", label="vicon")
+        ax.plot(self.vio_frame.p[1:, 0], self.vio_frame.p[1:, 1], color="tab:orange", label="odom")
+        ax.plot(self.vio_frame.p[0, 0], self.vio_frame.p[0, 1], 'o', color="tab:orange", label="odom")
+        ax.plot(self.vio_frame.p[-1, 0], self.vio_frame.p[-1, 1], 'x', color="tab:orange", label="odom")
 
     def plot_vio_error(self, ax= None):
         if ax is None:

@@ -547,6 +547,7 @@ class TwoAgentSystem():
 
         # Experiment variables:
         self.experiment_data = None
+        self.bool_2D = False
 
         #Parameters
         self.parameters={}
@@ -771,13 +772,21 @@ class TwoAgentSystem():
                 self.agents[drone]["drone"].integrate_odometry(i)
 
             if i % self.factor == 0:
-                dx_0, q_0 = drone0.reset_integration()
-                dx_1, q_1 = drone1.reset_integration()
+
 
                 uwb_measurement = distances[i]
                 self.los_state.append(self.experiment_data["los_state"][i])
-
-                eval("self.run_" + self.method + "_simulation" + "(dx_0, q_0, dx_1, q_1, uwb_measurement, i)")
+                if np.isnan(uwb_measurement):
+                    print("UWB measurement is NaN at step", i)
+                else:
+                    dx_0, q_0 = drone0.reset_integration()
+                    dx_1, q_1 = drone1.reset_integration()
+                    if self.bool_2D:
+                        dx_0[2] = 0
+                        dx_1[2] = 0
+                        q_0[2,2]  = 1e-8
+                        q_1[2,2]  = 1e-8
+                    eval("self.run_" + self.method + "_simulation" + "(dx_0, q_0, dx_1, q_1, uwb_measurement, i)")
 
         if self.plot_bool:
             plt.close()

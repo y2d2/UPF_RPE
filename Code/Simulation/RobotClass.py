@@ -367,9 +367,9 @@ class NewRobot:
                   color=color, marker="x", linestyle=linestyle, alpha=alpha)
 
     def plot_slam_error(self, ax = None, annotation="", linestyle="-", color = None, alpha=1, i=-1):
-        error = self.x_real - self.x_slam
+        error = self.x_real[1:] - self.x_slam
         t = np.arange(0, len(error))*0.1
-        error_h = np.array(self.h_real) - np.array(self.h_slam)
+        error_h = np.array(self.h_real)[1:] - np.array(self.h_slam)
         for i in range(len(error_h)):
             error_h[i] = limit_angle(error_h[i])
         if ax is None:
@@ -377,8 +377,8 @@ class NewRobot:
 
         legend = ["x", "y", "z", "heading"]
         for i in range(3):
-            ax[i].plot(t, error[:, i], color=color, linestyle=linestyle, alpha=alpha, label=annotation + " " + legend[i]+ " error")
-        ax[-1].plot(t, error_h, color=color, linestyle=linestyle, alpha=alpha, label=annotation + " " + "heading error")
+            ax[i].plot(t, error[:, i], color=color, linestyle=linestyle, alpha=alpha, label=annotation + " " + legend[i]+ " error", linewidth=2)
+        ax[-1].plot(t, error_h, color=color, linestyle=linestyle, alpha=alpha, label=annotation + " " + "heading error", linewidth=2)
         return ax
 
     def plot_trajectory(self, ax, color="k", label=None):

@@ -314,7 +314,7 @@ class UPFConnectedAgent:
         # self.check_validity(dx_ca, q_ca)
         self.run_predict_update_los(dx_ca, measurement, q_ca)
         self.resample()
-        self.calculate_average_particle()
+        # self.calculate_average_particle()
         if len(self.particles) > 5000:
             raise Exception("Too many particles")
 
@@ -438,7 +438,7 @@ class UPFConnectedAgent:
         best_particle = self.particles[np.where(new_weights == np.max(new_weights))[0][0]]
         self.set_best_particle(best_particle)
 
-        self.generate_new_particles()
+        # self.generate_new_particles()
         if not self.particles:
             raise Exception("No particles left")
 
@@ -497,7 +497,7 @@ class UPFConnectedAgent:
         best_particle = self.particles[np.where(new_weights == np.max(new_weights))[0][0]]
         self.set_best_particle(best_particle)
 
-        self.generate_new_particles()
+        # self.generate_new_particles()
         if not self.particles:
             raise Exception("No particles left")
 

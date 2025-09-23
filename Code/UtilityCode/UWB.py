@@ -5,6 +5,26 @@ import Code.UtilityCode.turtlebot4 as TB
 from scipy.optimize import minimize, Bounds
 
 
+
+class variance_uwb_rejection:
+    def __init__(self, history= 20, threshold =0.01):
+        self.history = history
+        self.threshold = threshold
+        self.los = []
+        self.measruments = []
+    def new_measurement(self, measurement):
+        self.measruments.append(measurement)
+        if len(self.measruments) > self.history:
+            self.measruments.pop(0)
+
+        var = np.var(self.measruments)
+        if var < self.threshold:
+            self.los.append(True)
+            # self.measruments.pop(-1)
+        else:
+            self.los.append(False)
+        return self.los[-1]
+
 class UWB:
     def __init__(self, name = "uwb"):
         #Raw data
@@ -25,6 +45,9 @@ class UWB:
     def get_measuremend(self, msg_data):
         t = msg_data.header.stamp.sec + msg_data.header.stamp.nanosec * 1e-9
         d = msg_data.uwbrange.distance
+        self.get_measurment(t,d)
+
+    def get_measurment(self, t, d):
         if d < self.thress:
             self.t.append(t)
             self.d.append(d)
@@ -87,6 +110,18 @@ class UWB:
         for i in range(index, len(self.sampled_d)):
             self.sampled_d[i] = self.real_d[i] + value + np.random.rand()*sigma_uwb
 
+    def outlier_rejection(self, horizon, thresshold):
+        measurments_horizon = []
+        for i in range(len(self.sampled_d)):
+            if len(measurments_horizon) >= horizon:
+                measurments_horizon.pop(0)
+            measurments_horizon.append(self.sampled_d[i])
+
+            var = np.var(measurments_horizon)
+            if var > thresshold:
+                self.sampled_d[i] = np.nan
+                print(f"Outlier detected at index {i}, value: {None}, replaced with real distance.")
+
     #---------------
     # Data
     #---------------
@@ -145,10 +180,13 @@ class UWB:
             ax = plt
         # plt.figure()
         # ax.title(self.name+" real")
-        ax.plot([d for i, d in enumerate(self.real_d) if (i % factor == 0)], label="Real $d$ [m]",  linewidth=3, color="k")
-        ax.plot([d for i, d in enumerate(self.sampled_d) if (i % factor == 0)], '--', color="tab:purple",  label=r"Measured $\tilde{d}$ [m]", linewidth=3)
+        # ax.plot([d for i, d in enumerate(self.real_d) if (i % factor == 0)], label="Real $d$ [m]",  linewidth=3, color="k")
+        # ax.plot([d for i, d in enumerate(self.sampled_d) if (i % factor == 0)], '--', color="tab:purple",  label=r"Measured $\tilde{d}$ [m]", linewidth=3)
+        # self.sampled_d can have None values
+
+
         er = np.abs(np.array(self.sampled_d) - self.real_d)
-        ax.plot([d for i, d in enumerate(er) if (i % factor == 0)], '--', color="tab:red", label=r"Error $\epsilon_{d} = |d - \tilde{d} |$ [m]", linewidth=3)
+        ax.plot([i *factor/10. for i in range(len(er))], [d for i, d in enumerate(er) if (i % factor == 0)], '-', color="tab:purple", label=r"Error $\epsilon_{d} = |d - \tilde{d} |$ [m]", linewidth=2)
         print("mean error: ", np.mean(er), "std error: ", np.std(er))
         # ax.legend(fontsize=12, loc="upper left")
         # plt.grid()

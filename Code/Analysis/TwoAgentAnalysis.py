@@ -47,7 +47,7 @@ class TwoAgentAnalysis:
     # -----------------------
     # Loading functions:
     # -----------------------
-    def load_results(self):
+    def load_results(self, reformat_bool=False):
         self.results = {}
         self.data = {}
         for result_folder in self.result_folders:
@@ -61,18 +61,20 @@ class TwoAgentAnalysis:
                     with open(result_folder + "/" + file, "rb") as f:
                         try:
                             data = pkl.load(f)
-                            print("Loading " + str(int(file_nr / n_files * 100.)), "%: " + result_folder + "/" + file)
+                            print("Loading " + str(round(file_nr / n_files * 100., 2)), "%: " + result_folder + "/" + file)
                         except EOFError:
                             print("!!!!!!!!! Could not open: ", result_folder + "/" + file + " !!!!!!!!!")
                     f.close()
-                    if "numerical_data" not in data:
-                        print("Reformating the data for analysis " + file + " ...")
-                        data = self.reformat_data(data)
-                        with open(result_folder + "/" + file, "wb") as f:
-                            pkl.dump(data, f)
-                        f.close()
-                    # self.data[file] = data
-                    self.data[file] = "Loaded"
+                    try:
+                        if "numerical_data" not in data or reformat_bool:
+                            print("Reformating the data for analysis " + file + " ...")
+
+                            data = self.reformat_data(data)
+                            with open(result_folder + "/" + file, "wb") as f:
+                                pkl.dump(data, f)
+                            f.close()
+                        # self.data[file] = data
+                        self.data[file] = "Loaded"
 
                     # if "analysis" not in data:
                     #     print("Starting statistical analysis of " + file + " ...")
@@ -83,8 +85,111 @@ class TwoAgentAnalysis:
                     # self.results[file] = data["analysis"]
 
                     # if "panda_date" not in data:
-                    self.reformat_data_to_pandas(data)
+                        self.reformat_data_to_pandas(data)
+                    except Exception as e:
+                        print("Error in reformatting the data: ", e)
+                        print("Error in reformatting the data: ", file)
         return
+
+    def laod_directly_to_df(self):
+        self.dfs = []
+
+        for result_folder in self.result_folders:
+            n_files = len(os.listdir(result_folder))
+            file_nr = 0.
+            for file in os.listdir(result_folder):
+                if int(file_nr / n_files * 100.) > self.percent_to_load:
+                    return
+                file_nr += 1
+                if file.endswith(".pkl"):
+                    with open(result_folder + "/" + file, "rb") as f:
+                        try:
+                            data = pkl.load(f)
+                            print("Loading " + str(round(file_nr / n_files * 100., 2)), "%: " + result_folder + "/" + file)
+                        except EOFError:
+                            print("!!!!!!!!! Could not open: ", result_folder + "/" + file + " !!!!!!!!!")
+                    f.close()
+                    self.new_panda_dataframe(data)
+
+    def find_method_class(self, method):
+        method_family = method.split("|")[0]
+        known_init = False
+        if "multi_particles=0" in method.split("|"):
+            known_init = True
+        if method_family == "losupf" and known_init:
+            method_class = "losupf_per"
+        elif method_family == "losupf"and not known_init:
+            method_class = "losupf"
+        elif method_family == "nodriftupf" and known_init:
+            method_class = "nodriftupf_per"
+        elif method_family == "nodriftupf" and not known_init:
+            method_class = "nodriftupf"
+        elif method_family == "QCQP":
+            method_class = "QCQP 10s"
+            if "horizon=200" in method.split("|"):
+                method_class = "QCQP 20s"
+        elif method_family == "NLS":
+            method_class = "NLS"
+        else:
+            method_class = "Unkown"
+        return method_class
+
+    def new_panda_dataframe(self,data):
+        for sim in data:
+            for method in data[sim]:
+                if  sim != "parameters" and sim != "analysis" and sim != "numerical_data":
+                    method_class = self.find_method_class(method)
+                    for drone_name in data[sim][method]:
+                        for variable in data[sim][method][drone_name]:
+                            if variable != "True_los_state":
+                                res = np.array(data[sim][method][drone_name][variable]).astype(float)
+                                df = pd.DataFrame({"value": res})
+                                df["Number"] = df.index  # Uses the index as the number to preserve order
+
+                                # Add additional variables
+                                df["Variable"] = variable
+                                df["Method"] = method
+                                df["Class"] = method_class
+                                df["Sigma_dv"] = data["parameters"]["sigma_dv"]
+                                df["Sigma_dw"] = data["parameters"]["sigma_dw"]
+                                df["Sigma_uwb"] = data["parameters"]["sigma_uwb"]
+                                df["Run"] = sim
+                                df["Drone"] = drone_name
+                                df["Type"] = data["parameters"]["type"]
+                                df["Frequency"] = data["parameters"]["frequency"]
+
+                                # Compute "Time" using "Number" and "Frequency"
+                                df["Time"] = df["Number"] / df["Frequency"].astype(float)
+
+                                # df = pd.DataFrame(res).assign(Variable=variable,
+                                #                               Method=method,
+                                #                               Sigma_dv=data["parameters"]["sigma_dv"],
+                                #                               Sigma_dw=data["parameters"]["sigma_dw"],
+                                #                               Sigma_uwb=data["parameters"]["sigma_uwb"],
+                                #                               Run = sim,
+                                #                               Drone = drone_name,
+                                #                               Type=data["parameters"]["type"],
+                                #                               Frequency=data["parameters"]["frequency"],
+                                #                               Number=df.index )
+                                # df["Time"] = df["Number"] / df["Frequency"].astype(float)
+
+                                self.dfs.append(df)
+
+    def save_df(self, file_name):
+        df = pd.concat(self.dfs)
+        df.to_pickle(file_name)
+
+    def load_df(self, file_name):
+        df = pd.read_pickle(file_name)
+        if self.df is None:
+            self.df = df
+        else:
+            self.df = pd.concat([self.df, df])
+
+    def load_df_list(self, list_of_df):
+        for df_file in list_of_df:
+            self.load_df(df_file)
+
 
     def reformat_data(self, data):
         data["numerical_data"] = {}
@@ -446,13 +551,17 @@ class TwoAgentAnalysis:
 
     def time_analysis(self, sigma_uwbs=[0.25], sigma_vs=[0.08], frequencies = [1.0, 10.0], start_time=1.0,
                       methods_order=[], methods_color=None, methods_legend={},
-                      variables=["error_x_relative", "error_h_relative"], sigma_bound = False,
+                      variables=["error_x_relative", "error_h_relative"], sigma_bound = False, legend_order = None,
                       save_fig=False, save_name="time_plot"):
+
+
+        if legend_order is None:
+            legend_order = methods_order
+
         if sigma_bound:
-            methods_order.insert(-2, "Sigma")
-            legend_col = 3
-        else:
-            legend_col = 4
+            legend_order.append("Sigma")
+            methods_order.insert(-1, "Sigma")
+
         method_df, methods_order = self.filter_methods(methods_order, sigma_uwbs, sigma_vs, frequencies, start_time)
 
         fig, axes = plt.subplots(1, len(variables), figsize=(4 * len(variables), 3))
@@ -504,23 +613,35 @@ class TwoAgentAnalysis:
             # Melt the DataFrame for Seaborn's lineplot
             avg_time_df_melted = pd.melt(avg_time_df, id_vars=["Time"], var_name="Method", value_name="MeanValue")
             # Plotting
-            plt.sca(axes[i])
+            try:
+                plt.sca(axes[i])
+                if "QCQP" in method:
+                    g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
+                                 palette=methods_color, hue_order=methods_order, linewidth=0.5, legend=False)
+                else:
+                    g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
+                                 palette=methods_color, hue_order=methods_order, linewidth=2.5, legend=False)
 
-            g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
-                             palette=methods_color, hue_order=methods_order, linewidth=2.5, legend=False)
+                axes[i].set_xlabel("time [s]", fontsize=12)
+                axes[i].set_ylabel(self.y_label[variable], fontsize=12)
+                # rmove grid from axs:
+                axes[i].grid(False)
+            except TypeError:
+                g = sns.lineplot(data=avg_time_df_melted, x="Time", y="MeanValue", hue="Method", markers=True,
+                                 palette=methods_color, hue_order=methods_order, linewidth=2.5, legend=False)
 
-            axes[i].set_xlabel("time [s]", fontsize=12)
-            axes[i].set_ylabel(self.y_label[variable], fontsize=12)
             # if variable == "error_x_relative":
             #     axes[i].set_ylim([0.5, 10])
             #     axes[i].set_yscale("log")
 
         # methods_order = methods_order[-1:] + methods_order[:-1]
-        legend_handles = [Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in methods_order]
-        legend_labels = [methods_legend[method] for method in methods_order]
+        # methods_order = methods_order[1:2] + [methods_order[0]] + methods_order[3:]
+        legend_handles = [Line2D([0], [0], color=methods_color[method], linewidth=2.5) for method in legend_order]
+        legend_labels = [methods_legend[method] for method in legend_order]
 
-        # fig.suptitle("Average error evolution of the experiments")
-        fig.legend(handles=legend_handles, labels=legend_labels, ncol=legend_col, fontsize=12, loc="upper center",
+        # fig.legend(handles=legend_handles, labels=legend_labels, ncol=legend_col, loc="upper center",
+        #            bbox_to_anchor=(0.5, 0.99))
+        fig.legend(handles=legend_handles, labels=legend_labels, ncol=4, loc="upper center",
                    bbox_to_anchor=(0.5, 0.99))
         plt.subplots_adjust(top=0.80, bottom=0.12, left=0.12, right=0.99)
 

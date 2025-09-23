@@ -112,8 +112,8 @@ class Measurement:
         else:
             load_custom_messages2()
 
-        UWBRangeStamp = typestore.types['yd_uwb_msgs/msg/UWBRangeStamp'].__msgtype__
-        Position = typestore.types['vicon_receiver/msg/Position'].__msgtype__
+        # UWBRangeStamp = typestore.types['yd_uwb_msgs/msg/UWBRangeStamp'].__msgtype__
+        # Position = typestore.types['vicon_receiver/msg/Position'].__msgtype__
 
         print("Reading bag")
 
@@ -128,10 +128,11 @@ class Measurement:
             for m, msg in enumerate(ros2_messages):
                 (connection, timestamp, rawdata) = msg
                 print(m/m_tot*100 , "%", connection, timestamp)
-
+                if m/m_tot > 1:
+                    break
                 if self.tb2_topic == connection.topic:
                     # print(connection.topic, connection.msgtype)
-                    data = typestore.deserialize_cdr(rawdata, Position)
+                    data = typestore.deserialize_cdr(rawdata, connection.msgtype)
                     self.tb2.update_vicon(data, timestamp)
 
                 if self.tb2_odom_topic == connection.topic:
@@ -140,6 +141,8 @@ class Measurement:
                         self.tb2.update_specVIO(data)
                     if VIO_source == "orb":
                         self.tb2.update_orb(data)
+                    if VIO_source == "odom":
+                        self.tb2.update_odom(data)
 
                 if self.tb3_odom_topic == connection.topic:
                     data = typestore.deserialize_cdr(rawdata, connection.msgtype)
@@ -147,9 +150,11 @@ class Measurement:
                         self.tb3.update_specVIO(data)
                     if VIO_source == "orb":
                         self.tb3.update_orb(data)
+                    if VIO_source == "odom":
+                        self.tb3.update_odom(data)
 
                 if self.tb3_topic == connection.topic:
-                    data = typestore.deserialize_cdr(rawdata, Position)
+                    data = typestore.deserialize_cdr(rawdata, connection.msgtype)
                     self.tb3.update_vicon(data, timestamp)
 
                 if self.uwb_topic == connection.topic:
@@ -371,6 +376,7 @@ class Measurement:
         self.tb3.sample(frequency, start_time, end_time)
         self.uwb.sample(frequency, start_time, end_time)
 
+
     #--------------------
     # UWB processing
     #____________________
@@ -496,7 +502,7 @@ def create_experiment(results_folder, sig_v, sig_w, sig_uwb, alpha=1., kappa=-1.
     tas.set_uncertainties(sig_v, sig_w, sig_uwb)
     return tas
 
-def create_experimental_data(data_folder, sig_v, sig_w, sig_uwb):
+def create_experimental_data(data_folder, sig_v, sig_w, sig_uwb, uwb_mu = 0.0):
     experiments=[]
     measurements = []
     # check wether data_folder is a file or a folder
@@ -519,7 +525,7 @@ def create_experimental_data(data_folder, sig_v, sig_w, sig_uwb):
         Q_vio = np.diag([sig_d ** 2, sig_d ** 2, sig_d ** 2, sig_phi ** 2])
 
         # measurement.get_uwb_distances()
-        uwb = measurement.uwb.sampled_d
+        uwb = np.array(measurement.uwb.sampled_d) - uwb_mu
         uwb_los = measurement.get_uwb_LOS(sig_uwb)
         DT_vio_tb2 = measurement.tb2.vio_frame.get_relative_motion_in_T()
         DT_vio_tb3 = measurement.tb3.vio_frame.get_relative_motion_in_T()
@@ -542,7 +548,7 @@ def create_experimental_data(data_folder, sig_v, sig_w, sig_uwb):
         experiments.append(experiment_data)
     return experiments, measurements
 
-def create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb):
+def create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb, uwb_flag=True, vio_flag=True):
     experiments, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
     for experiment in experiments:
         T_0_prev = np.eye(4)
@@ -551,20 +557,23 @@ def create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb):
             T_0 = experiment["drones"]["drone_0"]["T_real"][i]
             T_1 = experiment["drones"]["drone_1"]["T_real"][i]
             uwb = np.linalg.norm(T_0[0:3, 3] - T_1[0:3, 3])
-            experiment["uwb"][i] = uwb + np.random.normal(0, sig_uwb)
+            if uwb_flag:
+                experiment["uwb"][i] = uwb + np.random.normal(0.,sig_uwb)
             if i > 0:
                 dT_0 = inv_transformation_matrix(T_0_prev) @ T_0
                 t0_noise =  np.random.normal(0, sig_v/experiment["sample_freq"], size=(3))
                 theta_0_noise = np.random.normal(0, sig_w/experiment["sample_freq"])
                 T_0_noise = transformation_matrix_from_rot_vect([0, 0, theta_0_noise], t0_noise)
                 dT_0_noise = dT_0 @ T_0_noise
-                experiment["drones"]["drone_0"]["DT_slam"][i-1] = dT_0_noise
+                if vio_flag:
+                    experiment["drones"]["drone_0"]["DT_slam"][i-1] = dT_0_noise
                 dT_1 = inv_transformation_matrix(T_1_prev) @ T_1
                 t1_noise = np.random.normal(0, sig_v / experiment["sample_freq"], size=(3))
                 theta_1_noise = np.random.normal(0, sig_w / experiment["sample_freq"])
                 T_1_noise = transformation_matrix_from_rot_vect([0, 0, theta_1_noise], t1_noise)
                 dT_1_noise = dT_1 @ T_1_noise
-                experiment["drones"]["drone_1"]["DT_slam"][i - 1] = dT_1_noise
+                if vio_flag:
+                    experiment["drones"]["drone_1"]["DT_slam"][i - 1] = dT_1_noise
 
             T_0_prev = T_0
             T_1_prev = T_1

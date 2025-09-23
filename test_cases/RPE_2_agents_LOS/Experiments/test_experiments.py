@@ -48,32 +48,39 @@ class MyTestCase(unittest.TestCase):
         sig_v = 0.08
         sig_w = 0.08
         sig_uwb = 0.25
-
+        freqs = [10.0]
         # main_folder = "./"
-        results_folder = "Results/test"
+        results_folder = "Results_2D/base/"
+        # results_folder = "../../../Results/experiments/"
         data_folder = "corrections3/"
+        # data_folder = "corrections3_UWB_outlier_rejection/"
 
-        experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb)
+        experiment_data, measurements = create_experimental_data(data_folder, sig_v, sig_w, sig_uwb, uwb_mu=0.0)
+        for freq in freqs:
+            methods = [
+                    # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                    #    f"losupf|frequency={freq}|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+                    #    f"nodriftupf|frequency={freq}|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=1",
+                    #     f"losupf|frequency={freq}|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=1",
+                       #  f"nodriftupf|frequency={freq}|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=1",
+                       # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                       # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+                       # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                       # # "algebraic|frequency=1.0|horizon=10",
+                       # "algebraic|frequency=1.0|horizon=10",
+                       # # # "algebraic|frequency=10.0|horizon=1000",
+                       # "QCQP|frequency=1.0|horizon=10",
+                       "QCQP|frequency=10.0|horizon=100",
+                       "QCQP|frequency=10.0|horizon=200",
+                       "NLS|frequency=1.0|horizon=10",
+                       ]
 
-        methods = [
-                # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
-                   # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
-                   # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   # # "algebraic|frequency=1.0|horizon=10",
-                   # "algebraic|frequency=1.0|horizon=10",
-                   # # # "algebraic|frequency=10.0|horizon=1000",
-                   # "QCQP|frequency=1.0|horizon=10",
-                   # # # "QCQP|frequency=10.0|horizon=1000",
-                   # "NLS|frequency=0.1|horizon=1",
-                   ]
-
-        tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
-        tas.debug_bool = True
-        tas.plot_bool = False
-        tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data)
-        plt.show()
+            tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
+            tas.debug_bool = True
+            tas.plot_bool = False
+            tas.bool_2D = True
+            tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data)
+        # plt.show()
         # return tas, measurements
 
     def test_rename_experiments(self):
@@ -246,6 +253,20 @@ class MyTestCase(unittest.TestCase):
             "Legend": "NLS* 10Hz",
         }
 
+        vio_exp_10hz = {
+            "Method": f"slam",
+            "Variables": {
+                "Type": [types],
+                "Variable": variables,
+                "Sigma_dv": sigma_dv,
+                "Sigma_dw": sigma_dw,
+                "Sigma_uwb": sigma_uwb,
+                "Frequency": [frequency],
+            },
+            "Color": "k",
+            "Legend": "SLAM* ",
+        }
+
         frequency = 1.0
         horizon = 10
 
@@ -401,6 +422,7 @@ class MyTestCase(unittest.TestCase):
         methods_order = [
             upf_exp_10hz, upf_exp_1hz,
             nodriftupf_exp_10hz, nodriftupf_exp_1hz,
+            vio_exp_10hz,
             # alg_exp_10hz, alg_exp_1hz,
             # qcqp_exp_10hz, qcqp_exp_1hz,
             upf_exp_per_10hz, upf_exp_per_1hz,
@@ -428,7 +450,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_sim_analysis(self):
         result_folders = [
-            "../../../Results/Sim_cor/freq10",
+            "../../../Results/experiments",
         ]
         variables = ["error_x_relative", "error_h_relative"]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
@@ -455,13 +477,13 @@ class MyTestCase(unittest.TestCase):
     def test_exp_analysis(self):
         result_folders = [
             # "../../../Results/server_exp",
-            # "../../../Results/experiments",
-            "../../../Results/Sim_cor",
+            "../../../Results/experiments",
+            # "../../../Results/Sim_cor",
             # "Results/corr"
         ]
         variables = ["error_x_relative", "error_h_relative"]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
-        methods_order = self.load_results(variables, types="simulation")
+        methods_order = self.load_results(variables, types="experiment")
 
         df, methods_names, methods_colors, methods_legends = taa.filter_methods_new(methods_order)
         # taa.print_statistics(methods_names, variables, df)
@@ -469,13 +491,13 @@ class MyTestCase(unittest.TestCase):
                         hue_variable="Name", hue_order=methods_names,
                         col_variable="Variable",
                         row_variable=None,
-                        x_variable="Sigma_dv", 
+                        x_variable="Method",
                         )
 
         g.axes_dict["error_x_relative"].set_yscale("log")
         g.axes_dict["error_h_relative"].set_ylabel(taa.y_label["error_h_relative"], fontsize=12)
         g.axes_dict["error_x_relative"].set_ylabel(taa.y_label["error_x_relative"], fontsize=12)
-        sns.move_legend(g, loc="upper center", bbox_to_anchor= (0.5, 0.98), ncol=5)
+        # sns.move_legend(g, loc="upper center", bbox_to_anchor= (0.5, 0.98), ncol=5)
         plt.subplots_adjust(top=0.8, bottom=0.12, left=0.1, right=0.99)
         # plt.suptitle("Experiments")
         plt.show()
@@ -581,12 +603,20 @@ class MyTestCase(unittest.TestCase):
                             # "./Experiments/LOS_exp/Results/experiment_outlier_rejection_3/10hz",
                             # "./Experiments/LOS_exp/Results/experiments_paper/exp5"
                             # "./Experiments/LOS_exp/Results/exp_cor_new1/exp"
-                            # "../../../Results/experiments",
-                            "Results/Final"
+                            "../../../Results/experiments",
+                            # "Results/Results_final_10hz"
                             ]
         taa = TAA.TwoAgentAnalysis(result_folders=result_folders)
         methods_order = [
-                        #"losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+
+                "QCQP|frequency=10.0|horizon=100",
+
+
+
+
+
+            # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+
                         #  # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
 
                         #  # "NLS|horizon=10",
@@ -599,21 +629,29 @@ class MyTestCase(unittest.TestCase):
                         #  "QCQP|frequency=10.0|horizon=1000",
                         # "NLS|frequency=1.0|horizon=10",
                         # "NLS|frequency=1.0|horizon=100",
-            "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-            "QCQP|frequency=10.0|horizon=100",
 
             # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
 
-            # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
             # "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0",
 
-            # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
-            # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
 
+            # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
             # "NLS|frequency=1.0|horizon=10",
+
+            "slam",
+            # "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+            # "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+            "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
             # "NLS|frequency=0.1|horizon=1",
 
         ]
+        legends_order = [ "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
+                          "QCQP|frequency=10.0|horizon=100",
+                          "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+                          "NLS|frequency=1.0|horizon=10",
+                          "slam",
+                          ]
 
         methods_color = {
                         "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "lightgreen",
@@ -631,15 +669,16 @@ class MyTestCase(unittest.TestCase):
                          "QCQP|frequency=10.0|horizon=100": "tab:blue",
                         "NLS|frequency=0.1|horizon=1": "thistle",
                         "NLS|frequency=1.0|horizon=10": "tab:purple",
+                        "slam": "k",
                         # "NLS|frequency=1.0|horizon=10|perfect_guess=0": "tab:purple",
-                        # "Sigma": "tab:olive"
+                        "Sigma": "tab:olive"
                         }
 
         methods_legend = {
                             "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, proposed 1Hz",
-                            "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, proposed 10Hz",
+                            "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": "Ours, proposed",
                           "nodriftupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0": r"Ours, $\tilde{\text{w}}$ pseudo-state 1Hz",
-                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": r"Ours, $\tilde{\text{w}}$ pseudo-state 10Hz",
+                          "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0": r"Ours, $\tilde{\text{w}}$ pseudo-state ",
                           # "NLS|horizon=10": "NLS_10",
                           # "algebraic|horizon=10": "Algebraic_10",
                           # "algebraic|frequency=1.0|horizon=10": "Algebraic 10s",
@@ -649,12 +688,14 @@ class MyTestCase(unittest.TestCase):
                           # "QCQP|frequency=1.0|horizon=10": "QCQP",
                           # "QCQP|frequency=10.0|horizon=1000": "QCQP",
                           "QCQP|frequency=10.0|horizon=100": "QCQP",
-                            "NLS|frequency=1.0|horizon=10": "NLS* 10Hz",
+                            "NLS|frequency=1.0|horizon=10": "NLS* ",
                             "NLS|frequency=0.1|horizon=1": "NLS* 1Hz",
                         # "NLS|frequency=1.0|horizon=10|perfect_guess=0": "NLS*",
-                        "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0": "Ours* 10Hz",
+                        "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0": "Ours* ",
+                        "slam": "VIO*",
+            # "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0": "Ours* 1Hz",
                         "losupf|frequency=1.0|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0": "Ours* 1Hz",
-                        # "Sigma": r" Ours, $1 \sigma$-bound"
+                        "Sigma": r" Ours, $1 \sigma$-bound"
                         }
 
         # result_folders = [
@@ -670,11 +711,17 @@ class MyTestCase(unittest.TestCase):
 
         # taa.delete_data()
         taa.create_panda_dataframe()
-        sns.set_context("talk", font_scale=1.8)  # "talk" or "poster" context
-        sns.set_style("whitegrid")
+        # sns.set_context("poster", font_scale=0.8)  # "talk" or "poster" context
+        # sns.set_style("whitegrid")
         taa.time_analysis(sigma_uwbs=[0.15, 0.25], sigma_vs=[0.03, 0.08], frequencies = [0.1,1.0,10.0], start_time=0.,
-                          methods_order=methods_order, methods_color=methods_color, methods_legend=methods_legend,
+                          methods_order=methods_order, methods_color=methods_color, methods_legend=methods_legend,legend_order = legends_order,
+                          variables = ["error_x_relative", "error_h_relative"],
                           sigma_bound=False, save_fig=False)
+        fig = plt.gcf()
+        # fig.suptitle()
+        fig.set_size_inches(w=10, h=8)
+        # plt.xlabel("Time [s]")
+        # plt.ylabel("Relative position error [m]")
         # taa.boxplot_LOS_comp_time(save_fig=False)
         # taa.calculation_time(save_fig=False)
         plt.show()
@@ -806,8 +853,6 @@ class MyTestCase(unittest.TestCase):
         # ax[1].plot(losupf_x_error_1, label="losupf")
         # # ax[1].plot(slam_x_error_1, label="slam")
         # ax[1].legend()
-
-
 
     def test_plot_augmented_NLOS_Error_Graph(self):
         tas, measurements = self.test_run_NLOS_exp()

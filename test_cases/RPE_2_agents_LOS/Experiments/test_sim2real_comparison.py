@@ -1,3 +1,4 @@
+import itertools
 import unittest
 
 import pickle as pkl
@@ -13,34 +14,46 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 class MyTestCase(unittest.TestCase):
     def test_create_sim_data_from_real(self):
-        sig_v = 0.08
-        sig_w = 0.12
-        sig_uwb = 0.15
+        folder = "./Results_review/Sim_uwb_real_odom"
+        folder = "../../../Results/sim2real"
+        sigma_vs = [0.08]
+        sigma_uwbs = [0.25]
+        freqs = [10.0]
+        param_combinations = list(itertools.product(sigma_vs, sigma_uwbs, freqs))
 
-        main_folder = "./Experiments/LOS_exp/"
-        results_folder = main_folder + "Results/exp_cor_new6/sim"
-        data_folder = "./corrections3/"
+        # hor = [100, 50, 20, 10]
+        # sigma_vs = [0.05, 0.01, 0.5, 0.1]
+        # sig_v = 0.01
+        # sig_w = 0.01
+        for sig_v, sig_uwb, freq in param_combinations:
+            sig_w = sig_v
+            results_folder = f"{folder}/freq={str(freq).replace('.','c')}_sig_v={str(sig_v).replace('.','c')}_sig_w={str(sig_w).replace('.', 'c')}_sig_uwb={str(sig_uwb).replace('.', 'c')}"
+            if not os.path.exists(results_folder):
+                os.mkdir(results_folder)
+            main_folder = "./Experiments/LOS_exp/"
+            data_folder = "./corrections3/"
 
-        experiment_data, measurements = create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb)
-        methods = [
-                    "losupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   "nodriftupf|frequency=10.0|resample_factor=0.1|sigma_uwb_factor=1.0",
-                   # "algebraic|frequency=1.0|horizon=10",
-                   # "algebraic|frequency=10.0|horizon=100",
-                   # "algebraic|frequency=1.0|horizon=10",
-                   "algebraic|frequency=10.0|horizon=100",
-                   # "QCQP|frequency=10.0|horizon=100",
-                   # "QCQP|frequency=1.0|horizon=10"
-                   "QCQP|frequency=10.0|horizon=100",
-                     "NLS|frequency=1.0|horizon=10"
-                   ]
+            experiment_data, measurements = create_experimental_sim_data(data_folder, sig_v, sig_w, sig_uwb, uwb_flag=True, vio_flag=True)
+            methods = [
+                      # f"losupf|frequency={freq}|resample_factor=0.1|sigma_uwb_factor=1.0",
+                       # f"losupf|frequency={freq}|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=0",
+                       # f"nodriftupf|frequency={freq}|resample_factor=0.1|sigma_uwb_factor=1.0|multi_particles=1",
+                       # "algebraic|frequency=1.0|horizon=10",
+                       # "algebraic|frequency=10.0|horizon=100",
+                       # "algebraic|frequency=1.0|horizon=10",
+                       # "algebraic|frequency=10.0|horizon=100",
+                       # "QCQP|frequency=10.0|horizon=100",
+                       # "QCQP|frequency=1.0|horizon=10"
+                       f"QCQP|frequency={freq}|horizon={int(20*freq)}",
+                        # f"NLS|frequency=1.0|horizon=10"
+                       ]
 
-        tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
-        tas.debug_bool = True
-        tas.plot_bool = False
-        tas.run_experiment(methods=methods, redo_bool=True, experiment_data=experiment_data, res_type="simulation", prefix="sim_")
+            tas = create_experiment(results_folder, sig_v, sig_w, sig_uwb)
+            tas.debug_bool = True
+            tas.plot_bool = False
+            tas.run_experiment(methods=methods, redo_bool=False, experiment_data=experiment_data, res_type="simulation", prefix="sim_")
 
-        return tas, measurements
+            # return tas, measurements
 
     def test_create_sim_data_from_real_NLS(self):
         sig_v = 0.08
