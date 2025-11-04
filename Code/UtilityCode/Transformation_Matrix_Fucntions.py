@@ -78,6 +78,12 @@ def inv_transformation_matrix(T):
     T_inv[:3,-1] = -R.T @ T[:3,-1]
     return T_inv
 
+def so3_hat(w):
+    wx, wy, wz = w
+    return np.array([[0, -wz, wy],
+                     [wz, 0, -wx],
+                     [-wy, wx, 0]])
+
 
 if __name__ =="__main__":
     m = np.array([[0.00841304382668272, 0.9999593387705992, -0.0032467674747619813, 0.06894152758200835],
