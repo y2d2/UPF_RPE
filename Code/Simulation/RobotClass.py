@@ -134,7 +134,7 @@ class NewRobot:
         # integration varibale:
         self.dx_int = np.zeros(4)
         self.q_int = np.zeros((4, 4))
-
+        self.Q_list_bool = False
     #---------------------------
     # Setup functions:
     #---------------------------
@@ -426,7 +426,11 @@ class NewRobot:
         h_slam = [0.]
         dx_slam = np.zeros((1,3 ))
         dh_slam = [0.]
-        self.q = Q
+        if np.array(Q).shape != (4,4):
+            self.Q_list_bool = True
+            self.q = np.append(np.zeros((1,4,4)), Q, axis=0)
+        else:
+            self.q = Q
         for DT in DTs:
             dx_slam = np.vstack((dx_slam,TMF.get_translation(DT)))
             dh_slam.append(TMF.get_rotation_vector(DT)[-1])
@@ -444,7 +448,10 @@ class NewRobot:
         dslam = np.concatenate((self.dx_slam[i], np.array([self.dh_slam[i]])))
         h = get_4d_rot_matrix(self.dx_int[-1])
         self.dx_int = self.dx_int + h @ dslam
-        self.q_int = self.q_int + h @ self.q @ h.T
+        if self.Q_list_bool:
+            self.q_int = self.q_int + h @ self.q[i] @ h.T
+        else:
+            self.q_int = self.q_int + h @ self.q @ h.T
 
     def reset_integration(self):
         dx = self.dx_int.copy()

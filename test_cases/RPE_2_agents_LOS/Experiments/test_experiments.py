@@ -29,7 +29,7 @@ class MyTestCase(unittest.TestCase):
 
 
         result_folder = "Real_Exp_test"
-        data_file = "Experiments/Exp3_SemiNLOS/Measurements/exp3_sec1_los_sampled.pkl"
+        data_file = "./corrections3/exp1_los_sampled.pkl"
         experiment_data, _ = create_experimental_data(data_file, sig_v, sig_w, sig_uwb)
         tas = create_experiment(result_folder, sig_v, sig_w, sig_uwb)
         # tas.run_experiment(methods=[ "upf"], redo_bool=True, experiment_data=experiment_data)

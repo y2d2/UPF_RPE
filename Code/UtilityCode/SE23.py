@@ -1,9 +1,28 @@
 import numpy as np
 import quaternion as quaternion
 
+def get_roll_pitch_yaw_from_SO3(R):
+    q = quaternion.from_rotation_matrix(R)
+    roll, pitch, yaw = quaternion.as_euler_angles(q)
+    return np.array([roll, pitch, yaw])
 
-def get_SO3_rotation_matrix(w, dt):
-    theta = np.linalg.norm(w)*dt
+def get_w_from_SO3(R):
+    w = quaternion.as_rotation_vector(quaternion.from_rotation_matrix(R))
+    return w
+
+# def get_S3_rotation_matrix(w):
+#     theta = np.linalg.norm(w)
+#     if theta == 0:
+#         return np.eye(3)
+#     k = w/np.linalg.norm(w)
+#     K = so3_hat(k)
+#     R = (np.eye(3) + np.sin(theta)*K + (1 - np.cos(theta))*(K @ K))
+#     return R
+
+def get_SO3_rotation_matrix(w, dt=None):
+    if dt is not None:
+        w = w*dt
+    theta = np.linalg.norm(w)
     if theta == 0:
         return np.eye(3)
     k = w/np.linalg.norm(w)

@@ -765,7 +765,10 @@ class TwoAgentSystem():
         # drone1.set_vio_slam(self.experiment_data["drone_1"], self.experiment_data["Q_vio"])
         distances = self.experiment_data["uwb"]
         exp_len = len(self.experiment_data["uwb"])
-        self.factor = int(self.experiment_data["sample_freq"] / self.frequency)
+        if not np.isnan(self.experiment_data["sample_freq"]):
+            self.factor = int(self.experiment_data["sample_freq"] / self.frequency)
+        else:
+            self.factor = 1
         for i in range(0, exp_len - 1):
             if self.debug_bool:
                 print(datetime.now(), " Experiment step: ", i, " /", exp_len)
@@ -788,8 +791,15 @@ class TwoAgentSystem():
                     q_1[2,:] = 1e-8
                     q_1[:,2] = 1e-8
                 uwb_measurement = distances[i]
-                self.los_state.append(int(self.experiment_data["los_state"][i]))
-                self.uwb_error.append(self.experiment_data["uwb_error"][i])
+
+                if "los_state" in self.experiment_data:
+                    self.los_state.append(int(self.experiment_data["los_state"][i]))
+                else:
+                    self.los_state.append(1)
+                if "uwb_error" in self.experiment_data:
+                    self.uwb_error.append(self.experiment_data["uwb_error"][i])
+                else:
+                    self.uwb_error.append(np.nan)
 
                 eval("self.run_" + self.method + "_simulation" + "(dx_0, q_0, dx_1, q_1, uwb_measurement, i)")
 
@@ -1055,7 +1065,10 @@ class TwoAgentSystem():
         x_ha = drone0.x_slam[i+1]
         h_ha = drone0.h_slam[i+1]
         x_ha_0 = np.concatenate([x_ha, np.array([h_ha])])
-        upf0.ha.update(x_ha_0, q_0)
+        if np.all(q_1 == 0):
+            upf0.ha.update(x_ha_0, np.eye(4)*1e-10)
+        else:
+            upf0.ha.update(x_ha_0, q_0)
         # Timing the execution of the algorihtm
         t1 = time.time()
         upf0.run_model(dt_j = dx_1, q_j=q_1, dt_i = dx_0, q_i = q_0, d_ij = uwb_measurement, time_i=i)
@@ -1067,7 +1080,10 @@ class TwoAgentSystem():
         x_ha = drone1.x_slam[i+1]
         h_ha = drone1.h_slam[i+1]
         x_ha_1 = np.concatenate([x_ha, np.array([h_ha])])
-        upf1.ha.update(x_ha_1, q_1)
+        if np.all(q_1 == 0):
+            upf1.ha.update(x_ha_1, np.eye(4)*1e-10)
+        else:
+            upf1.ha.update(x_ha_1, q_1)
         # Timing the execution of the algorihtm
         t3 = time.time()
         upf1.run_model(dt_j = dx_0, q_j=q_0, dt_i =  dx_1, q_i = q_1, d_ij= uwb_measurement, time_i=i)
