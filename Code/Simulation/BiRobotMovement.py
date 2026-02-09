@@ -28,6 +28,11 @@ def run_multi_drone_simulation(time_steps, list_of_drones: List[NewRobot], move_
         kwargs["i"] = i
         move_function(list_of_drones, **kwargs)
 
+def stream_simulation(time_steps, host_agent: NewRobot, connected_agent: NewRobot, move_function, kwargs={}):
+    for i in range(time_steps):
+        kwargs["i"] = i
+        move_function(host_agent, connected_agent, **kwargs)
+        yield i
 
 def run_simulation(time_steps, host_agent: NewRobot, connected_agent: NewRobot, move_function, kwargs={}):
     print(kwargs)
@@ -44,11 +49,12 @@ def fix_connected_2D_host(host: NewRobot, connected: NewRobot, **kwargs):
     control2d.set_control()
     connected.move(w=0, v=np.array([0, 0, 0]))
 
-def both_3D_control(host: NewRobot, connected: NewRobot, **kwargs):
+def both_3D_control(host: NewRobot, connected: NewRobot | None, **kwargs):
     control_host = kwargs.get("control_host")
     control_host.set_control()
-    control_connected = kwargs.get("control_connected")
-    control_connected.set_control()
+    if connected is not None:
+        control_connected = kwargs.get("control_connected")
+        control_connected.set_control()
     # connected.move(w=0, v=np.array([0, 0, 0]))
     # host.move(w=0, v=np.array([0, 0, 0]))
 
@@ -186,8 +192,9 @@ class Control3D(Control1D):
         self.target_time = 0
         self.current_target_time = 0
         self.speed_target = np.array([0,0,0])
+        self.set_random_target = self.set_random_target_spherical
 
-    def set_random_target(self):
+    def set_random_target_spherical(self):
         self.current_target_time = 0
         r = np.random.uniform(0, self.radius)
         theta = np.random.uniform(0, 2 * np.pi)
@@ -201,6 +208,50 @@ class Control3D(Control1D):
         # speed_target_z = np.random.uniform(-self.max_v, self.max_v)
         # self.speed_target = np.array([speed_target_x, speed_target_y, speed_target_z])
         self.target_time = np.random.uniform(self.target_time_max/4, self.target_time_max)
+
+    def set_random_target_cartesian(self):
+        self.current_target_time = 0
+        x = np.random.uniform(-self.l/2, self.l/2)
+        y = np.random.uniform(-self.b/2, self.b/2)
+        z = np.random.uniform(0, self.height)
+        self.target = self.center + np.array([x, y, z])
+        self.angle_target = np.random.uniform(0, 2 * np.pi)
+        self.speed_target = np.random.uniform([-self.max_v, -self.max_v, -self.max_v],
+                                              [self.max_v, self.max_v, self.max_v])
+        # speed_target_x = np.random.uniform(-self.max_v, self.max_v)
+        # speed_target_y = np.random.uniform(-self.max_v, self.max_v)
+        # speed_target_z = np.random.uniform(-self.max_v, self.max_v)
+        # self.speed_target = np.array([speed_target_x, speed_target_y, speed_target_z])
+        self.target_time = np.random.uniform(self.target_time_max / 4, self.target_time_max)
+
+    def pos_control(self):
+        if self.current_target_time >= self.target_time:
+            self.set_random_target()
+        self.current_target_time += 1/self.frequency
+
+        current_position = self.agent.x_real[-1]
+        current_yaw = self.agent.h_real[-1]
+
+        current_velocity = self.agent.v_slam_real[-1]
+        current_rotational_speed = self.agent.w_slam_real[-1]
+        target_position = self.target
+        target_yaw = self.angle_target
+        yaw_error_1 = (target_yaw - current_yaw - np.pi) % (2 * np.pi) - np.pi
+        w_tar = self.p_angle * yaw_error_1
+
+        # Compute position error
+        position_error = target_position - current_position
+        rot_matrix = np.array([[np.cos(current_yaw), np.sin(current_yaw), 0],
+                               [-np.sin(current_yaw), np.cos(current_yaw), 0],
+                               [0, 0, 1]])
+        position_error1 = rot_matrix @ position_error
+        v = self.p_pos * position_error1
+        if np.linalg.norm(position_error1) < 1e-3:
+            yaw_command = np.clip(w_tar, -self.max_w, self.max_w)
+        else:
+            yaw_command = np.clip(w_tar, -self.max_w, self.max_w)
+        velocity_command = np.clip(v, -self.max_v, self.max_v)
+        self.agent.move(yaw_command, velocity_command)
 
     def set_control(self):
         if self.current_target_time >= self.target_time:

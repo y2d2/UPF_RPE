@@ -365,6 +365,10 @@ class NewRobot:
                   color=color, marker="o", linestyle=linestyle, alpha=alpha)
         ax.plot3D(self.x_slam[i, 0], self.x_slam[i, 1], self.x_slam[i, 2],
                   color=color, marker="x", linestyle=linestyle, alpha=alpha)
+        ax.stem([self.x_slam[i, 0]], [self.x_slam[i, 1]], [self.x_slam[i, 2]],
+                basefmt="k^", linefmt="k:", bottom=0)
+        # ax.plot3D(self.x_slam[0:i, 0], self.x_slam[j:i, 1], self.x_slam[j:i, 2],
+                  # color=self.color, marker=self.mark, linestyle=self.linestyle, alpha=alpha)
 
     def plot_slam_error(self, ax = None, annotation="", linestyle="-", color = None, alpha=1, i=-1):
         error = self.x_real - self.x_slam
@@ -422,8 +426,9 @@ class NewRobot:
 
     def set_vio_slam(self, DTs, Q):
         T_slam = self.T0
-        x_slam = np.zeros((1, 3))
-        h_slam = [0.]
+        t_slam = TMF.get_4D_t_from_matrix(T_slam)
+        x_slam = t_slam[0:3].reshape((1,3))
+        h_slam = [t_slam[3]]
         dx_slam = np.zeros((1,3 ))
         dh_slam = [0.]
         if np.array(Q).shape != (4,4):
@@ -504,6 +509,7 @@ class NewRobot:
         with open(file, "wb") as f:
             pkl.dump(traj_dict, f)
         return None
+
 
 if __name__ == "__main__":
     pass

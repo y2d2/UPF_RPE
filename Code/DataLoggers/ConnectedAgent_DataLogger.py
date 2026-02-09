@@ -195,7 +195,7 @@ class UPFConnectedAgentDataLogger:
         # dx_ha_ax.legend()
 
         distance_ax = fig.add_subplot(gs[3, -1])
-        bp_dl.plot_test(distance_ax, los)
+        # bp_dl.plot_test(distance_ax, los)
 
         dx_ha_ax_1 = fig.add_subplot(gs[3, 2])
         label = ["x [m]", "y [m]", "z [m]", "h [(rad)]"]
@@ -234,7 +234,8 @@ class UPFConnectedAgentDataLogger:
         # print(self.upf_connected_agent.best_particle)
         best_particle_log = self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger
         best_particle_log.plot_ca_corrected_estimated_trajectory(ax, color=color, alpha=alpha,
-                                                                   label="Best Particle",  history=history)
+                                                                      label="Best Particle",  history=history)
+        ax.plot(best_particle_log.connected_agent.x_slam[:, 0],best_particle_log.connected_agent.x_slam[:, 1], best_particle_log.connected_agent.x_slam[:, 2], color="tab:blue")
 
     def plot_best_particle_variance_graph(self):
         best_particle_log = self.find_particle_log(self.upf_connected_agent.best_particle).rpea_datalogger

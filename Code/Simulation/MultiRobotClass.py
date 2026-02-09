@@ -786,10 +786,10 @@ class TwoAgentSystem():
                 if self.D2_bool:
                     dx_0[2] = 0
                     dx_1[2] = 0
-                    q_0[2, :] = 1e-8
-                    q_0[:, 2] = 1e-8
-                    q_1[2,:] = 1e-8
-                    q_1[:,2] = 1e-8
+                    q_0[2, :] = 1e-10
+                    q_0[:, 2] = 1e-10
+                    q_1[2,:] = 1e-10
+                    q_1[:,2] = 1e-10
                 uwb_measurement = distances[i]
 
                 if "los_state" in self.experiment_data:
@@ -802,7 +802,7 @@ class TwoAgentSystem():
                     self.uwb_error.append(np.nan)
 
                 eval("self.run_" + self.method + "_simulation" + "(dx_0, q_0, dx_1, q_1, uwb_measurement, i)")
-
+                nothing = "nothing"
         if self.plot_bool:
             plt.close()
         eval("self.end_" + self.method + "_test()")
@@ -1060,15 +1060,16 @@ class TwoAgentSystem():
         # upf1.ha.predict(dx_ha=dx_1, Q_ha=q_1)
         # dx_0, q_0 = upf0.ha.reset_integration()
         # dx_1, q_0 = upf1.ha.reset_integration()
+        if np.all(q_0 == 0):
+            q_0 = np.eye(4)*1e-10
+        if np.all(q_1 == 0):
+            q_1 = np.eye(4)*1e-10
 
         # Drone 0
         x_ha = drone0.x_slam[i+1]
         h_ha = drone0.h_slam[i+1]
         x_ha_0 = np.concatenate([x_ha, np.array([h_ha])])
-        if np.all(q_1 == 0):
-            upf0.ha.update(x_ha_0, np.eye(4)*1e-10)
-        else:
-            upf0.ha.update(x_ha_0, q_0)
+        upf0.ha.update(x_ha_0, q_0)
         # Timing the execution of the algorihtm
         t1 = time.time()
         upf0.run_model(dt_j = dx_1, q_j=q_1, dt_i = dx_0, q_i = q_0, d_ij = uwb_measurement, time_i=i)
@@ -1080,10 +1081,7 @@ class TwoAgentSystem():
         x_ha = drone1.x_slam[i+1]
         h_ha = drone1.h_slam[i+1]
         x_ha_1 = np.concatenate([x_ha, np.array([h_ha])])
-        if np.all(q_1 == 0):
-            upf1.ha.update(x_ha_1, np.eye(4)*1e-10)
-        else:
-            upf1.ha.update(x_ha_1, q_1)
+        upf1.ha.update(x_ha_1, q_1)
         # Timing the execution of the algorihtm
         t3 = time.time()
         upf1.run_model(dt_j = dx_0, q_j=q_0, dt_i =  dx_1, q_i = q_1, d_ij= uwb_measurement, time_i=i)
@@ -1156,17 +1154,18 @@ class TwoAgentSystem():
         with open(self.result_file, "wb") as f:
             pkl.dump(self.data, f)
 
-        try:
-            if self.plot_bool:
-                for agent in self.agents:
-                    # plt.figure()
-                    print(f"plotting {self.current_sim_name} for agent {agent}")
-                    self.agents[agent]["log"].plot_self(self.los_state, title=agent + " " + self.current_sim_name)
-                    # plt.show()
-                    # plt.pause(0.1)
-                    # plt.close()
-        except Exception as e:
-            print(e)
+
+        # try:
+        if self.plot_bool:
+            for agent in self.agents:
+                # plt.figure()
+                print(f"plotting {self.current_sim_name} for agent {agent}")
+                self.agents[agent]["log"].plot_self(self.los_state, title=agent + " " + self.current_sim_name)
+                # plt.show()
+                # plt.pause(0.1)
+                # plt.close()
+        # except Exception as e:
+        #     print(e)
 
     # ----------------------------
     # ---- Benchmark test_na_5_na_8_nh_8 functions ----
