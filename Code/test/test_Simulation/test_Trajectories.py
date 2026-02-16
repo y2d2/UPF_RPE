@@ -2,7 +2,7 @@ import unittest
 
 from Code.Simulation.Trajectories import Trajectory
 from Code.Simulation.Sensors import IMU, VIO_2D, IMU_2D
-from Code.Simulation.Trajectories_Generator import create_ERB, create_ECB, Velocity_Control_2D, trajectory_generator
+from Code.Simulation.Trajectories_Generator import create_ERB, create_ECB, Velocity_Control_2D, trajectory_generator, random_starting_conditions
 import numpy as np
 import matplotlib.pyplot as plt
 import Code.UtilityCode.SE23 as SE23
@@ -87,9 +87,7 @@ class Trajectory_TestCase(unittest.TestCase):
         plt.show()
 
     def test_2D_control_room(self):
-        T_OR = np.eye(4)
-        v_R0 = np.array([0,0,0])
-
+        T_OR,v_R0 =  random_starting_conditions()
         traj = trajectory_generator(T_OR = T_OR, v_R0 = v_R0, dict_of_sensors={}, plt_bool=True)
 
 

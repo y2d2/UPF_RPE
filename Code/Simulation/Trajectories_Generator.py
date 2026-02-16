@@ -4,6 +4,15 @@ import Code.UtilityCode.SE23 as SE23
 import numpy as np
 import matplotlib.pyplot as plt
 
+def random_starting_conditions():
+    t = np.random.uniform([0, 0, 0], [10, 10, 0])
+    w = np.random.uniform(-1, 1)
+    w = np.array([0, 0, w])
+    T_OR = SE23.SE3_from_rot_vec_and_trans(w, t)
+    v_R0 = np.random.uniform(-1, 1, 3)
+    v_R0[-1] = 0
+
+    return T_OR, v_R0
 
 def plot_situation(ax, true_trajectory, targets = None, dict_of_sensors={}):
     ax.cla()
@@ -20,8 +29,6 @@ def plot_situation(ax, true_trajectory, targets = None, dict_of_sensors={}):
         sensor["sensor"].odom_trajectory.plot_trajectory(ax, color=sensor["color"], linestyle=sensor["linestyle"],
                                                          label=sensor["label"])
     ax.legend()
-
-
 
 def trajectory_generator(T_OR = np.eye(4), v_R0 = np.zeros(3), trajectory_time = 100, dt = 0.1,
                          dict_of_sensors = {}, plt_bool = False):
@@ -85,7 +92,7 @@ class Velocity_Control_2D():
         # self.sensor = sensor
         self.traj =  Trajectory(T_OR=T_OR, v_R0= v_R0)
         self.target_height =self.traj.get_current_position()[-1]
-        self.target = [np.zeros(3)]
+        self.target = []
         self.target_theta = [0]
         self.v_max = 0
         self.omega_max  = 0
