@@ -1,13 +1,16 @@
 import numpy as np
 import quaternion as quaternion
 
-def limit_angle(angle: float) -> float:
+def limit_angle_old(angle: float) -> float:
     angle = angle % (2 * np.pi)
     while angle <= -np.pi:
         angle = angle + 2 * np.pi
     while angle > np.pi:
         angle = angle - 2 * np.pi
     return angle
+
+def limit_angle(angle: float) -> float:
+    return np.arctan2(np.sin(angle), np.cos(angle))
 #########################################################################
 # SO(3) Functions
 #########################################################################
@@ -94,9 +97,25 @@ def SE3_get_rotation_vector(T):
     w = w_unit*w_amplitutede
     return w
 
+def SE3_from_rot_vec_and_trans(w, t):
+    T = np.eye(4)
+    T[:3,:3] = quaternion.as_rotation_matrix(quaternion.from_rotation_vector(w))
+    T[:3,-1] = t
+    return T
+
 #########################################################################
 # SE_2(3) Functions
 #########################################################################
+# X is the SE23 element, which is a 5x5 matrix of the form:
+# - [ R, v, t ],
+# T is the SE3 element, which is a 4x4 matrix of the form:
+# - [ R, t ],
+
+def SE23_trim_to_SE3(X):
+    T = np.eye(4)
+    T[:3, :3] = X[:3, :3]
+    T[:3, 3] = X[:3, 4]
+    return T
 
 def SE23_from_w_v_t(w, v, t):
     X = np.eye(5)
@@ -124,7 +143,7 @@ def SIM23_from_v_w_dt(X, v, w, dt):
 
     # a = (dR@v - X[:3,3])/dt
     a = (v - np.transpose(R)@X[:3,3])/dt
-    return SIM23_from_a_w_dt(X, a, w, dt)
+    return SIM23_from_a_w_dt(X, a, w, dt), a
 
 def SE23_from_a_w_dt(X, a, w, dt):
     # Note this is for small increments only
@@ -170,10 +189,10 @@ def SE23_from_SE3s(X1, T2,  t1, t2 ):
     # Returns X2 and dX = X1^-1 @ X2, which is the transformation from R1 to R2.
     X2 = np.eye(5)
     X2[:3,:3] = T2[:3,:3]
-    X2[:3,3] = T2[:3,3]
+    X2[:3,4] = T2[:3,3]
     v2 = (T2[:3,-1] - X1[:3, -1]) / (t2 - t1)
-    dv2 = (v2 - X1[:3,4])
-    X2[:3,4] = dv2
+    dv2 = (v2 - X1[:3,3])
+    X2[:3,3] = X1[:3,:3]@dv2
     dX  = SE23_inverse(X1)@X2
     return X2, dX
 
