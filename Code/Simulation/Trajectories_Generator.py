@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def random_starting_conditions():
-    t = np.random.uniform([0, 0, 0], [10, 10, 0])
+    t = np.random.uniform([-5, -5, 0], [5, 5, 0])
     w = np.random.uniform(-1, 1)
     w = np.array([0, 0, w])
     T_OR = SE23.SE3_from_rot_vec_and_trans(w, t)
@@ -127,8 +127,8 @@ class Velocity_Control_2D():
     def set_random_target(self):
         target = np.zeros(3)
         target[-1] = self.target_height
-        target[0] = np.random.uniform(0, self.l)
-        target[1] = np.random.uniform(0, self.b)
+        target[0] = np.random.uniform(-self.l/2, self.l/2)
+        target[1] = np.random.uniform(-self.b/2, self.b/2)
         self.target.append(target)
         self.target_theta.append(np.random.uniform(0, 2*np.pi))
         self.target_deadline = np.random.uniform( self.max_time/2, self.max_time)
