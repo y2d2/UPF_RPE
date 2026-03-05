@@ -1,4 +1,5 @@
 import numpy as np
+
 import Code.UtilityCode.SE23 as SE23
 
 
@@ -45,10 +46,35 @@ class Trajectory():
                 return position
         return None
 
+    def get_local_state_at_time(self, time) :
+        if time < self.t[0] or time > self.t[-1]:
+            print("Time is out of bounds.")
+
+        for i in range(len(self.t)-1):
+            if self.t[i] <= time <= self.t[i+1]:
+                t1 = self.t[i]
+                t2 = self.t[i+1]
+                X1 = self.X_RRi[i]
+                X2 = self.X_RRi[i+1]
+                # Linear interpolation of the position
+                alpha = (time - t1) / (t2 - t1)
+                position = (1-alpha) * X1[:3,4] + alpha * X2[:3,4]
+                velocity = (1-alpha) * X1[:3,3] + alpha * X2[:3,3]
+
+                # Interpolation of angle:
+                R1 = X1[:3,:3]
+                R2 = X2[:3,:3]
+                angle_vect_1 = SE23.get_w_from_SO3(R1)
+                angle_vect_2 = SE23.get_w_from_SO3(R2)
+                angle_vect = (1-alpha) * angle_vect_1 + alpha * angle_vect_2
+                X = SE23.SE23_from_t_v_rot(position, velocity,  angle_vect)
+                return position, velocity, angle_vect, X
+        return None
 
     def get_current_velocity(self):
         X_ORi = self.X_OR @ self.X_RRi[-1]
         return X_ORi[:3,3]
+
 
     def get_current_orientation(self):
         X_ORi = self.X_OR @ self.X_RRi[-1]

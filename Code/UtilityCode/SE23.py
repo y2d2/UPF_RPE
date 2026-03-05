@@ -182,8 +182,6 @@ def SE23_from_eps(eps):
     t = eps[:3,4]
     return w, v, t
 
-
-
 def SE23_from_SE3s(X1, T2,  t1, t2 ):
     # X1 and T2 have the same base: X1 = X_OR1, T2 = T_OR2. We want to find X2 = X_OR2, so we can find the transformation from X1 to X2, which is the transformation from R1 to R2, which is what we want to find.
     # Returns X2 and dX = X1^-1 @ X2, which is the transformation from R1 to R2.
