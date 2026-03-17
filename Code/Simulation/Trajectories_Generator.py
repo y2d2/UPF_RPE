@@ -30,11 +30,11 @@ def plot_situation(ax, true_trajectory, targets = None, dict_of_sensors={}):
                                                          label=sensor["label"])
     ax.legend()
 
-def trajectory_generator(T_OR = np.eye(4), v_R0 = np.zeros(3), trajectory_time = 100, dt = 0.1,
+def trajectory_generator(T_OR = np.eye(4), v_R0 = np.zeros(3), trajectory_time = 100, dt = 0.1, l = 10, b = 10, z = 2,
                          dict_of_sensors = {}, plt_bool = False):
 
     contr = Velocity_Control_2D(T_OR=T_OR, v_R0=v_R0, dt=dt)
-    contr.set_room_parameters(10, 10, 2)
+    contr.set_room_parameters(l, b, z)
     contr.set_control_parameters(max_speed=1.0, max_rotspeed=np.pi / 4, max_acceleration=0.2,
                                  k_v=0.4, k_omega=1.0, d_switch=0.2, max_time=20)
 
