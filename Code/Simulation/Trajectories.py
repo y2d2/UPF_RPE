@@ -202,5 +202,13 @@ class Trajectory():
         stems.baseline.set_color(color)
         stems.markerline.set_color(color)
 
+    def plot_distance_to_origin(self, ax, label="", format_string="k-"):
+        X_ORi = np.array([self.X_OR @ X_RRi for X_RRi in self.X_RRi])
+        x = X_ORi[:, 0, 4]
+        y = X_ORi[:, 1, 4]
+        z = X_ORi[:, 2, 4]
+        distance = np.sqrt(x**2 + y**2 + z**2)
+        ax.plot(self.t, distance, format_string, label=label)
+
     def save_trajectory(self, filename):
         np.savez(filename, X_OR=self.X_OR, X_RRi=self.X_RRi, dX_i=self.dX_i, t=self.t)

@@ -107,3 +107,7 @@ class InterRobotDistanceSensor():
         self.t.append(time)
         self.d.append(d_noise)
         return d_noise
+
+    def plot(self, ax):
+        ax.plot(self.t, self.d_true, color="g", label="True UWB distance")
+        ax.plot(self.t, self.d, "--b", label="Measured UWB distance")
