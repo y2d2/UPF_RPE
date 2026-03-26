@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/../../../Codebase/POSEIDON_FAIR_enrichment/.idea/POSEIDON_FAIR_enrichment.iml" filepath="$PROJECT_DIR$/../../../Codebase/POSEIDON_FAIR_enrichment/.idea/POSEIDON_FAIR_enrichment.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/UPF_RPE.iml" filepath="$PROJECT_DIR$/.idea/UPF_RPE.iml" />
-    </modules>
-  </component>
-</project>
