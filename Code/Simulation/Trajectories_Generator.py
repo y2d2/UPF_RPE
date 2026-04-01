@@ -31,9 +31,15 @@ def plot_situation(ax, true_trajectory, targets = None, dict_of_sensors={}):
     ax.legend()
 
 def trajectory_generator(T_OR = np.eye(4), v_R0 = np.zeros(3), trajectory_time = 100, dt = 0.1, l = 10, b = 10, z = 2,
-                         dict_of_sensors = {}, plt_bool = False):
+                         dict_of_sensors = {}, plt_bool = False, control_type = '2D'):
 
-    contr = Velocity_Control_2D(T_OR=T_OR, v_R0=v_R0, dt=dt)
+    if control_type == '2D':
+        contr = Velocity_Control_2D(T_OR=T_OR, v_R0=v_R0, dt=dt)
+    elif control_type == '3D':
+        contr = Velocity_Control_3D(T_OR=T_OR, v_R0=v_R0, dt=dt)
+    else:
+        raise ValueError(f"Unknown control_type: {control_type}")
+
     contr.set_room_parameters(l, b, z)
     contr.set_control_parameters(max_speed=1.0, max_rotspeed=np.pi / 4, max_acceleration=0.2,
                                  k_v=0.4, k_omega=1.0, d_switch=0.2, max_time=20)
@@ -53,7 +59,10 @@ def trajectory_generator(T_OR = np.eye(4), v_R0 = np.zeros(3), trajectory_time =
             plt.pause(0.001)
 
     if plt_bool:
+        plt.close(fig)
         plt.ioff()
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
         plot_situation(ax, contr.traj, targets=np.array(contr.target), dict_of_sensors=dict_of_sensors)
         plt.show()
     return contr.traj
@@ -195,4 +204,90 @@ class Velocity_Control_2D():
         v_y = -0.1 * v_RiO[1]
         self.mission_time += self.dt
         a, v, w, time = self.traj.do_step(None, np.array([v_cmd, v_y,0]), np.array([0,0,omega_cmd]), t+self.dt)
+        return a, v, w, time
+
+
+class Velocity_Control_3D(Velocity_Control_2D):
+    def __init__(self, T_OR, v_R0, dt=0.01):
+        super().__init__(T_OR, v_R0, dt)
+        self.target_phi = [0] # Pitch target
+
+    def set_random_target(self):
+        target = np.zeros(3)
+        target[0] = np.random.uniform(-self.l/2, self.l/2)
+        target[1] = np.random.uniform(-self.b/2, self.b/2)
+        target[2] = np.random.uniform(0, self.z)
+        self.target.append(target)
+        self.target_theta.append(np.random.uniform(0, 2*np.pi))
+        self.target_phi.append(np.random.uniform(-np.pi/4, np.pi/4))
+        self.target_deadline = np.random.uniform(self.max_time/2, self.max_time)
+        self.mission_time = 0
+
+    def apply_control(self):
+        if self.mission_time > self.target_deadline:
+            self.set_random_target()
+
+        t_ORi, v_ORi, rot_vec, t = self.traj.get_current_state()
+        v_RiO = self.traj.get_current_body_velocity()
+        v_current = np.linalg.norm(v_ORi)
+
+        # Use SE23 to get roll, pitch, yaw
+        X_ORi = self.traj.X_OR @ self.traj.X_RRi[-1]
+        R_ORi = X_ORi[:3, :3]
+        roll, pitch, yaw = SE23.get_roll_pitch_yaw_from_SO3(R_ORi)
+
+        e = self.target[-1] - t_ORi
+        distance = np.linalg.norm(e)
+        distance_xy = np.linalg.norm(e[:2])
+
+        # --- Heading to target ---
+        theta_goal = np.arctan2(e[1], e[0])
+        phi_goal = np.arctan2(e[2], distance_xy)
+
+        e_theta = SE23.limit_angle(theta_goal - yaw)
+        e_phi = SE23.limit_angle(phi_goal - pitch)
+
+        # --- Final orientation error ---
+        e_theta_f = SE23.limit_angle(self.target_theta[-1] - yaw)
+        e_phi_f = SE23.limit_angle(self.target_phi[-1] - pitch)
+
+        # --- Angular velocity command ---
+        if distance > self.d_switch:
+            omega_yaw_cmd = self.k_omega * e_theta
+            omega_pitch_cmd = self.k_omega * e_phi
+            k_v = self.k_v
+        else:
+            omega_yaw_cmd = self.k_omega * e_theta_f
+            omega_pitch_cmd = self.k_omega * e_phi_f
+            k_v = self.k_v / 10
+
+        omega_yaw_cmd = max(-self.omega_max, min(omega_yaw_cmd, self.omega_max))
+        omega_pitch_cmd = max(-self.omega_max, min(omega_pitch_cmd, self.omega_max))
+
+        # --- Linear velocity command (distance-based) ---
+        v_des = k_v * distance
+
+        # No reverse driving
+        v_cmd_raw = max(0.0, v_des)
+
+        # Speed limit
+        v_cmd_raw = min(v_cmd_raw, self.v_max)
+        # Reduce speed based on angular error (both yaw and pitch)
+        v_cmd_raw = v_cmd_raw * np.cos(e_theta) * np.cos(e_phi)
+
+        # --- Acceleration limiting ---
+        dv_max = self.a_max * self.dt
+        v_cmd = max(
+            v_current - dv_max,
+            min(v_cmd_raw, v_current + dv_max)
+        )
+
+        # --- Damping for lateral and vertical velocities ---
+        v_y = -0.1 * v_RiO[1]
+        v_z = -0.1 * v_RiO[2]
+
+        self.mission_time += self.dt
+        # w in body frame: [roll_rate, pitch_rate, yaw_rate]
+        # Here we only control pitch and yaw rates.
+        a, v, w, time = self.traj.do_step(None, np.array([v_cmd, v_y, v_z]), np.array([0, omega_pitch_cmd, omega_yaw_cmd]), t + self.dt)
         return a, v, w, time

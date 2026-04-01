@@ -90,6 +90,9 @@ class Trajectory_TestCase(unittest.TestCase):
         T_OR,v_R0 =  random_starting_conditions()
         traj = trajectory_generator(T_OR = T_OR, v_R0 = v_R0, dict_of_sensors={}, plt_bool=True)
 
+    def test_3D_control_room(self):
+        T_OR,v_R0 =  random_starting_conditions()
+        traj = trajectory_generator(T_OR = T_OR, v_R0 = v_R0, dict_of_sensors={}, plt_bool=True, control_type='3D')
 
 
 if __name__ == '__main__':
