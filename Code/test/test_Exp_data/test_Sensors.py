@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 import numpy as np
 
@@ -8,6 +9,16 @@ try:
     HAS_EXP_DATA_DEPS = True
 except ImportError:
     HAS_EXP_DATA_DEPS = False
+
+try:
+    import rosbags  # noqa: F401
+    HAS_ROSBAGS = True
+except ImportError:
+    HAS_ROSBAGS = False
+
+
+TB2_BAG = Path("/workspace/Ptyhon/https-github.com-y2d2-PRP_ARP_M/test_cases/exp_data/tb2_exp_2026_04_21-11_21_04")
+IMU_BAG = Path("/workspace/Ptyhon/https-github.com-y2d2-PRP_ARP_M/test_cases/exp_data/imu_esp_uwb_2026_04_16-07_28_17")
 
 
 @unittest.skipUnless(HAS_EXP_DATA_DEPS, "This test requires the UPF_RPE optional math dependencies.")
@@ -95,6 +106,69 @@ class TestMeasuredSensors(unittest.TestCase):
         self.assertIsNone(v)
         self.assertTrue(np.allclose(a, np.array([2.0, 0.0, 0.0])))
         self.assertTrue(np.allclose(w, np.array([0.0, 0.0, 2.0])))
+
+
+@unittest.skipUnless(HAS_EXP_DATA_DEPS, "This test requires the UPF_RPE optional math dependencies.")
+@unittest.skipUnless(HAS_ROSBAGS, "This test requires the 'rosbags' package.")
+class TestMeasuredSensorPlots(unittest.TestCase):
+    def test_plot_vio_trajectory_from_bag(self):
+        import matplotlib.pyplot as plt
+
+        vio = VIO.from_rosbag(TB2_BAG, odom_topic="/tb2/odom")
+
+        figure, axis = plt.subplots()
+        vio.odom_trajectory.plot_trajectory(axis, label="TB2 VIO", color="tab:blue")
+        axis.set_title("TB2 VIO trajectory")
+        axis.set_xlabel("x [m]")
+        axis.set_ylabel("y [m]")
+        axis.grid(True)
+        axis.axis("equal")
+        axis.legend()
+        plt.show()
+
+    def test_plot_imu_trajectory_from_bag(self):
+        import matplotlib.pyplot as plt
+
+        imu = IMU.from_rosbag(IMU_BAG, imu_topic="/a200_0957/sensors/imu_0/data")
+
+        figure, axis = plt.subplots()
+        imu.odom_trajectory.plot_trajectory(axis, label="Jazzy IMU", color="tab:orange")
+        axis.set_title("Jazzy IMU integrated trajectory")
+        axis.set_xlabel("x [m]")
+        axis.set_ylabel("y [m]")
+        axis.grid(True)
+        axis.axis("equal")
+        axis.legend()
+        plt.show()
+
+    def test_plot_esp_imu_trajectory_from_bag(self):
+        import matplotlib.pyplot as plt
+
+        esp_imu = ESP_IMU.from_rosbag(TB2_BAG, packet_topic="/tb2/uwb")
+
+        figure, axis = plt.subplots()
+        esp_imu.plot_trajectory(axis, label="TB2 ESP IMU", color="tab:green")
+        axis.set_title("TB2 ESP IMU integrated trajectory")
+        axis.set_xlabel("x [m]")
+        axis.set_ylabel("y [m]")
+        axis.grid(True)
+        axis.axis("equal")
+        axis.legend()
+        plt.show()
+
+    def test_plot_interrobot_distance_from_bag(self):
+        import matplotlib.pyplot as plt
+
+        uwb = InterRobotDistanceSensor.from_rosbag(TB2_BAG, uwb_topic="/tb2/uwb")
+
+        figure, axis = plt.subplots()
+        uwb.plot(axis, label="TB2 measured UWB distance")
+        axis.set_title("TB2 UWB distance")
+        axis.set_xlabel("time [s]")
+        axis.set_ylabel("distance [m]")
+        axis.grid(True)
+        axis.legend()
+        plt.show()
 
 
 if __name__ == "__main__":

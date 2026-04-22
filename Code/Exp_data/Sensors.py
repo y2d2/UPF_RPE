@@ -281,6 +281,18 @@ class MeasuredTrajectory:
         for i, time in enumerate(self.t):
             yield self.a_body[i], self.v_body[i], self.w_body[i], time
 
+    def plot_trajectory(self, ax, label="", color="k", linestyle="-", marker=""):
+        if self.T_global.shape[0] == 0:
+            return
+        positions = self.T_global[:, :3, 3]
+        x = positions[:, 0]
+        y = positions[:, 1]
+        z = positions[:, 2]
+        if hasattr(ax, "plot3D"):
+            ax.plot3D(x, y, z, label=label, color=color, linestyle=linestyle, marker=marker)
+        else:
+            ax.plot(x, y, label=label, color=color, linestyle=linestyle, marker=marker)
+
 
 class OdometrySensor:
     def __init__(self, trajectory=None, velocity_bool=False):
@@ -515,6 +527,46 @@ class ESP_IMU:
         w = _interpolate_vector(self.t[idx], self.t[idx + 1], self.w_body[idx], self.w_body[idx + 1], time)
         return a, None, w
 
+    def to_measured_trajectory(self, T_OR=None, v_R0=None):
+        if len(self.t) == 0:
+            return MeasuredTrajectory()
+
+        if T_OR is None:
+            T_OR = np.eye(4)
+        if v_R0 is None:
+            v_R0 = np.zeros(3)
+
+        T_global = [np.array(T_OR, dtype=float)]
+        velocities = [np.array(v_R0, dtype=float)]
+        for i in range(1, len(self.t)):
+            dt = self.t[i] - self.t[i - 1]
+            if dt < 0:
+                continue
+            T_prev = T_global[-1]
+            v_prev = velocities[-1]
+            R_prev = T_prev[:3, :3]
+            a_prev = np.array(self.a_body[i - 1], dtype=float)
+            w_prev = np.array(self.w_body[i - 1], dtype=float)
+            R_new = R_prev @ SE23.get_SO3_rotation_matrix(w_prev, dt)
+            v_new = v_prev + a_prev * dt
+            p_new = T_prev[:3, 3] + (R_prev @ v_prev) * dt + 0.5 * (R_prev @ a_prev) * dt ** 2
+            T_new = np.eye(4)
+            T_new[:3, :3] = R_new
+            T_new[:3, 3] = p_new
+            T_global.append(T_new)
+            velocities.append(v_new)
+
+        return MeasuredTrajectory(T_global, self.t, v_body=velocities, w_body=self.w_body, a_body=self.a_body)
+
+    def plot_trajectory(self, ax, label="", color="k", linestyle="-", marker="", T_OR=None, v_R0=None):
+        self.to_measured_trajectory(T_OR=T_OR, v_R0=v_R0).plot_trajectory(
+            ax=ax,
+            label=label,
+            color=color,
+            linestyle=linestyle,
+            marker=marker,
+        )
+
 
 class InterRobotDistanceSensor:
     def __init__(self, t=None, d=None, d_true=None, raw_packets=None, packet_decoder=None, range_ids=None):
@@ -566,3 +618,11 @@ class InterRobotDistanceSensor:
         if idx >= len(self.t) - 1 or self.t[idx] == time:
             return self.d[idx]
         return float(_interpolate_vector(self.t[idx], self.t[idx + 1], self.d[idx], self.d[idx + 1], time))
+
+    def plot(self, ax=None, label="Measured UWB distance", true_label="True UWB distance"):
+        if ax is None:
+            import matplotlib.pyplot as plt
+            ax = plt
+        if self.d_true:
+            ax.plot(self.t[:len(self.d_true)], self.d_true, label=true_label, color="g")
+        ax.plot(self.t[:len(self.d)], self.d, label=label, color="b")
