@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -8,6 +9,8 @@ import Code.UtilityCode.SE23 as SE23
 
 ESP_PACKET_MSG_TYPE = "ros2_esp_bridge/msg/EspPacketStamped"
 ESP_PACKET_MSG_DEF = "std_msgs/Header header\nstring raw_packet\n"
+ESP_IMU_SAMPLE_FIELD_COUNT = 15
+ESP_RANGE_FIELD_COUNT = 4
 
 
 def _interpolate_vector(t0, t1, value0, value1, time):
@@ -39,6 +42,142 @@ def _load_rosbag_reader():
             "Bag-based Exp_data sensors require the 'rosbags' package."
         ) from exc
     return Reader, Stores, get_types_from_msg, get_typestore
+
+
+@dataclass
+class EspImuSample:
+    time_ms: int
+    temperature: float
+    ax: float
+    ay: float
+    az: float
+    gx: float
+    gy: float
+    gz: float
+    mx: float
+    my: float
+    mz: float
+    q0: float
+    q1: float
+    q2: float
+    q3: float
+    ros_time: float | None = None
+
+
+@dataclass
+class EspRangeMeasurement:
+    rid: int
+    dist_m: float
+    fp_rssi: int
+    rx_rssi: int
+
+
+@dataclass
+class EspPacket:
+    packet_id: int
+    packet_time: int
+    imu_sample_count: int
+    imu_dropped_samples: int
+    imu_time_ms: int
+    imu_point_count: int
+    imu_samples: list[EspImuSample] = field(default_factory=list)
+    valid_ranges: int = 0
+    ranges: list[EspRangeMeasurement] = field(default_factory=list)
+
+
+class EspPacketParser:
+    @staticmethod
+    def _normalize_row(row):
+        normalized = list(row)
+        while normalized and normalized[-1] == "":
+            normalized.pop()
+        return normalized
+
+    @staticmethod
+    def parse_row(row):
+        normalized = EspPacketParser._normalize_row(row)
+        if len(normalized) < 6:
+            raise ValueError(f"Row too short to parse packet: {normalized}")
+
+        packet_id = int(normalized[0])
+        packet_time = int(normalized[1])
+        imu_sample_count = int(normalized[2])
+        imu_dropped_samples = int(normalized[3])
+        imu_time_ms = int(normalized[4])
+        imu_point_count = int(normalized[5])
+
+        cursor = 6
+        imu_samples = []
+        for _ in range(imu_point_count):
+            next_cursor = cursor + ESP_IMU_SAMPLE_FIELD_COUNT
+            if next_cursor > len(normalized):
+                raise ValueError(f"Not enough fields for {imu_point_count} IMU samples: {normalized}")
+            fields = normalized[cursor:next_cursor]
+            imu_samples.append(
+                EspImuSample(
+                    time_ms=int(fields[0]),
+                    temperature=float(fields[1]),
+                    ax=float(fields[2]),
+                    ay=float(fields[3]),
+                    az=float(fields[4]),
+                    gx=float(fields[5]),
+                    gy=float(fields[6]),
+                    gz=float(fields[7]),
+                    mx=float(fields[8]),
+                    my=float(fields[9]),
+                    mz=float(fields[10]),
+                    q0=float(fields[11]),
+                    q1=float(fields[12]),
+                    q2=float(fields[13]),
+                    q3=float(fields[14]),
+                )
+            )
+            cursor = next_cursor
+
+        if cursor >= len(normalized):
+            raise ValueError(f"Missing valid_ranges field: {normalized}")
+
+        valid_ranges = int(normalized[cursor])
+        cursor += 1
+
+        ranges = []
+        for _ in range(valid_ranges):
+            next_cursor = cursor + ESP_RANGE_FIELD_COUNT
+            if next_cursor > len(normalized):
+                raise ValueError(f"Not enough fields for {valid_ranges} ranges: {normalized}")
+            fields = normalized[cursor:next_cursor]
+            ranges.append(
+                EspRangeMeasurement(
+                    rid=int(fields[0]),
+                    dist_m=float(fields[1]),
+                    fp_rssi=int(fields[2]),
+                    rx_rssi=int(fields[3]),
+                )
+            )
+            cursor = next_cursor
+
+        if cursor != len(normalized):
+            raise ValueError(f"Unexpected trailing fields: {normalized[cursor:]}")
+
+        return EspPacket(
+            packet_id=packet_id,
+            packet_time=packet_time,
+            imu_sample_count=imu_sample_count,
+            imu_dropped_samples=imu_dropped_samples,
+            imu_time_ms=imu_time_ms,
+            imu_point_count=imu_point_count,
+            imu_samples=imu_samples,
+            valid_ranges=valid_ranges,
+            ranges=ranges,
+        )
+
+    @staticmethod
+    def parse_packet_string(packet_string):
+        return EspPacketParser.parse_row(packet_string.split(";"))
+
+
+def _message_stamp_to_time(msg):
+    return msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
 
 
 class MeasuredTrajectory:
@@ -189,6 +328,21 @@ class OdometrySensor:
                 decode_type = msgtype or connection.msgtype
                 yield typestore.deserialize_cdr(rawdata, decode_type)
 
+    @classmethod
+    def _esp_packets_from_rosbag(cls, bag_path, topic):
+        for msg in cls._messages_from_topic(
+            bag_path,
+            topic,
+            msgtype=ESP_PACKET_MSG_TYPE,
+            register_esp=True,
+        ):
+            ros_time = _message_stamp_to_time(msg)
+            try:
+                packet = EspPacketParser.parse_packet_string(msg.raw_packet)
+            except ValueError:
+                continue
+            yield ros_time, packet
+
 
 class VIO(OdometrySensor):
     def __init__(self, trajectory=None):
@@ -317,8 +471,53 @@ class IMU_2D(IMU):
         return a, None, w
 
 
+class ESP_IMU:
+    def __init__(self, t=None, raw_time_ms=None, a_body=None, w_body=None, m_body=None, temperature=None, q=None):
+        self.t = [] if t is None else list(np.array(t, dtype=float))
+        self.raw_time_ms = [] if raw_time_ms is None else list(np.array(raw_time_ms, dtype=int))
+        self.a_body = np.empty((0, 3)) if a_body is None else np.array(a_body, dtype=float)
+        self.w_body = np.empty((0, 3)) if w_body is None else np.array(w_body, dtype=float)
+        self.m_body = np.empty((0, 3)) if m_body is None else np.array(m_body, dtype=float)
+        self.temperature = np.empty((0,)) if temperature is None else np.array(temperature, dtype=float)
+        self.q = np.empty((0, 4)) if q is None else np.array(q, dtype=float)
+
+    @classmethod
+    def from_rosbag(cls, bag_path, packet_topic="/tb2/uwb"):
+        samples = []
+        for ros_time, packet in OdometrySensor._esp_packets_from_rosbag(bag_path, packet_topic):
+            for sample in packet.imu_samples:
+                sample.ros_time = ros_time - (packet.imu_time_ms - sample.time_ms) / 1000.0
+                samples.append(sample)
+
+        samples.sort(key=lambda sample: (sample.ros_time, sample.time_ms))
+        if not samples:
+            return cls()
+
+        return cls(
+            t=[sample.ros_time for sample in samples],
+            raw_time_ms=[sample.time_ms for sample in samples],
+            a_body=[[sample.ax, sample.ay, sample.az] for sample in samples],
+            w_body=[[sample.gx, sample.gy, sample.gz] for sample in samples],
+            m_body=[[sample.mx, sample.my, sample.mz] for sample in samples],
+            temperature=[sample.temperature for sample in samples],
+            q=[[sample.q0, sample.q1, sample.q2, sample.q3] for sample in samples],
+        )
+
+    def get_new_measurement(self, time):
+        idx = _find_segment(self.t, time)
+        if idx is None:
+            print("Time is out of bounds.")
+            return None, None, None
+        if idx >= len(self.t) - 1 or self.t[idx] == time:
+            return self.a_body[idx], None, self.w_body[idx]
+
+        a = _interpolate_vector(self.t[idx], self.t[idx + 1], self.a_body[idx], self.a_body[idx + 1], time)
+        w = _interpolate_vector(self.t[idx], self.t[idx + 1], self.w_body[idx], self.w_body[idx + 1], time)
+        return a, None, w
+
+
 class InterRobotDistanceSensor:
-    def __init__(self, t=None, d=None, d_true=None, raw_packets=None, packet_decoder=None):
+    def __init__(self, t=None, d=None, d_true=None, raw_packets=None, packet_decoder=None, range_ids=None):
         self.t = [] if t is None else list(np.array(t, dtype=float))
         if d is None:
             self.d = [None] * len(self.t)
@@ -326,43 +525,44 @@ class InterRobotDistanceSensor:
             self.d = list(np.array(d, dtype=float))
         self.d_true = [] if d_true is None else list(np.array(d_true, dtype=float))
         self.raw_packets = [] if raw_packets is None else list(raw_packets)
+        self.range_ids = [] if range_ids is None else list(np.array(range_ids, dtype=int))
         self.packet_decoder = packet_decoder or self.default_packet_decoder
 
     @staticmethod
     def default_packet_decoder(raw_packet):
-        values = re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", raw_packet)
-        if not values:
+        packet = EspPacketParser.parse_packet_string(raw_packet)
+        if not packet.ranges:
             raise ValueError(f"Could not decode a distance from raw packet: {raw_packet}")
-        for value in reversed(values):
-            distance = float(value)
-            if distance > 0:
-                return distance
-        return float(values[-1])
+        return packet.ranges[0].dist_m
 
     @classmethod
-    def from_rosbag(cls, bag_path, uwb_topic="/tb2/uwb", packet_decoder=None):
+    def from_rosbag(cls, bag_path, uwb_topic="/tb2/uwb", packet_decoder=None, range_id=None):
         times = []
-        raw_packets = []
-        for msg in OdometrySensor._messages_from_topic(
-            bag_path,
-            uwb_topic,
-            msgtype=ESP_PACKET_MSG_TYPE,
-            register_esp=True,
-        ):
-            stamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-            times.append(stamp)
-            raw_packets.append(msg.raw_packet)
-        return cls(t=times, raw_packets=raw_packets, packet_decoder=packet_decoder)
+        distances = []
+        range_ids = []
+        for ros_time, packet in OdometrySensor._esp_packets_from_rosbag(bag_path, uwb_topic):
+            if not packet.ranges:
+                continue
+            range_measurement = None
+            if range_id is None:
+                range_measurement = packet.ranges[0]
+            else:
+                for measurement in packet.ranges:
+                    if measurement.rid == range_id:
+                        range_measurement = measurement
+                        break
+            if range_measurement is None:
+                continue
+            times.append(ros_time)
+            distances.append(range_measurement.dist_m)
+            range_ids.append(range_measurement.rid)
+        return cls(t=times, d=distances, packet_decoder=packet_decoder, range_ids=range_ids)
 
     def get_new_measurement(self, time):
         idx = _find_segment(self.t, time)
         if idx is None:
             print("Time is out of bounds.")
             return None
-        if self.d[idx] is None and idx < len(self.raw_packets):
-            self.d[idx] = self.packet_decoder(self.raw_packets[idx])
         if idx >= len(self.t) - 1 or self.t[idx] == time:
             return self.d[idx]
-        if self.d[idx + 1] is None and idx + 1 < len(self.raw_packets):
-            self.d[idx + 1] = self.packet_decoder(self.raw_packets[idx + 1])
         return float(_interpolate_vector(self.t[idx], self.t[idx + 1], self.d[idx], self.d[idx + 1], time))
