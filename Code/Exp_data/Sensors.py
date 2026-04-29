@@ -295,6 +295,8 @@ class MeasuredTrajectory:
 
 
 class OdometrySensor:
+    # TODO : remove the true trajectory. This is uknown. In stead make an addtional class from Odometry Sensor that is called GT position>
+    # This could then be used to Import VICON or similar data.
     def __init__(self, trajectory=None, velocity_bool=False):
         self.true_trajectory = trajectory
         self.odom_trajectory = trajectory
@@ -625,4 +627,5 @@ class InterRobotDistanceSensor:
             ax = plt
         if self.d_true:
             ax.plot(self.t[:len(self.d_true)], self.d_true, label=true_label, color="g")
-        ax.plot(self.t[:len(self.d)], self.d, label=label, color="b")
+        ax.plot(self.t[:len(self.d)], self.d, label=label, color="b", linestyle="", marker="x")
+        ax.legend()
