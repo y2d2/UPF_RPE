@@ -180,6 +180,32 @@ def _message_stamp_to_time(msg):
     return msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
 
 
+def _message_pose(msg):
+    pose = msg.pose
+    if hasattr(pose, "pose"):
+        return pose.pose
+    return pose
+
+
+def _message_pose_to_transform(msg):
+    pose = _message_pose(msg)
+    p = np.array([
+        pose.position.x,
+        pose.position.y,
+        pose.position.z,
+    ])
+    q = np.array([
+        pose.orientation.w,
+        pose.orientation.x,
+        pose.orientation.y,
+        pose.orientation.z,
+    ])
+    T = np.eye(4)
+    T[:3, :3] = SE23.quaternion.as_rotation_matrix(SE23.quaternion.from_float_array(q))
+    T[:3, 3] = p
+    return T
+
+
 class MeasuredTrajectory:
     def __init__(self, T_global=None, time=None, v_body=None, w_body=None, a_body=None):
         self.T_global = np.empty((0, 4, 4))
@@ -295,14 +321,13 @@ class MeasuredTrajectory:
 
 
 class OdometrySensor:
-    # TODO : remove the true trajectory. This is uknown. In stead make an addtional class from Odometry Sensor that is called GT position>
-    # This could then be used to Import VICON or similar data.
     def __init__(self, trajectory=None, velocity_bool=False):
-        self.true_trajectory = trajectory
         self.odom_trajectory = trajectory
         self.velocity_bool = velocity_bool
 
     def sensor_measurement(self, time):
+        if self.odom_trajectory is None:
+            return None, None, None
         state = self.odom_trajectory.get_local_state_at_time(time)
         if state is None:
             return None, None, None
@@ -310,8 +335,24 @@ class OdometrySensor:
         idx = _find_segment(self.odom_trajectory.t, time)
         if idx is None:
             return None, None, None
-        a = self.odom_trajectory.a_body[idx]
-        w = self.odom_trajectory.w_body[idx]
+        if idx >= len(self.odom_trajectory.t) - 1 or self.odom_trajectory.t[idx] == time:
+            a = self.odom_trajectory.a_body[idx]
+            w = self.odom_trajectory.w_body[idx]
+        else:
+            a = _interpolate_vector(
+                self.odom_trajectory.t[idx],
+                self.odom_trajectory.t[idx + 1],
+                self.odom_trajectory.a_body[idx],
+                self.odom_trajectory.a_body[idx + 1],
+                time,
+            )
+            w = _interpolate_vector(
+                self.odom_trajectory.t[idx],
+                self.odom_trajectory.t[idx + 1],
+                self.odom_trajectory.w_body[idx],
+                self.odom_trajectory.w_body[idx + 1],
+                time,
+            )
         if self.velocity_bool:
             return None, velocity, w
         return a, None, w
@@ -358,6 +399,36 @@ class OdometrySensor:
             yield ros_time, packet
 
 
+class GTPosition(OdometrySensor):
+    def __init__(self, trajectory=None):
+        super().__init__(trajectory=trajectory, velocity_bool=False)
+
+    def sensor_measurement(self, time):
+        if self.odom_trajectory is None:
+            return None
+        return self.odom_trajectory.get_global_postion_at_time(time)
+
+    def get_new_measurement(self, *args, **kwargs):
+        if "time" in kwargs:
+            time = kwargs["time"]
+        elif len(args) == 1:
+            time = args[0]
+        else:
+            raise TypeError("GT position sensors expect a time argument.")
+        return self.sensor_measurement(time)
+
+    @classmethod
+    def from_rosbag(cls, bag_path, pose_topic="/vicon/pose"):
+        times = []
+        T_global = []
+        for msg in cls._messages_from_topic(bag_path, pose_topic):
+            times.append(_message_stamp_to_time(msg))
+            T_global.append(_message_pose_to_transform(msg))
+
+        trajectory = MeasuredTrajectory(T_global, times)
+        return cls(trajectory=trajectory)
+
+
 class VIO(OdometrySensor):
     def __init__(self, trajectory=None):
         super().__init__(trajectory=trajectory, velocity_bool=True)
@@ -369,23 +440,8 @@ class VIO(OdometrySensor):
         v_body = []
         w_body = []
         for msg in cls._messages_from_topic(bag_path, odom_topic):
-            stamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-            p = np.array([
-                msg.pose.pose.position.x,
-                msg.pose.pose.position.y,
-                msg.pose.pose.position.z,
-            ])
-            q = np.array([
-                msg.pose.pose.orientation.w,
-                msg.pose.pose.orientation.x,
-                msg.pose.pose.orientation.y,
-                msg.pose.pose.orientation.z,
-            ])
-            T = np.eye(4)
-            T[:3, :3] = SE23.quaternion.as_rotation_matrix(SE23.quaternion.from_float_array(q))
-            T[:3, 3] = p
-            times.append(stamp)
-            T_global.append(T)
+            times.append(_message_stamp_to_time(msg))
+            T_global.append(_message_pose_to_transform(msg))
             v_body.append([
                 msg.twist.twist.linear.x,
                 msg.twist.twist.linear.y,

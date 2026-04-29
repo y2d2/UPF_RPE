@@ -4,7 +4,18 @@ from pathlib import Path
 import numpy as np
 
 try:
-    from Code.Exp_data.Sensors import ESP_IMU, EspPacketParser, IMU, InterRobotDistanceSensor, MeasuredTrajectory, VIO
+    from Code.Exp_data.Sensors import (
+        ESP_IMU,
+        EspPacketParser,
+        GTPosition,
+        IMU,
+        IMU_2D,
+        InterRobotDistanceSensor,
+        MeasuredTrajectory,
+        OdometrySensor,
+        VIO,
+        VIO_2D,
+    )
     import Code.UtilityCode.SE23 as SE23
     HAS_EXP_DATA_DEPS = True
 except ImportError:
@@ -23,6 +34,17 @@ IMU_BAG = Path("/workspace/Ptyhon/https-github.com-y2d2-PRP_ARP_M/test_cases/exp
 
 @unittest.skipUnless(HAS_EXP_DATA_DEPS, "This test requires the UPF_RPE optional math dependencies.")
 class TestMeasuredSensors(unittest.TestCase):
+    def _trajectory(self):
+        T0 = np.eye(4)
+        T1 = SE23.SE3_from_rot_vec_and_trans(np.array([0.0, 0.0, 0.2]), np.array([1.0, 2.0, 3.0]))
+        return MeasuredTrajectory(
+            T_global=[T0, T1],
+            time=[0.0, 1.0],
+            v_body=[[0.0, 0.0, 0.0], [1.0, 2.0, 3.0]],
+            w_body=[[0.0, 0.0, 0.0], [0.1, 0.2, 0.3]],
+            a_body=[[0.0, 0.0, 0.0], [4.0, 5.0, 6.0]],
+        )
+
     def test_measured_trajectory_interpolates_state(self):
         T0 = np.eye(4)
         T1 = SE23.SE3_from_rot_vec_and_trans(np.array([0.0, 0.0, 0.2]), np.array([1.0, 0.0, 0.0]))
@@ -37,6 +59,11 @@ class TestMeasuredSensors(unittest.TestCase):
         self.assertTrue(np.allclose(position, np.array([0.5, 0.0, 0.0])))
         self.assertTrue(np.allclose(velocity, np.array([0.5, 0.0, 0.0])))
         self.assertAlmostEqual(rotation[2], 0.1, places=6)
+
+    def test_odometry_sensor_has_no_true_trajectory(self):
+        sensor = OdometrySensor(trajectory=self._trajectory())
+        self.assertFalse(hasattr(sensor, "true_trajectory"))
+        self.assertIsNotNone(sensor.odom_trajectory)
 
     def test_vio_sensor_returns_velocity_measurement(self):
         T0 = np.eye(4)
@@ -54,6 +81,14 @@ class TestMeasuredSensors(unittest.TestCase):
         self.assertTrue(np.allclose(v, np.array([0.5, 0.0, 0.0])))
         self.assertTrue(np.allclose(w, np.array([0.0, 0.0, 0.05])))
 
+    def test_vio_2d_sensor_flattens_vertical_components(self):
+        sensor = VIO_2D(trajectory=self._trajectory())
+
+        a, v, w = sensor.get_new_measurement(time=0.5)
+        self.assertIsNone(a)
+        self.assertTrue(np.allclose(v, np.array([0.5, 1.0, 0.0])))
+        self.assertTrue(np.allclose(w, np.array([0.0, 0.0, 0.15])))
+
     def test_imu_sensor_returns_acceleration_measurement(self):
         T0 = np.eye(4)
         T1 = SE23.SE3_from_rot_vec_and_trans(np.zeros(3), np.array([0.5, 0.0, 0.0]))
@@ -70,6 +105,20 @@ class TestMeasuredSensors(unittest.TestCase):
         self.assertTrue(np.allclose(a, np.array([1.0, 0.0, 0.0])))
         self.assertIsNone(v)
         self.assertTrue(np.allclose(w, np.array([0.0, 0.0, 0.1])))
+
+    def test_imu_2d_sensor_flattens_vertical_components(self):
+        sensor = IMU_2D(trajectory=self._trajectory())
+
+        a, v, w = sensor.get_new_measurement(time=0.5)
+        self.assertTrue(np.allclose(a, np.array([2.0, 2.5, 0.0])))
+        self.assertIsNone(v)
+        self.assertTrue(np.allclose(w, np.array([0.0, 0.0, 0.15])))
+
+    def test_gt_position_returns_global_position(self):
+        sensor = GTPosition(trajectory=self._trajectory())
+
+        position = sensor.get_new_measurement(time=0.5)
+        self.assertTrue(np.allclose(position, np.array([0.5, 1.0, 1.5])))
 
     def test_range_sensor_interpolates_distances(self):
         sensor = InterRobotDistanceSensor(t=[0.0, 1.0], d=[1.0, 3.0])
