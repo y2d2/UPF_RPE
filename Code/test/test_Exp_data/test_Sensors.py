@@ -28,8 +28,8 @@ except ImportError:
     HAS_ROSBAGS = False
 
 
-TB2_BAG = Path("/workspace/Ptyhon/https-github.com-y2d2-PRP_ARP_M/test_cases/exp_data/tb2_exp_2026_04_21-11_21_04")
-IMU_BAG = Path("/workspace/Ptyhon/https-github.com-y2d2-PRP_ARP_M/test_cases/exp_data/imu_esp_uwb_2026_04_16-07_28_17")
+TB2_BAG = Path("/workspace/Python/https-github.com-y2d2-PRP_ARP_M/test_cases/exp_data/tb2_exp_2026_04_21-11_21_04")
+IMU_BAG = Path("/workspace/Python/https-github.com-y2d2-PRP_ARP_M/test_cases/exp_data/imu_esp_uwb_2026_04_16-07_28_17")
 
 
 @unittest.skipUnless(HAS_EXP_DATA_DEPS, "This test requires the UPF_RPE optional math dependencies.")
