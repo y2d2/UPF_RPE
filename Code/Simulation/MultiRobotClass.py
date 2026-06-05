@@ -624,6 +624,15 @@ class TwoAgentSystem():
         name = "c".join(name.split("."))
         name = "n".join(name.split("-"))
         name = "_s_".join(name.split("/"))
+        name = "nl".join(name.split("num_layers"))
+        name = "lr".join(name.split("learning_rate"))
+        name= "hs".join(name.split("hidden_size"))
+        name = "tl".join(name.split("training_length"))
+        name = "mp".join(name.split("model_path"))
+        name = "suf".join(name.split("sigma_uwb_factor"))
+        name = "rf".join(name.split("resample_factor"))
+        name = "mpar".join(name.split("multi_particles"))
+        name = "md".join(name.split("max_dis"))
         self.result_file = os.path.join(self.result_folder, name + ".pkl")
         if (not os.path.isfile(self.result_file) or redo_bool):
             self.data = {}
@@ -731,15 +740,18 @@ class TwoAgentSystem():
             # if self.current_sim_name not in self.data:
             #     self.data[self.current_sim_name] = {}
             for method in methods:
-                print(datetime.now(), " ", method + " of ", methods)
-                self.reset_agents_w_exp_data()
-                self.parse_test_name(method)
-                if self.generate_results_file(redo_bool):
-                    self.run_exp(method)
-                    if os.path.isfile(self.result_file):
-                        os.remove(self.result_file)
-                    with open(self.result_file, "wb") as f:
-                        pkl.dump(self.data, f)
+                try:
+                    print(datetime.now(), " ", method + " of ", methods)
+                    self.reset_agents_w_exp_data()
+                    self.parse_test_name(method)
+                    if self.generate_results_file(redo_bool):
+                        self.run_exp(method)
+                        if os.path.isfile(self.result_file):
+                            os.remove(self.result_file)
+                        with open(self.result_file, "wb") as f:
+                            pkl.dump(self.data, f)
+                except Exception as e:
+                    print(f"Failed {method}")
             print("-----------------------------------")
 
     def reset_agents_w_exp_data(self):
