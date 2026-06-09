@@ -146,9 +146,9 @@ class UPFConnectedAgent:
         self.P_ha = 0
 
         # Area variables:
-        self.n_altitude = 0
-        self.n_azimuth = 0
-        self.n_heading = 0
+        self.n_altitude = 1
+        self.n_azimuth = 1
+        self.n_heading = 1
 
         # UKF Variables:
         self.kappa = 0
