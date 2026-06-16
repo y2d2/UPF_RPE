@@ -530,7 +530,116 @@ class UPFConnectedAgent:
                     return particle_2
         return None
 
+    def merge_similar_particles(self):
+        def limit_angle(angle):
+            angle = angle % (2 * np.pi)
+            while angle <= -np.pi:
+                angle = angle + 2 * np.pi
+            while angle > np.pi:
+                angle = angle - 2 * np.pi
+            return angle
 
+        def angle_mean(values, weights):
+            return np.arctan2(np.sum(weights * np.sin(values)), np.sum(weights * np.cos(values)))
+
+        def residual(x, mean, angle_indices):
+            dx = x - mean
+            for index in angle_indices:
+                if index < len(dx):
+                    dx[index] = limit_angle(dx[index])
+            return dx
+
+        def weighted_mean(x_1, x_2, weights, angle_indices):
+            mean = weights[0] * x_1 + weights[1] * x_2
+            for index in angle_indices:
+                if index < len(mean):
+                    mean[index] = angle_mean(np.array([x_1[index], x_2[index]]), weights)
+            return mean
+
+        def merge_moments(x_1, p_1, x_2, p_2, w_1, w_2, angle_indices):
+            weight_sum = w_1 + w_2
+            if weight_sum > 0:
+                weights = np.array([w_1, w_2], dtype=np.float64) / weight_sum
+            else:
+                weights = np.array([0.5, 0.5], dtype=np.float64)
+            mean = weighted_mean(x_1, x_2, weights, angle_indices)
+            dx_1 = residual(x_1, mean, angle_indices)
+            dx_2 = residual(x_2, mean, angle_indices)
+            covariance = weights[0] * (p_1 + np.outer(dx_1, dx_1))
+            covariance += weights[1] * (p_2 + np.outer(dx_2, dx_2))
+            return mean, 0.5 * (covariance + covariance.T), weight_sum
+
+        def mahalanobis_distance_squared(particle_1, particle_2):
+            if getattr(particle_1, "los_state", None) != getattr(particle_2, "los_state", None):
+                return np.inf
+
+            dx = particle_1.t_si_sj - particle_2.t_si_sj
+            dx[3] = limit_angle(dx[3])
+            covariance = particle_1.P_t_si_sj + particle_2.P_t_si_sj + np.eye(4) * 1e-9
+            return dx.T @ np.linalg.pinv(covariance) @ dx
+
+        def merge_particle_state(kept_particle, particle):
+            kept_kf = getattr(kept_particle.rpea, "kf", None)
+            particle_kf = getattr(particle.rpea, "kf", None)
+            if kept_kf is not None and particle_kf is not None:
+                mean, covariance, weight = merge_moments(
+                    kept_kf.x.copy(),
+                    kept_kf.P.copy(),
+                    particle_kf.x.copy(),
+                    particle_kf.P.copy(),
+                    kept_particle.weight,
+                    particle.weight,
+                    [1, 2, 3, 7, 8],
+                )
+                kept_kf.x = mean
+                kept_kf.P = covariance
+                kept_particle.rpea.weight = weight
+                kept_particle.weight = weight
+                if hasattr(kept_particle.rpea, "calculate_x_ca"):
+                    kept_particle.rpea.calculate_x_ca()
+                if hasattr(kept_particle.rpea, "calculate_P_x_ca"):
+                    kept_particle.rpea.calculate_P_x_ca()
+                if hasattr(kept_particle, "get_states"):
+                    kept_particle.get_states()
+            else:
+                mean, covariance, weight = merge_moments(
+                    kept_particle.t_si_sj.copy(),
+                    kept_particle.P_t_si_sj.copy(),
+                    particle.t_si_sj.copy(),
+                    particle.P_t_si_sj.copy(),
+                    kept_particle.weight,
+                    particle.weight,
+                    [3],
+                )
+                kept_particle.t_si_sj = mean
+                kept_particle.P_t_si_sj = covariance
+                kept_particle.weight = weight
+                if kept_particle.rpea is not None:
+                    kept_particle.rpea.t_si_sj = mean
+                    kept_particle.rpea.P_t_si_sj = covariance
+                    if hasattr(kept_particle.rpea, "weight"):
+                        kept_particle.rpea.weight = weight
+
+        if not self.particles:
+            self.weights = []
+            self.best_particle = None
+            return
+
+        threshold = 9.487729036781154
+        new_particles = []
+        for particle in self.particles:
+            merged = False
+            for kept_particle in new_particles:
+                if mahalanobis_distance_squared(kept_particle, particle) <= threshold:
+                    merge_particle_state(kept_particle, particle)
+                    merged = True
+                    break
+            if not merged:
+                new_particles.append(particle)
+
+        self.particles = new_particles
+        self.weights = [particle.weight for particle in self.particles]
+        self.set_best_particle()
 
 class UPFConnectedAgentDataLogger:
     def __init__(self, host_agent: NewRobot, connected_agent: NewRobot, upf_connected_agent: UPFConnectedAgent):
