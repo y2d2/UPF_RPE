@@ -481,14 +481,41 @@ class UPFConnectedAgent:
             raise Exception("No particles left")
 
     def calculate_average_particle(self):
-        #TODO calculate avarega particle + uncertainty.
-        self.average_t_si_sj = np.zeros(4)
-        self.t_si_sj = np.empty((0, 4))
-        for particle in self.particles:
-            self.average_t_si_sj = particle.t_si_sj * particle.weight + self.average_t_si_sj
-            self.t_si_sj = np.concatenate((self.t_si_sj, particle.t_si_sj.reshape(1, 4)), axis=0)
+        def limit_angle(angle):
+            angle = angle % (2 * np.pi)
+            while angle <= -np.pi:
+                angle = angle + 2 * np.pi
+            while angle > np.pi:
+                angle = angle - 2 * np.pi
+            return angle
 
-        self.t_si_sj_sig = np.max(self.t_si_sj, axis=0) - np.min(self.t_si_sj, axis=0)
+        self.average_t_si_sj = np.zeros(4)
+        self.average_P_t_si_sj = np.zeros((4, 4))
+        self.t_si_sj = np.empty((0, 4))
+        self.t_si_sj_sig = np.zeros(4)
+        if not self.particles:
+            return
+
+        weights = np.array([particle.weight for particle in self.particles], dtype=np.float64)
+        weight_sum = np.sum(weights)
+        if weight_sum > 0:
+            weights = weights / weight_sum
+        else:
+            weights = np.ones(len(self.particles), dtype=np.float64) / len(self.particles)
+
+        self.t_si_sj = np.array([particle.t_si_sj for particle in self.particles], dtype=np.float64)
+        self.average_t_si_sj[:3] = np.average(self.t_si_sj[:, :3], axis=0, weights=weights)
+        self.average_t_si_sj[3] = np.arctan2(
+            np.sum(weights * np.sin(self.t_si_sj[:, 3])),
+            np.sum(weights * np.cos(self.t_si_sj[:, 3])),
+        )
+
+        for weight, particle in zip(weights, self.particles):
+            residual = particle.t_si_sj - self.average_t_si_sj
+            residual[3] = limit_angle(residual[3])
+            self.average_P_t_si_sj += weight * (particle.P_t_si_sj + np.outer(residual, residual))
+        self.average_P_t_si_sj = 0.5 * (self.average_P_t_si_sj + self.average_P_t_si_sj.T)
+        self.t_si_sj_sig = np.sqrt(np.maximum(np.diag(self.average_P_t_si_sj), 0))
 
     def set_best_particle(self):
         best_particle = self.particles[np.where(self.weights == np.max(self.weights))[0][0]]
