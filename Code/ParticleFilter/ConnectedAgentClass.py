@@ -653,8 +653,11 @@ class UPFConnectedAgent:
             return
 
         threshold = 9.487729036781154
+        indexed_particles = enumerate(self.particles)
+        particles_by_weight = sorted(indexed_particles, key=lambda item: (-item[1].weight, item[0]))
+
         new_particles = []
-        for particle in self.particles:
+        for _, particle in particles_by_weight:
             merged = False
             for kept_particle in new_particles:
                 if mahalanobis_distance_squared(kept_particle, particle) <= threshold:
