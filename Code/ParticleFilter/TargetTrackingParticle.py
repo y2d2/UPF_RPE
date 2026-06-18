@@ -66,10 +66,16 @@ class UKFLOSTargetTrackingParticle(TargetTrackingParticle):
         self.get_states()
         self.drift_correction_bool = True
 
+    def set_initial_state(self, s_j, sigma_t):
+        self.rpea.set_initial_state(s_j, sigma_t)
+        self.rpea.weight = self.weight
+        self.get_states()
+
     def run_model(self, dt_i, q_i, t_i, P_i, dt_j, q_j, d_ij, sig_uwb, time_i):
         self.rpea.run_filter(dt_j, q_j, t_i, P_i, d_ij, sig_uwb, self.drift_correction_bool, True, time_i)
         self.likelihood = self.rpea.kf.likelihood
         self.weight = self.weight * self.likelihood
+        self.rpea.weight = self.weight
         self.get_states()
 
     def get_states(self):

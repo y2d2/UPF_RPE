@@ -136,40 +136,31 @@ class TargetTrackingUKF:
         self.kf = ModifiedUnscentedKalmanFilter(dim_x=self.kf_variables, dim_z=1, dt=self.dt, fx=self.fx, hx=self.hx,
                                                 points=points, residual_x=subtract)
 
-    def calculate_initial_state(self, s, ca_heading):
-        # Due to UWB having extrinsicity, the initial state of the connected agent has to be calculated using this and
-        # The measured distance to the connected agent.
-        r = s[0]
-        s_1 = s.copy()
-        s_1[0] = 1  # Unity vector of the direction of the connected agent.
-        T_si_uwb = TMF.transformation_matrix_from_4D_t(self.t_si_uwb)
-        T_sj_uwb = TMF.transformation_matrix_from_4D_t(self.t_sj_uwb)
-        t_1_cijcji = sphericalToCartesian(s_1)
-        R_1_cijcji = TMF.get_rotation(TMF.transformation_matrix_from_4D_t(np.array([0, 0, 0, ca_heading])))
-        R_si_uwb = TMF.get_rotation(T_si_uwb)
-        t_si_uwb = TMF.get_translation(T_si_uwb)
-        t_sj_uwb = TMF.get_translation(T_sj_uwb)
-
-        t_star = t_si_uwb + R_si_uwb @ R_1_cijcji @ t_sj_uwb
-        t_plus = R_si_uwb @ t_1_cijcji
-        b = 2 * np.dot(t_plus, t_star)
-        c = np.linalg.norm(t_star) ** 2 - r ** 2
-
-        D = b ** 2 - 4 * c
-        if D < 0:
-            raise ValueError("No real solution")
-        sol1 = (-b + np.sqrt(D)) / 2
-        if sol1 < 0:
-            raise ValueError("No real solution")
-        return np.array([sol1, s_1[1], s_1[2]])
-
-    def set_initial_state(self, t_j, sigma_t):
-        s_cor = self.calculate_initial_state(t_j[:3], t_j[3])
-        self.kf.x = np.array([s_cor[0], s_cor[1], s_cor[2], t_j[3], 0, 0, 0, 0, 0])
+    def set_initial_state(self, s_j, sigma_t):
+        s_cor = self.calculate_initial_state(s_j)
+        self.kf.x = np.array([s_cor[0], s_cor[1], s_cor[2], s_cor[3], 0, 0, 0, 0, 0])
         self.kf.P = np.diag(
             [(sigma_t[0]) ** 2, sigma_t[1] ** 2, sigma_t[2] ** 2, sigma_t[3] ** 2, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8])
         self.calculate_x_ca()
         self.calculate_P_x_ca()
+
+    def calculate_initial_state(self, s):
+        # Due to UWB having extrinsicity, the initial state of the connected agent has to be calculated using this and
+        # The measured distance to the connected agent.
+        t_cij = np.zeros(4)
+        t_cij[:3] = sphericalToCartesian(s[:3])  # Vector from agent i to j in the UWB frame
+        t_cij[3] = s[3]
+        T_cij = TMF.transformation_matrix_from_4D_t(t_cij)
+        T_si_uwb = TMF.transformation_matrix_from_4D_t(self.t_si_uwb)
+        T_sj_uwb = TMF.transformation_matrix_from_4D_t(self.t_sj_uwb)
+        T_ij = T_si_uwb @ T_cij @ TMF.inv_transformation_matrix(T_sj_uwb)
+        t_ij = TMF.get_4D_t_from_matrix(T_ij)
+        r = TMF.get_translation(TMF.inv_transformation_matrix(T_si_uwb) @ T_ij @ T_sj_uwb)
+        r = np.linalg.norm(r)
+        s_ij = np.zeros(4)
+        s_ij[:3] = cartesianToSpherical(t_ij[:3])
+        s_ij[3] = t_ij[3]
+        return s_ij
 
     def set_uwb_extrinsicity(self, t_si_uwb, t_sj_uwb):
         self.t_si_uwb = t_si_uwb
