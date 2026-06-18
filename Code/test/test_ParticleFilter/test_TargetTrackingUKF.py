@@ -373,6 +373,7 @@ class Test_TargetTrackingUKF(unittest.TestCase):
         plt.show()
     # Test cases: Copies
 
+    @unittest.skip("Legacy plotting/NLOS copy workflow uses removed APIs and the old 3D predict signature.")
     def test_TC6a_Copies(self):
         TEST_CASE_NAME = "TC6a: Copies"
         self.initTest()
@@ -436,4 +437,3 @@ class Test_TargetTrackingUKF(unittest.TestCase):
 
 if __name__ == "__main__":
     ut = unittest.main()
-

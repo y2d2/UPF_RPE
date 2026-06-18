@@ -33,17 +33,26 @@ from Code.UtilityCode.utility_fuctions import cartesianToSpherical, sphericalToC
 
 import Code.UtilityCode.Transformation_Matrix_Fucntions as TMF
 
+ANGLE_STATE_INDICES = (1, 2, 3, 7, 8)
+
+
 def subtract(x, y):
-    # dx = np.zeros(x.shape)
     dx = x - y
-    # dx[0] = x[0] - y[0]
-    # dx[1] = limit_Angle(x[1] - y[1])
-    # dx[2] = limit_Angle(x[2] - y[2])
-    # # if np.abs(dx[2]) > np.pi /2:
-    # #     dx[2] = np.sign(dx[2]) * ( np.abs(dx[2]) - 2* (np.abs(dx[2]) - np.pi/2))
-    # #     dx[1] = limit_Angle(dx[1] + np.pi)
-    # dx[3] = x[3] - y[3]
+    for index in ANGLE_STATE_INDICES:
+        if index < len(dx):
+            dx[index] = limit_angle(dx[index])
     return dx
+
+
+def state_mean(sigmas, weights):
+    mean = np.dot(weights, sigmas)
+    for index in ANGLE_STATE_INDICES:
+        if index < mean.shape[0]:
+            mean[index] = np.arctan2(
+                np.sum(weights * np.sin(sigmas[:, index])),
+                np.sum(weights * np.cos(sigmas[:, index])),
+            )
+    return mean
 
 
 def subtract_spherical(x, y):
@@ -134,7 +143,7 @@ class TargetTrackingUKF:
         self.beta = beta
         points = ModifiedMerweScaledSigmaPoints(self.kf_variables, alpha, beta, kappa, subtract=subtract)
         self.kf = ModifiedUnscentedKalmanFilter(dim_x=self.kf_variables, dim_z=1, dt=self.dt, fx=self.fx, hx=self.hx,
-                                                points=points, residual_x=subtract)
+                                                points=points, residual_x=subtract, x_mean_fn=state_mean)
 
     def set_initial_state(self, s_j, sigma_t):
         s_cor = self.calculate_initial_state(s_j)
@@ -176,22 +185,26 @@ class TargetTrackingUKF:
         self.predict(dt_j, q_j)
         if update_bool:
             self.update(d_ij, t_i, P_i, sig_d, bool_drift)
-            self.weight = self.weight * self.kf.likelihood
         self.calculate_x_ca()
         self.calculate_P_x_ca()
         return None
-        # self.weight = self.kf.likelihood
 
     # -------------------------------------------------------------------------------------- #
     # --- Prediction functions
     # -------------------------------------------------------------------------------------- #
     def predict(self, dx_ca, q=None):
+        dx_ca = np.asarray(dx_ca, dtype=np.float64)
+        if dx_ca.shape != (4,):
+            raise ValueError("dx_ca must be a 4D displacement vector [x, y, z, heading]")
         if q is None:
             q = np.diag([self.sigma_dx_ca ** 2, self.sigma_dx_ca ** 2, self.sigma_dx_ca ** 2, self.sigma_dh_ca ** 2])
+        q = np.asarray(q, dtype=np.float64)
+        if q.shape != (4, 4):
+            raise ValueError("q must be a 4x4 odometry covariance matrix")
         DT_sj = transform_matrix(self.Dt_sj).astype(np.float64)
         f = get_covariance_of_transform(DT_sj).astype(np.float64)
-        self.Dt_sj = self.Dt_sj + f @ dx_ca.astype(np.float64)
-        self.q_ca = self.q_ca + f @ q.astype(np.float64) @ f.T
+        self.Dt_sj = self.Dt_sj + f @ dx_ca
+        self.q_ca = self.q_ca + f @ q @ f.T
         return None
 
     def reset_prediction_states(self):
@@ -241,8 +254,53 @@ class TargetTrackingUKF:
     # -------------------------------------------------------------------------------------- #
     # --- Update functions
     # -------------------------------------------------------------------------------------- #
-    def calculate_r(self, sigma_uwb):
-        self.kf.R = np.diag([np.linalg.norm(self.q_ha[:3, :3]) ** 2 + sigma_uwb ** 2])
+    def _state_to_transforms(self, x, t_oi_si=None, include_pending_dt=False):
+        if t_oi_si is None:
+            t_oi_si = self.t_oi_si
+        T_oi_cij = transform_matrix(self.t_oi_cij)
+        t_cij_cji = np.append(sphericalToCartesian(x[:3]), np.array([x[3]]))
+        T_cij_cji = transform_matrix(t_cij_cji)
+        T_cji_sj = transform_matrix(x[4:-1])
+        T_si_oi = inv_transformation_matrix(t_oi_si)
+        T_si_sj = T_si_oi @ T_oi_cij @ T_cij_cji @ T_cji_sj
+        T_oi_sj = T_oi_cij @ T_cij_cji @ T_cji_sj
+        if include_pending_dt:
+            T_sj_sj = transform_matrix(self.Dt_sj)
+            T_si_sj = T_si_sj @ T_sj_sj
+            T_oi_sj = T_oi_sj @ T_sj_sj
+        return T_si_sj, T_oi_sj, T_cij_cji, T_cji_sj
+
+    def _uwb_vector_from_state(self, x, t_oi_si=None):
+        T_si_sj, _, _, _ = self._state_to_transforms(x, t_oi_si=t_oi_si)
+        T_uwbi_uwbj = inv_transformation_matrix(self.t_si_uwb) @ T_si_sj @ transform_matrix(self.t_sj_uwb)
+        return get_states_of_transform(T_uwbi_uwbj)[:3]
+
+    def _range_from_state(self, x, t_oi_si=None):
+        return np.linalg.norm(self._uwb_vector_from_state(x, t_oi_si=t_oi_si))
+
+    def _range_jacobian_host_pose(self, x_ha):
+        jacobian = np.zeros(4)
+        epsilons = np.array([1e-5, 1e-5, 1e-5, 1e-6])
+        for index, epsilon in enumerate(epsilons):
+            x_plus = np.array(x_ha, dtype=float).copy()
+            x_minus = np.array(x_ha, dtype=float).copy()
+            x_plus[index] += epsilon
+            x_minus[index] -= epsilon
+            jacobian[index] = (
+                self._range_from_state(self.kf.x, t_oi_si=x_plus)
+                - self._range_from_state(self.kf.x, t_oi_si=x_minus)
+            ) / (2 * epsilon)
+        return jacobian
+
+    def calculate_r(self, sigma_uwb, P_x_ha=None):
+        variance = sigma_uwb ** 2
+        if P_x_ha is not None:
+            P_x_ha = np.asarray(P_x_ha, dtype=np.float64)
+            if P_x_ha.shape != (4, 4):
+                raise ValueError("P_x_ha must be a 4x4 covariance matrix")
+            jacobian = self._range_jacobian_host_pose(self.t_oi_si)
+            variance += float(jacobian @ P_x_ha @ jacobian.T)
+        self.kf.R = np.diag([max(variance, 0.0)])
 
     def update(self, z, x_ha, P_x_ha, sigma_uwb, bool_drift=True):
         # Prediction step
@@ -250,7 +308,7 @@ class TargetTrackingUKF:
         self.kf.predict()
         # Update step
         self.uwb_measurement = z
-        self.calculate_r(sigma_uwb)
+        self.calculate_r(sigma_uwb, P_x_ha)
         self.kf.update(np.array([z]))
         # Reset
         self.t_oi_si_prev = x_ha
@@ -258,82 +316,50 @@ class TargetTrackingUKF:
         self.set_residual_drift(bool_drift)
 
     def hx(self, x):
-        T_oi_cij = transform_matrix(self.t_oi_cij)
-        t_cij_cji = np.append(sphericalToCartesian(x[:3]), np.array([x[3]]))
-        T_cij_cji = transform_matrix(t_cij_cji)
-        T_cji_sj = transform_matrix(x[4:-1])
-        T_si_oi = inv_transformation_matrix(self.t_oi_si)
-        # T_sj_sj = transform_matrix(self.Dt_sj)
-        T_si_sj = T_si_oi @ T_oi_cij @ T_cij_cji @ T_cji_sj
-        # t_si_sj = get_states_of_transform(T_si_sj)
-        T_uwbi_uwbj = inv_transformation_matrix(self.t_si_uwb) @ T_si_sj @ transform_matrix(self.t_sj_uwb)
-        t_uwbi_uwbj = get_states_of_transform(T_uwbi_uwbj)
-        r = np.linalg.norm(t_uwbi_uwbj[:3])
-        # r = np.linalg.norm(t_si_sj[:3])
-
-        # # Calculate the cartesian start position in the absolute reference frame of the host agent.
-        # x_ca_0 = self.x_ha_0[:3] + get_rot_matrix(self.x_ha_0[-1]) @ sphericalToCartesian(x[:3])
-        # # calculate the end position of the connected agent in the absolute reference frame of the host agent.
-        # x_ca = x_ca_0 + get_rot_matrix(self.x_ha_0[-1]) @ get_rot_matrix(x[3]) @ x[4:-2]
-        # # Calculate the distance between the two agents.
-
-        return np.array([r])
+        return np.array([self._range_from_state(x)])
 
     # -------------------------------------------------------------------------------------- #
     # --- Postprocessing functions
     # -------------------------------------------------------------------------------------- #
     def calculate_x_ca(self):
-        T_oi_cij = transform_matrix(self.t_oi_cij)
-        self.t_cij_cji = np.append(sphericalToCartesian(self.kf.x[:3]), np.array([self.kf.x[3]]))
-        T_cij_cji = transform_matrix(self.t_cij_cji)
-        T_cji_sj = transform_matrix(self.kf.x[4:-1])
-        T_si_oi = inv_transformation_matrix(self.t_oi_si)
-        T_sj_sj = transform_matrix(self.Dt_sj)
-        T_si_sj = T_si_oi @ T_oi_cij @ T_cij_cji @ T_cji_sj @ T_sj_sj
+        T_si_sj, T_oi_sj, T_cij_cji, T_cji_sj = self._state_to_transforms(
+            self.kf.x, include_pending_dt=True
+        )
         self.t_si_sj = get_states_of_transform(T_si_sj)
-        # x_ca_r = self.t_si_sj[:3]
-        # self.x_ca_r = x_ca_r
-        # self.s_ca_r = cartesianToSpherical(x_ca_r)
-        T_oi_sj = T_oi_cij @ T_cij_cji @ T_cji_sj @ T_sj_sj
         self.t_oi_sj = get_states_of_transform(T_oi_sj)
-        # self.x_ca = self.t_oi_sj[:3]
-        # self.h_ca = self.t_oi_sj[-1]
-        T_oi_cji = T_oi_cij @ T_cij_cji
+        T_oi_cji = transform_matrix(self.t_oi_cij) @ T_cij_cji
         self.t_oi_cji = get_states_of_transform(T_oi_cji)
-        # self.x_ca_0 = self.t_oi_cji[:3]
         self.t_cji_sj = get_states_of_transform(T_cji_sj)
-        # self.x_ca_odom = self.t_cji_sj[:3]
-
-        #
-        # else:
-        #     # self.x_ca_odom = self.kf.x[4:-2]  # + create_Rotation_Matrix(self.kf.x[4]) @ self.dx_ca
-        #     self.x_ca_odom = self.kf.x[4:-2] + get_rot_matrix(self.kf.x[-2]) @ self.Dt_sj[:3]
-        #
-        #     self.x_ca_0 = self.x_ha_0[:3] + get_rot_matrix(self.x_ha_0[-1]) @ sphericalToCartesian(self.kf.x[:3])
-        #     # Calculate the absolute position of the connected agent.
-        #     self.x_ca = self.x_ca_0 + get_rot_matrix(self.x_ha_0[-1]) @ get_rot_matrix(self.kf.x[3]) @ self.x_ca_odom
-        #     self.x_ca_r = self.x_ca - self.x_ha[:3]  # expressed in the absolute reference frame of the host agent.
-        #     self.s_ca_r = cartesianToSpherical(self.x_ca_r)
-        #     # Expressed in the local reference frame of the host agent.
-        #     self.s_ca_r[1] = limit_angle(self.s_ca_r[1] - self.x_ha[3])
-        #     self.x_ca_r = sphericalToCartesian(self.s_ca_r)
-        #     self.h_ca = self.x_ha_0[-1] + self.kf.x[3] + self.kf.x[-2] + self.Dt_sj[-1]
         return None
 
     def calculate_P_x_ca(self):
-        f = get_4d_rot_matrix(self.kf.x[3])
-        stds = np.sqrt(np.diag(self.kf.P))
-        ca_0 = sphericalToCartesian(self.kf.x[:3])  # + self.x_ha_0[:3]
-        ca_0_max = sphericalToCartesian(self.kf.x[:3] + stds[:3])  # + self.x_ha_0[:3]
-        dis_0 = np.linalg.norm(ca_0_max - ca_0)
+        sigmas = self.kf.points_fn.sigma_points(self.kf.x, self.kf.P)
+        t_sigmas = np.array([
+            get_states_of_transform(
+                self._state_to_transforms(sigma, include_pending_dt=True)[0]
+            )
+            for sigma in sigmas
+        ], dtype=np.float64)
 
-        self.sigma_x_ca_0 = dis_0  # / self.kf.x[0]
-        self.sigma_x_ca = np.sqrt(dis_0 ** 2
-                                  + np.linalg.norm(self.kf.P[4:-2, 4:-2].astype(np.float64))
-                                  + np.linalg.norm(self.q_ca[:3, :3].astype(np.float64)))
-        self.sigma_h_ca = np.sqrt(self.kf.P[3, 3] + self.kf.P[-2, -2] + self.q_ca[-1, -1])
-        self.P_t_si_sj[:3,:3] = np.eye(3) * dis_0**2 + self.kf.P[4:-2, 4:-2].astype(np.float64) + self.q_ca[:3, :3].astype(np.float64)
-        self.P_t_si_sj[-1,-1] = self.kf.P[-2,-2] + self.q_ca[-1,-1]
+        mean = np.dot(self.kf.Wm, t_sigmas)
+        mean[3] = np.arctan2(
+            np.sum(self.kf.Wm * np.sin(t_sigmas[:, 3])),
+            np.sum(self.kf.Wm * np.cos(t_sigmas[:, 3])),
+        )
+        covariance = np.zeros((4, 4), dtype=np.float64)
+        for weight, sigma_t in zip(self.kf.Wc, t_sigmas):
+            residual = sigma_t - mean
+            residual[3] = limit_angle(residual[3])
+            covariance += weight * np.outer(residual, residual)
+        if np.any(self.q_ca):
+            covariance += self.q_ca.astype(np.float64)
+        covariance = 0.5 * (covariance + covariance.T)
+
+        self.P_t_si_sj = covariance
+        self.P_x_ca = covariance.copy()
+        self.sigma_x_ca_0 = np.linalg.norm(np.sqrt(np.maximum(np.diag(self.kf.P[:3, :3]), 0)))
+        self.sigma_x_ca = np.linalg.norm(np.sqrt(np.maximum(np.diag(self.P_t_si_sj[:3, :3]), 0)))
+        self.sigma_h_ca = np.sqrt(max(self.P_t_si_sj[-1, -1], 0))
 
     # -------------------------------------------------------------------------------------- #
     # --- Residual drift functions
@@ -406,4 +432,3 @@ class TargetTrackingUKF:
         copiedUKF.weight = copy.deepcopy(self.weight)
 
         return copiedUKF
-

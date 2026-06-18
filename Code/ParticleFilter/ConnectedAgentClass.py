@@ -439,8 +439,14 @@ class UPFConnectedAgent:
         if len(valid_indices) == 0:
             valid_indices = np.array([int(np.argmax(weights))])
         self.particles = [self.particles[i] for i in valid_indices]
-        for particle in self.particles: particle.weight = 1.
+        kept_weights = weights[valid_indices]
+        kept_weights = kept_weights / np.sum(kept_weights)
+        for particle, weight in zip(self.particles, kept_weights):
+            particle.weight = float(weight)
+            if getattr(particle, "rpea", None) is not None:
+                particle.rpea.weight = particle.weight
         self.weights = [particle.weight for particle in self.particles]
+        self.set_best_particle()
 
     def set_branch_kill_resampling(self, resample_factor=0.1, sigma_uwb_factor=1.5):
         self.sigma_uwb_factor = sigma_uwb_factor
