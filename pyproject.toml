@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "UPF_RPE"
+version = "0.1.0"
+description = "Unscented Particle Filter for relative pose estimation using odometry and UWB measurements"
+readme = "README.md"
+license = {text = "GPL3"}
+authors = [
+    {name = "Yuri Durodie", email = "yuri.durodie@vub.be"}
+]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "scipy",
+    "filterpy",
+    "matplotlib",
+    "h5py",
+]
+
+[project.optional-dependencies]
+all = [
+    "cvxpy",
+    "gurobipy",
+    "torch",
+]
+qcqp = [
+    "cvxpy",
+    "gurobipy",
+]
+deep-learning = [
+    "torch",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["Code*"]
