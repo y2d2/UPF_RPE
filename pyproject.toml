@@ -35,5 +35,5 @@ deep-learning = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["Code*"]
+where = ["src"]
+include = ["upf_rte*"]

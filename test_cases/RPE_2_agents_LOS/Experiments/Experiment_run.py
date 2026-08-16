@@ -1,6 +1,6 @@
 import os
 
-from Code.UtilityCode.Measurement import create_experiment, create_experimental_data
+from upf_rte.UtilityCode.Measurement import create_experiment, create_experimental_data
 
 
 def test_run_LOS_exp():

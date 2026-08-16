@@ -5,14 +5,14 @@ import rosbags.rosbag2 as rb2
 import unittest
 from rosbags.serde import deserialize_cdr
 
-import Code.Simulation.MultiRobotClass as MRC
-from Code.UtilityCode.turtlebot4 import Turtlebot4
+import upf_rte.Simulation.MultiRobotClass as MRC
+from upf_rte.UtilityCode.turtlebot4 import Turtlebot4
 import numpy as np
 
-from Code.UtilityCode.Measurement import Measurement, create_experiment, create_experimental_data
-from Code.Analysis import TwoAgentAnalysis as TAA
+from upf_rte.UtilityCode.Measurement import Measurement, create_experiment, create_experimental_data
+from upf_rte.Analysis import TwoAgentAnalysis as TAA
 
-from Code.Simulation.RobotClass import NewRobot
+from upf_rte.Simulation.RobotClass import NewRobot
 import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt

@@ -1,16 +1,16 @@
 import unittest
 import os
-import Code.Simulation.MultiRobotClass
-from Code.BaseLines import NLS, NLSDataLogger
+import upf_rte.Simulation.MultiRobotClass
+from upf_rte.BaseLines import NLS, NLSDataLogger
 import numpy as np
 import pickle as pkl
 
-from Code.UtilityCode import Measurement
+from upf_rte.UtilityCode import Measurement
 
-from Code.Simulation import NewRobot
+from upf_rte.Simulation import NewRobot
 import matplotlib
 
-from Code.UtilityCode.utility_fuctions import get_4d_rot_matrix
+from upf_rte.UtilityCode.utility_fuctions import get_4d_rot_matrix
 
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
@@ -163,7 +163,7 @@ class MyTestCase(unittest.TestCase):
             pkl.dump(nls_logger_10, file)
 
     def test_show_unob_uncertainty(self):
-        from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
+        from upf_rte.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
 
         upf0: UPFConnectedAgent = pkl.load(open("presentation/exp1_unobservable_sampled/drone_0_losupf.pkl", "rb"))
         upf0_logger: UPFConnectedAgentDataLogger = upf0.upf_connected_agent_logger
@@ -184,7 +184,7 @@ class MyTestCase(unittest.TestCase):
         plt.show()
 
     def test_show_trajectory_estimations(self):
-        from Code.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
+        from upf_rte.ParticleFilter.ConnectedAgentClass import UPFConnectedAgent, UPFConnectedAgentDataLogger
         plt.ion()
         upf0: UPFConnectedAgent = pkl.load(open("presentation/exp3_sec1_los_sampled/drone_0_losupf.pkl", "rb"))
         upf0_logger: UPFConnectedAgentDataLogger = upf0.upf_connected_agent_logger

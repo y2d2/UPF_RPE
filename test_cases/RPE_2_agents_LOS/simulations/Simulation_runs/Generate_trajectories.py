@@ -1,5 +1,5 @@
 
-import Code.Simulation.MultiRobotClass as MRC
+import upf_rte.Simulation.MultiRobotClass as MRC
 
 if __name__ == "__main__":
     folder_name = '../robot_trajectories/Standard'

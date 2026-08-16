@@ -1,4 +1,3 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from .Code.ParticleFilter import ConnectedAgentClass, TargetTrackingUKF
-import Code
+# Placeholder for package import - module structure has moved to src/upf_rte/

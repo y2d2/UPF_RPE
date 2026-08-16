@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     file_content_start = "import os \n"
     file_content_start += "os.environ[\"OPENBLAS_NUM_THREADS\"]= \"2\"\n"
-    file_content_start += "import Code.Simulation.MultiRobotClass as MRC\n"
+    file_content_start += "import upf_rte.Simulation.MultiRobotClass as MRC\n"
     file_content_start += "\n"
     file_content_start += "if __name__ == \"__main__\":\n"
     file_content_start += "\tresult_folder = \"" + result_folder + "\" \n"
